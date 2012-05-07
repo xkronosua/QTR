@@ -145,18 +145,19 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
                                 markersize=self.mplhorizontalSlider_2.value()
                                 )
         # creating line
-        self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r-',
+        self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
                                              animated=True
                                             )
         # creating rectangle
-        self.rectab, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r-',
+        self.rectab, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
                                              animated=True)
-        self.rectbc, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r-',
+        self.rectbc, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
                                                      animated=True)
-        self.rectcd, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r-',
+        self.rectcd, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
                                                      animated=True)
-        self.rectda, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r-',
+        self.rectda, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
                                                      animated=True)
+        # TODO: create a circle
         # enable grid
         self.mpl.canvas.ax.grid(True)
         if self.background != None:
@@ -261,28 +262,15 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
     ###########################################################################
     ############################ Events #######################################
     ###########################################################################
+
+    ############################## Line #######################################
     def cut_line(self):
         """start cut the line"""
+        self.sdata = self.tdata.copy()
         self.cidpress = self.mpl.canvas.mpl_connect(
                 'button_press_event', self.on_press)
         self.cidrelease = self.mpl.canvas.mpl_connect(
                 'button_release_event', self.on_release)
-
-    def cut_rect(self):
-        """start to cut the rect"""
-        self.cidpress = self.mpl.canvas.mpl_connect(
-                'button_press_event', self.on_press2)
-        self.cidrelease = self.mpl.canvas.mpl_connect(
-                'button_release_event', self.on_release2)
-
-    def cut_point(self):
-        """connect to all the events we need to cut the rect"""
-        self.cidpick = self.mpl.canvas.mpl_connect(
-                'button_press_event', self.onpick)
-
-    def onpick(self, event):
-        self.mpl.canvas.mpl_disconnect(self.cidpick)
-        self.mplactionPoint.setChecked(False)
 
     def on_press(self, event):
         """on button press event for line
@@ -334,6 +322,31 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
             self.mplactionCut_by_line.setChecked(False)
             self.mpl.canvas.mpl_disconnect(self.cidpress)
         return
+
+    def on_motion(self, event):
+        '''on motion we will move the rect if the mouse is over us'''
+        self.x2 = event.xdata
+        self.y2 = event.ydata
+        self.draw_line()
+
+    def on_release(self, event):
+        '''on release we reset the press data'''
+        self.x2 = event.xdata
+        self.y2 = event.ydata
+        self.issecond = 1
+        self.draw_line()
+        if self.x1 and self.x2 and self.y1 and self.y2:
+            self.mpl.canvas.mpl_disconnect(self.cidmotion)
+            self.mpl.canvas.mpl_disconnect(self.cidrelease)
+
+    ############################### Rect ####################################
+    def cut_rect(self):
+        """start to cut the rect"""
+        self.sdata = self.tdata.copy()
+        self.cidpress = self.mpl.canvas.mpl_connect(
+                'button_press_event', self.on_press2)
+        self.cidrelease = self.mpl.canvas.mpl_connect(
+                'button_release_event', self.on_release2)
 
     def on_press2(self, event):
         """on button press event for rectangle
@@ -396,27 +409,11 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
             self.mpl.canvas.mpl_disconnect(self.cidpress)
         return
 
-    def on_motion(self, event):
-        '''on motion we will move the rect if the mouse is over us'''
-        self.x2 = event.xdata
-        self.y2 = event.ydata
-        self.draw_line()
-
     def on_motion2(self, event):
         '''on motion we will move the rect if the mouse is over us'''
         self.x2 = event.xdata
         self.y2 = event.ydata
         self.draw_rect()
-
-    def on_release(self, event):
-        '''on release we reset the press data'''
-        self.x2 = event.xdata
-        self.y2 = event.ydata
-        self.issecond = 1
-        self.draw_line()
-        if self.x1 and self.x2 and self.y1 and self.y2:
-            self.mpl.canvas.mpl_disconnect(self.cidmotion)
-            self.mpl.canvas.mpl_disconnect(self.cidrelease)
 
     def on_release2(self, event):
         '''on release we reset the press data'''
@@ -427,6 +424,36 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
         if self.x1 and self.x2 and self.y1 and self.y2:
             self.mpl.canvas.mpl_disconnect(self.cidmotion)
             self.mpl.canvas.mpl_disconnect(self.cidrelease)
+
+    ############################### Point ####################################
+    # TODO: Point cut
+    def cut_point(self):
+        """connect to all the events we need to cut the rect"""
+        self.sdata = self.tdata.copy()
+        self.cidmotion = self.mpl.canvas.mpl_connect(
+                'motion_notify_event', self.on_motion31)
+        self.cidpress = self.mpl.canvas.mpl_connect(
+                'button_press_event', self.on_press3)
+
+    def on_motion31(self, event):
+        # copy background
+        self.background = \
+            self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
+
+    def on_press3(self, event):
+        self.mpl.canvas.mpl_disconnect(self.cidmotion)
+        self.cidmotion = self.mpl.canvas.mpl_connect(
+            'motion_notify_event', self.on_motion32)
+        self.mpl.canvas.mpl_disconnect(self.cidpress)
+        self.cidrelease = self.mpl.canvas.mpl_connect(
+                'button_release_event', self.on_release3)
+
+    def on_motion32(self, event):
+        pass
+
+    def on_release3(self, event):
+        self.mpl.canvas.mpl_disconnect(self.cidmotion)
+        self.mpl.canvas.mpl_disconnect(self.cidrelease)
 
 if __name__ == '__main__' :
     app = QtGui.QApplication(sys.argv)
