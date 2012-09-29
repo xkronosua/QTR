@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 import scipy as np
 import matplotlib.pyplot as plt
 import sys
@@ -101,7 +101,7 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		#self.Rescale()
 	
 	def getData(self,pr):
-		print pr
+		print(pr)
 		return self.tdata
 		
 	# Rescale

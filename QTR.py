@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # _*_ coding: utf-8 _*_
 import sys, os
 from PyQt4 import QtGui, QtCore, uic
@@ -30,7 +30,7 @@ def averaging(x, y, xi = [], N = 100.):
 	xi_1 = sp.insert(xi,-1,xi[-1])
 	EQ = sp.poly1d( sp.polyfit(x, y, 3) )
 	ynew = []
-	for i in xrange(len(xi_1)-1):
+	for i in range(len(xi_1)-1):
 	
 		window = ( (x>=xi_1[i]) * (x<xi_1[i+1]) )!=0
 		y_w = y[window]
