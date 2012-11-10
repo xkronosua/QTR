@@ -1,10 +1,16 @@
 #!/usr/bin/python
 # _*_ coding: utf-8 _*_
 import sys, os
-from PyQt4 import QtGui, QtCore, uic
+from PyQt4 import QtGui, QtCore#, uic
 import scipy as sp
 from scipy.signal import medfilt
 import glue_designer as qc
+from qtrForm import Ui_MainWindow
+import signal
+
+def signal_handler(signal, frame):
+        sys.exit(0)
+
 
 def poly_cut(X, Y, p, d=0.7, m=6):
 	'''	Обрізка вздовж кривої апроксиміції поліномом.
@@ -19,19 +25,19 @@ def poly_cut(X, Y, p, d=0.7, m=6):
 	X_new = X[ condition ]
 	return X_new, Y_new
 	
-def averaging(x, y, xi = [], N = 100.):
+def averaging(data, xi = [], Start = 1, End = 2, Step = 1):
 	'''	Усереднення між заданими вузлами.
 	N	-	відсоток від кількості старих вузлів		
 	'''
+	x, y = data[:,0], data[:,1]
 	if not any(xi): 
-		xi = sp.linspace(x.min(),x.max(),len(x)*N/100.)
+		xi = sp.arange(Start, End,Step)
 	else:
 		xi = sp.sort(xi)
 	xi_1 = sp.insert(xi,-1,xi[-1])
 	EQ = sp.poly1d( sp.polyfit(x, y, 3) )
 	ynew = []
 	for i in range(len(xi_1)-1):
-	
 		window = ( (x>=xi_1[i]) * (x<xi_1[i+1]) )!=0
 		y_w = y[window]
 		if y_w.any():		
@@ -44,15 +50,16 @@ def averaging(x, y, xi = [], N = 100.):
 
 	return xi, sp.array(ynew)
 	
-def b_s(x, y, xi = [], N = 100., sm = 1100000., km = 5):
+def b_s(data, xi = [], Start = 1, End = 2, Step = 1, sm = 1100000., km = 5):
 	'''	Інтерполяція B-сплайном
 	N	-	відсоток вузлів
 	sm	-	коефіцієнт згладжування
 	km	-	степінь полінома
 	'''
 	print("B-spline interpolation [s = %.3f, k = %.3f]" % (sm,km))
+	x, y = data[:,0], data[:,1]
 	if not any(xi):
-		xi = sp.linspace(x.min(), x.max(), len(x)*N/100.)
+		xi = sp.arange(Start, End,Step)
 	y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
 	return xi, y_interp
 	
@@ -77,8 +84,10 @@ class QTR(QtGui.QMainWindow):
 		
 		# Завантажуємо графічну форму
 		QtGui.QMainWindow.__init__(self)
-		self.ui = uic.loadUi('qtr.ui')
-		self.ui.show()
+		#self.ui = uic.loadUi('qtr.ui')
+		#self.ui.show()
+		self.ui = Ui_MainWindow()
+		self.ui.setupUi(self)
 		
 		'''
 		# Вантажимо збережені параметри, якщо такі є
@@ -108,7 +117,7 @@ class QTR(QtGui.QMainWindow):
 		# plot
 		self.connect(self.ui.cPlot, QtCore.SIGNAL("clicked()"), self.cPlot)
 		self.connect(self.ui.sPlot, QtCore.SIGNAL("clicked()"), self.sPlot)
-		self.connect(self.ui.resPlot, QtCore.SIGNAL("clicked()"), self.plotRes)
+		self.connect(self.ui.rPlot, QtCore.SIGNAL("clicked()"), self.plotRes)
 		
 		# Poly cut
 		self.connect(self.ui.cPolyOk, QtCore.SIGNAL("clicked()"), self.cPolyCut)
@@ -117,7 +126,7 @@ class QTR(QtGui.QMainWindow):
 		# B-spline
 		self.connect(self.ui.cB_splineOk, QtCore.SIGNAL("clicked()"), self.cB_spline)
 		self.connect(self.ui.sB_splineOk, QtCore.SIGNAL("clicked()"), self.sB_spline)
-		self.connect(self.ui.resB_splineOk, QtCore.SIGNAL("clicked()"), self.resB_spline)
+		self.connect(self.ui.rB_splineOk, QtCore.SIGNAL("clicked()"), self.rB_spline)
 		
 		
 		# averaging
@@ -127,30 +136,30 @@ class QTR(QtGui.QMainWindow):
 		# MedFilt
 		self.connect(self.ui.cMedFilt, QtCore.SIGNAL("clicked()"), self.cMedFilt)
 		self.connect(self.ui.sMedFilt, QtCore.SIGNAL("clicked()"), self.sMedFilt)
-		self.connect(self.ui.resMedFilt, QtCore.SIGNAL("clicked()"), self.resMedFilt)
+		self.connect(self.ui.rMedFilt, QtCore.SIGNAL("clicked()"), self.rMedFilt)
 		
 		# Reset
 		self.connect(self.ui.cReset, QtCore.SIGNAL("clicked()"), self.cReset)
 		self.connect(self.ui.sReset, QtCore.SIGNAL("clicked()"), self.sReset)
-		self.connect(self.ui.resReset, QtCore.SIGNAL("clicked()"), self.resReset)
+		self.connect(self.ui.rReset, QtCore.SIGNAL("clicked()"), self.rReset)
 		
 		# Undo
 		self.connect(self.ui.cUndo, QtCore.SIGNAL("clicked()"), self.cUndo)
 		self.connect(self.ui.sUndo, QtCore.SIGNAL("clicked()"), self.sUndo)
-		self.connect(self.ui.resUndo, QtCore.SIGNAL("clicked()"), self.resUndo)
+		self.connect(self.ui.rUndo, QtCore.SIGNAL("clicked()"), self.rUndo)
 		
 		# Save files
 		self.connect(self.ui.cSave, QtCore.SIGNAL("clicked()"), self.cSave)
 		self.connect(self.ui.sSave, QtCore.SIGNAL("clicked()"), self.sSave)
-		self.connect(self.ui.resSave, QtCore.SIGNAL("clicked()"), self.resSave)
+		self.connect(self.ui.rSave, QtCore.SIGNAL("clicked()"), self.rSave)
 		
 		# Res evaluating
-		self.connect(self.ui.resButton, QtCore.SIGNAL("clicked()"), self.ResEval)
+		self.connect(self.ui.rButton, QtCore.SIGNAL("clicked()"), self.ResEval)
 		
 		# Tab changed
 		self.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.plotCurrent)
 		#self.connect(self.ui.tabWidget, QtCore.SIGNAL("clicked()"), self.sSave)
-		#self.connect(self.ui.tabWidget, QtCore.SIGNAL("clicked()"), self.resSave)
+		#self.connect(self.ui.tabWidget, QtCore.SIGNAL("clicked()"), self.rSave)
 		
 		# Remove temp files from ./.tmp
 		self.connect(self.ui.Close, QtCore.SIGNAL('clicked()'), QtCore.SLOT('close()'))
@@ -158,6 +167,11 @@ class QTR(QtGui.QMainWindow):
 		# Enabling/disabling M column
 		self.connect(self.ui.cMCheck, QtCore.SIGNAL('stateChanged(int)'), self.cMCheck)
 		self.connect(self.ui.sMCheck, QtCore.SIGNAL('stateChanged(int)'), self.sMCheck)
+		
+		# Auto detectiong start&end
+		self.connect(self.ui.cAutoInterval, QtCore.SIGNAL('stateChanged(int)'), self.cAutoInterval)
+		self.connect(self.ui.sAutoInterval, QtCore.SIGNAL('stateChanged(int)'), self.sAutoInterval)
+		self.connect(self.ui.rAutoInterval, QtCore.SIGNAL('stateChanged(int)'), self.rAutoInterval)
 		
 	'''================================================================================'''
 	
@@ -172,6 +186,41 @@ class QTR(QtGui.QMainWindow):
 			self.ui.sMColumn.setEnabled(True)
 		else:
 			self.ui.sMColumn.setEnabled(False)
+			
+	# AutoDetect start&end
+	def AutoInterval(self, state, startObject, endObject, type1 = 'c', type2 = 's', single = False):
+		''' визначаємо мінімальний спільний інтервал по Х'''
+		Min, Max = 1, 2
+		print(state)
+		if state and sp.any(self.dataDict[type1]) and sp.any(self.dataDict[type2]) and not single:
+			startObject.setEnabled(False)
+			endObject.setEnabled(False)
+			Min = max(self.dataDict[type1][:,0].min(), self.dataDict[type2][:,0].min())
+			Max = min(self.dataDict[type1][:,0].max(), self.dataDict[type2][:,0].max())
+		elif state and sp.any(self.dataDict[type1]):
+			startObject.setEnabled(False)
+			endObject.setEnabled(False)
+			Min = self.dataDict[type1][:,0].min()
+			Max = self.dataDict[type1][:,0].max()
+		else:
+			startObject.setEnabled(True)
+			endObject.setEnabled(True)
+			
+		startObject.setValue(Min)
+		endObject.setValue(Max)
+		
+	def cAutoInterval(self, state): self.AutoInterval(state, self.ui.cStart, self.ui.cEnd, type1 = 'c', type2 = 's')
+	def sAutoInterval(self, state): self.AutoInterval(state, self.ui.sStart, self.ui.sEnd, type1 = 's', type2 = 'c')
+	def rAutoInterval(self, state): self.AutoInterval(state, self.ui.rStart, self.ui.rEnd, type1 = 'r', single = True)
+	
+	# AutoDetect smooting param for b_spline
+	def SmoothParamDetect(self, data, changeObj, param = 1.7):
+		y = data[:,1]
+		try:
+			changeObj.setValue(sp.std(y)*len(y)/param)
+		except:
+			print("SmoothParamerror")
+
 	# Get data from Qcut onSave
 	def getBackFromQcut(self):
 		''' Отримання доних, що змінені вручну в QCut'''
@@ -181,7 +230,7 @@ class QTR(QtGui.QMainWindow):
 	# Save
 	def cSave(self):	self.Save('c')
 	def sSave(self):	self.Save('s')
-	def resSave(self):	self.Save('r')
+	def rSave(self):	self.Save('r')
 			
 	def Save(self, type = 'c'):
 		''' Отримання назви файлу з QFileDialog і збереження розділювачем \t'''
@@ -198,7 +247,7 @@ class QTR(QtGui.QMainWindow):
 				
 	def cReset(self):	self.Reset('c')		
 	def sReset(self):	self.Reset('s')
-	def resReset(self):	self.Reset('r')
+	def rReset(self):	self.Reset('r')
 	
 	# Undo
 	''' Завантаження даних з попереднього збереження'''
@@ -208,7 +257,7 @@ class QTR(QtGui.QMainWindow):
 				
 	def cUndo(self):	self.Undo('c')		
 	def sUndo(self):	self.Undo('s')
-	def resUndo(self):	self.Undo('r')
+	def rUndo(self):	self.Undo('r')
 		
 	# Evaluate res
 	def ResEval(self):
@@ -216,36 +265,39 @@ class QTR(QtGui.QMainWindow):
 			Якщо розміри масивів не співпадають,
 			то усереднюємо довший по вузлах коротшого
 		"""
+		
 		data = self.dataDict
 		if len(data['c']) != len(data['s']):
 			activeX = []
 			if len(data['c']) < len(data['s']):
 				self.Print("Length [c] < [s]. c - active")
 				activeX = data['c'][:,0]
-				x, y = averaging(data['s'][:,0], data['s'][:,1], xi = activeX)
+				x, y = averaging(data['s'], xi = activeX)
 				res = y/data['c'][:,1]
 				
 			else: 
 				self.Print("Length [c] > [s]. s - active")
 				activeX = data['s'][:,0]
-				x, y = averaging(data['c'][:,0], data['c'][:,1], xi = activeX)
+				x, y = averaging(data['c'], xi = activeX)
 				res = data['s'][:,1] / y
 		else:
 			activeX = data['c'][:,0]
 			res = data['s'][:,1]/data['c'][:,1]
 		self.dataDict['r'] = sp.array([activeX,res]).T
 		self.append(self.dataDict['r'], 'r', 2)
+		self.ui.rAutoInterval.setChecked(True)
+		self.SmoothParamDetect(self.dataDict['r'],self.ui.rB_splineS)
 		
-	# averaging
+	######### averaging ##################################
 	''' Усереднення по заданій кількості вузлів (у %)'''
 	def cAverage(self):
 		XY = self.dataDict['c']
-		x, y = averaging(XY[:,0], XY[:,1], N = self.ui.cAverageN.value() )
+		x, y = averaging(XY, Start = self.ui.cStart.value(), End = self.ui.cEnd.value(), Step = self.ui.cAverageStep.value() )
 		self.append( sp.array([x,y]).T, "c")
 		
 	def sAverage(self):
 		XY = self.dataDict['s']
-		x, y = averaging(XY[:,0], XY[:,1], N = self.ui.sAverageN.value() )
+		x, y = averaging(XY, Start = self.ui.sStart.value(), End = self.ui.sEnd.value(), Step = self.ui.sAverageStep.value() )
 		self.append( sp.array([x,y]).T , 's' )
 
 	# Median filtering of Y
@@ -257,27 +309,27 @@ class QTR(QtGui.QMainWindow):
 		
 	def cMedFilt(self):	self.MedFilt(self.ui.cMedFiltS.value(), 'c')
 	def sMedFilt(self):	self.MedFilt(self.ui.sMedFiltS.value(), 's')
-	def resMedFilt(self):	self.MedFilt(self.ui.resMedFiltS.value(), 'r')
+	def rMedFilt(self):	self.MedFilt(self.ui.rMedFiltS.value(), 'r')
 	
 	# B-spline
 	def cB_spline(self):
 		XY = self.dataDict['c']
-		x, y = b_s(XY[:,0], XY[:,1], N = self.ui.cB_splineN.value(),\
+		x, y = b_s(XY, Start = self.ui.cStart.value(), End = self.ui.cEnd.value(), Step = self.ui.cB_splineStep.value(),\
 			sm = self.ui.cB_splineS.value(), km = self.ui.cB_splineK.value())
 		self.append( sp.array([x,y]).T, 'c')
 		print( sp.shape(self.dataDict['c']), " x ",  sp.shape(self.dataDict['s']))
 		
 	def sB_spline(self):
 		XY = self.dataDict['s']
-		x, y = b_s(XY[:,0], XY[:,1], N = self.ui.sB_splineN.value(),\
+		x, y = b_s(XY, Start = self.ui.sStart.value(), End = self.ui.sEnd.value(), Step = self.ui.sB_splineStep.value(),\
 			sm = self.ui.sB_splineS.value(), km = self.ui.sB_splineK.value())
 		self.append( sp.array([x,y]).T, 's')
 		print( sp.shape(self.dataDict['c']), " x ",  sp.shape(self.dataDict['s']))
 		
-	def resB_spline(self):
+	def rB_spline(self):
 		XY = self.dataDict['r']
-		x, y = b_s(XY[:,0], XY[:,1], N = self.ui.resB_splineN.value(),\
-			sm = self.ui.resB_splineS.value(), km =  self.ui.resB_splineK.value())
+		x, y = b_s(XY, Start = self.ui.rStart.value(), End = self.ui.rEnd.value(), Step = self.ui.rB_splineStep.value(),\
+			sm = self.ui.rB_splineS.value(), km =  self.ui.rB_splineK.value())
 		self.append( sp.array([x,y]).T , 'r')
 		print( sp.shape(self.dataDict['c']), " x ",  sp.shape(self.dataDict['s']))
 		
@@ -358,20 +410,29 @@ class QTR(QtGui.QMainWindow):
 		self.dataDict['c'] = self.Load(self.ui.cPath.text(), xn, yn, mn)
 		self.append(self.dataDict['c'], 'c', 2)
 		
+		# auto...
+		self.ui.cAutoInterval.setChecked(True)
+		self.SmoothParamDetect(self.dataDict['c'],self.ui.cB_splineS)
+		
 		self.ui.tab_2.setEnabled(True)
 		if self.ui.tab_3.isEnabled():
 			self.ui.tab_4.setEnabled(True)
-
+		
+	
 		
 	def sLoad(self):
 		xn = int(self.ui.sXColumn.value())
 		yn = int(self.ui.sYColumn.value())
+		
 		if self.ui.sMCheck.checkState():
 			mn = self.ui.sMColumn.value()
 		else: mn = -1
 		#----------------------------
 		self.dataDict['s'] = self.Load(self.ui.sPath.text(), xn, yn, mn)
 		self.append(self.dataDict['s'], 's', 2)
+		# auto...
+		self.ui.sAutoInterval.setChecked(True)
+		self.SmoothParamDetect(self.dataDict['s'],self.ui.sB_splineS)
 		
 		self.ui.tab_3.setEnabled(True)
 		if self.ui.tab_2.isEnabled():
@@ -426,7 +487,7 @@ class QTR(QtGui.QMainWindow):
 		elif type == 's':
 			buttons = self.ui.sUndo, self.ui.sReset
 		elif type == 'r':
-			buttons = self.ui.resUndo, self.ui.resReset
+			buttons = self.ui.rUndo, self.ui.rReset
 		else:	pass
 		
 		if self.indexDict[type] == 0 :
@@ -466,11 +527,8 @@ class QTR(QtGui.QMainWindow):
 		app.exit()
 		
 if __name__ == "__main__":
-	
+	signal.signal(signal.SIGINT, signal_handler)
 	app = QtGui.QApplication(sys.argv)
-
 	win = QTR()
+	win.show()
 	sys.exit(app.exec_())
-
-
-
