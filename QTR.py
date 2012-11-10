@@ -214,10 +214,14 @@ class QTR(QtGui.QMainWindow):
 	def rAutoInterval(self, state): self.AutoInterval(state, self.ui.rStart, self.ui.rEnd, type1 = 'r', single = True)
 	
 	# AutoDetect smooting param for b_spline
-	def SmoothParamDetect(self, data, changeObj, param = 1.7):
+	def SmoothParamDetect(self, data, changeObj, param = 0.97):
 		y = data[:,1]
+		x = data[:,0]
+		EQ = sp.poly1d( sp.polyfit(x, y, 3) )
+		poly_Y = EQ( x )
+		Y = y - poly_Y
 		try:
-			changeObj.setValue(sp.std(y)*len(y)/param)
+			changeObj.setValue(sp.std(Y)**2*len(y)*param)
 		except:
 			print("SmoothParamerror")
 
