@@ -70,8 +70,8 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>421</width>
-      <height>561</height>
+      <width>511</width>
+      <height>571</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -188,7 +188,7 @@
             <number>100</number>
            </property>
            <property name="value">
-            <number>2</number>
+            <number>5</number>
            </property>
           </widget>
          </item>
@@ -363,7 +363,7 @@
             <number>100</number>
            </property>
            <property name="value">
-            <number>2</number>
+            <number>5</number>
            </property>
           </widget>
          </item>
@@ -449,8 +449,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>417</width>
-        <height>526</height>
+        <width>431</width>
+        <height>521</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -477,19 +477,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
        </item>
        <item>
         <widget class="QLabel" name="label_13">
@@ -537,13 +524,13 @@
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="cPolyD">
            <property name="decimals">
-            <number>2</number>
+            <number>3</number>
            </property>
            <property name="minimum">
-            <double>0.000000000000000</double>
+            <double>0.001000000000000</double>
            </property>
            <property name="maximum">
-            <double>10.000000000000000</double>
+            <double>999.000000000000000</double>
            </property>
            <property name="singleStep">
             <double>0.010000000000000</double>
@@ -555,8 +542,14 @@
          </item>
          <item row="1" column="0">
           <widget class="QDoubleSpinBox" name="cPolyP">
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="minimum">
+            <double>0.001000000000000</double>
+           </property>
            <property name="maximum">
-            <double>999.000000000000000</double>
+            <double>9999.000000000000000</double>
            </property>
            <property name="value">
             <double>80.000000000000000</double>
@@ -573,19 +566,6 @@
         </layout>
        </item>
        <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
           <widget class="QCheckBox" name="cAutoInterval">
@@ -598,28 +578,34 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="cStart">
+          <widget class="QDoubleSpinBox" name="cStart">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>999999999</number>
+            <double>99999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
            <property name="value">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="cEnd">
+          <widget class="QDoubleSpinBox" name="cEnd">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>99999999</number>
+            <double>9999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
            <property name="value">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
           </widget>
          </item>
@@ -670,19 +656,6 @@
         </layout>
        </item>
        <item>
-        <spacer name="verticalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <widget class="QLabel" name="label_15">
          <property name="text">
           <string>В-spline</string>
@@ -710,7 +683,7 @@
             <double>999999999.000000000000000</double>
            </property>
            <property name="singleStep">
-            <double>0.000100000000000</double>
+            <double>0.050000000000000</double>
            </property>
            <property name="value">
             <double>1500000.000000000000000</double>
@@ -754,33 +727,30 @@
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="cB_splineStep">
            <property name="decimals">
-            <number>4</number>
+            <number>3</number>
            </property>
            <property name="minimum">
-            <double>0.000100000000000</double>
+            <double>0.001000000000000</double>
            </property>
            <property name="maximum">
             <double>999999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
            <property name="value">
             <double>1.000000000000000</double>
            </property>
           </widget>
          </item>
+         <item row="2" column="2">
+          <widget class="QCheckBox" name="cAutoB_splineS">
+           <property name="text">
+            <string>авто</string>
+           </property>
+          </widget>
+         </item>
         </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
        </item>
        <item>
         <widget class="QLabel" name="label_29">
@@ -821,19 +791,6 @@
         </layout>
        </item>
        <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QPushButton" name="cSave">
@@ -866,8 +823,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>417</width>
-        <height>479</height>
+        <width>431</width>
+        <height>521</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -941,13 +898,13 @@
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="sPolyD">
            <property name="decimals">
-            <number>2</number>
+            <number>3</number>
            </property>
            <property name="minimum">
-            <double>0.000000000000000</double>
+            <double>0.001000000000000</double>
            </property>
            <property name="maximum">
-            <double>10.000000000000000</double>
+            <double>999.000000000000000</double>
            </property>
            <property name="singleStep">
             <double>0.010000000000000</double>
@@ -959,11 +916,14 @@
          </item>
          <item row="1" column="0">
           <widget class="QDoubleSpinBox" name="sPolyP">
+           <property name="decimals">
+            <number>3</number>
+           </property>
            <property name="minimum">
-            <double>1.000000000000000</double>
+            <double>0.001000000000000</double>
            </property>
            <property name="maximum">
-            <double>999.000000000000000</double>
+            <double>9999.000000000000000</double>
            </property>
            <property name="value">
             <double>80.000000000000000</double>
@@ -992,25 +952,31 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="sStart">
+          <widget class="QDoubleSpinBox" name="sStart">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>999999999</number>
+            <double>9999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="sEnd">
+          <widget class="QDoubleSpinBox" name="sEnd">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>99999999</number>
+            <double>9999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
            <property name="value">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
           </widget>
          </item>
@@ -1048,7 +1014,10 @@
             <double>0.001000000000000</double>
            </property>
            <property name="maximum">
-            <double>999999.000000000000000</double>
+            <double>99999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
            <property name="value">
             <double>1.000000000000000</double>
@@ -1098,7 +1067,7 @@
             <double>999999999.000000000000000</double>
            </property>
            <property name="singleStep">
-            <double>0.000100000000000</double>
+            <double>0.050000000000000</double>
            </property>
            <property name="value">
             <double>1500000.000000000000000</double>
@@ -1129,7 +1098,7 @@
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="sB_splineStep">
            <property name="decimals">
-            <number>4</number>
+            <number>3</number>
            </property>
            <property name="minimum">
             <double>0.001000000000000</double>
@@ -1137,8 +1106,18 @@
            <property name="maximum">
             <double>999999.000000000000000</double>
            </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
+           </property>
            <property name="value">
             <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QCheckBox" name="sAutoB_splineS">
+           <property name="text">
+            <string>авто</string>
            </property>
           </widget>
          </item>
@@ -1215,8 +1194,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>351</width>
-        <height>302</height>
+        <width>431</width>
+        <height>321</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -1264,25 +1243,28 @@
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="rStart">
+          <widget class="QDoubleSpinBox" name="rStart">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>999999999</number>
+            <double>9999999.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSpinBox" name="rEnd">
+          <widget class="QDoubleSpinBox" name="rEnd">
            <property name="minimum">
-            <number>1</number>
+            <double>0.010000000000000</double>
            </property>
            <property name="maximum">
-            <number>99999999</number>
+            <double>9999999.000000000000000</double>
            </property>
-           <property name="value">
-            <number>1</number>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
            </property>
           </widget>
          </item>
@@ -1323,7 +1305,7 @@
             <double>999999999.000000000000000</double>
            </property>
            <property name="singleStep">
-            <double>0.000100000000000</double>
+            <double>0.010000000000000</double>
            </property>
            <property name="value">
             <double>10.000000000000000</double>
@@ -1341,6 +1323,9 @@
           <widget class="QSpinBox" name="rB_splineK">
            <property name="minimum">
             <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>5</number>
            </property>
            <property name="value">
             <number>5</number>
@@ -1365,8 +1350,18 @@
            <property name="maximum">
             <double>99999.000000000000000</double>
            </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
+           </property>
            <property name="value">
             <double>1.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QCheckBox" name="rAutoB_splineS">
+           <property name="text">
+            <string>авто</string>
            </property>
           </widget>
          </item>

@@ -44,7 +44,7 @@ def averaging(data, xi = [], Start = 1, End = 2, Step = 1):
 			ynew.append(sp.mean(y_w))
 		else: 
 			if i != 0 and i>3:
-				ynew.append(  sp.mean(sp.array([EQ(xi_1[i])] + ynew[-3:])))
+				ynew.append(  sp.mean(sp.array([EQ(xi_1[i])] + ynew[-2:])))
 			else:
 				ynew.append(EQ(xi_1[i]))	
 
@@ -173,6 +173,11 @@ class QTR(QtGui.QMainWindow):
 		self.connect(self.ui.sAutoInterval, QtCore.SIGNAL('stateChanged(int)'), self.sAutoInterval)
 		self.connect(self.ui.rAutoInterval, QtCore.SIGNAL('stateChanged(int)'), self.rAutoInterval)
 		
+		# Auto detection Smooth param
+		self.connect(self.ui.cAutoB_splineS, QtCore.SIGNAL('stateChanged(int)'), self.cAutoB_splineS)
+		self.connect(self.ui.sAutoB_splineS, QtCore.SIGNAL('stateChanged(int)'), self.sAutoB_splineS)
+		self.connect(self.ui.rAutoB_splineS, QtCore.SIGNAL('stateChanged(int)'), self.rAutoB_splineS)
+		
 	'''================================================================================'''
 	
 	# Enabling/disabling M column
@@ -190,13 +195,13 @@ class QTR(QtGui.QMainWindow):
 	# AutoDetect start&end
 	def AutoInterval(self, state, startObject, endObject, type1 = 'c', type2 = 's', single = False):
 		''' визначаємо мінімальний спільний інтервал по Х'''
-		Min, Max = 1, 2
+		Min, Max = 0, 0
 		print(state)
 		if state and sp.any(self.dataDict[type1]) and sp.any(self.dataDict[type2]) and not single:
 			startObject.setEnabled(False)
 			endObject.setEnabled(False)
-			Min = max(self.dataDict[type1][:,0].min(), self.dataDict[type2][:,0].min())
 			Max = min(self.dataDict[type1][:,0].max(), self.dataDict[type2][:,0].max())
+			Min = max(self.dataDict[type1][:,0].min(), self.dataDict[type2][:,0].min())
 		elif state and sp.any(self.dataDict[type1]):
 			startObject.setEnabled(False)
 			endObject.setEnabled(False)
@@ -205,26 +210,45 @@ class QTR(QtGui.QMainWindow):
 		else:
 			startObject.setEnabled(True)
 			endObject.setEnabled(True)
-			
-		startObject.setValue(Min)
-		endObject.setValue(Max)
+		if Max and Min:
+			startObject.setValue(Min)
+			endObject.setValue(Max)
 		
 	def cAutoInterval(self, state): self.AutoInterval(state, self.ui.cStart, self.ui.cEnd, type1 = 'c', type2 = 's')
 	def sAutoInterval(self, state): self.AutoInterval(state, self.ui.sStart, self.ui.sEnd, type1 = 's', type2 = 'c')
 	def rAutoInterval(self, state): self.AutoInterval(state, self.ui.rStart, self.ui.rEnd, type1 = 'r', single = True)
 	
 	# AutoDetect smooting param for b_spline
-	def SmoothParamDetect(self, data, changeObj, param = 0.97):
-		y = data[:,1]
-		x = data[:,0]
-		EQ = sp.poly1d( sp.polyfit(x, y, 3) )
-		poly_Y = EQ( x )
-		Y = y - poly_Y
-		try:
-			changeObj.setValue(sp.std(Y)**2*len(y)*param)
-		except:
-			print("SmoothParamerror")
+	def SmoothParamDetect(self, data, changeObjS, changeObjStep, changeObjK, State = True, param = 0.95):
+		if State:
+			changeObjS.setEnabled(False)
+			y = data[:,1]
+			x = data[:,0]
+			EQ = sp.poly1d( sp.polyfit(x, y, 3) )
+			poly_Y = EQ( x )
+			Y = y - poly_Y
+			Step = float(changeObjStep.value())
+			K = float(changeObjK.value())
 
+			try:
+				print(str((1+Step/K**3)*param))
+				changeObjS.setValue(sp.std(Y)**2*len(y)*(1+Step/K**3)*param)
+			except:
+				print("SmoothParamerror")
+		else:
+			changeObjS.setEnabled(True)
+			
+	def cAutoB_splineS(self, state):
+		self.SmoothParamDetect(self.dataDict['c'], self.ui.cB_splineS,\
+							   self.ui.cB_splineStep, self.ui.cB_splineK, State = state)
+	def sAutoB_splineS(self, state):
+		self.SmoothParamDetect(self.dataDict['s'], self.ui.sB_splineS,\
+							   self.ui.sB_splineStep, self.ui.sB_splineK, State = state)
+	def rAutoB_splineS(self, state):
+		self.SmoothParamDetect(self.dataDict['r'], self.ui.rB_splineS,\
+							   self.ui.rB_splineStep, self.ui.rB_splineK, State = state)
+	
+	
 	# Get data from Qcut onSave
 	def getBackFromQcut(self):
 		''' Отримання доних, що змінені вручну в QCut'''
@@ -269,7 +293,6 @@ class QTR(QtGui.QMainWindow):
 			Якщо розміри масивів не співпадають,
 			то усереднюємо довший по вузлах коротшого
 		"""
-		
 		data = self.dataDict
 		if len(data['c']) != len(data['s']):
 			activeX = []
@@ -290,7 +313,7 @@ class QTR(QtGui.QMainWindow):
 		self.dataDict['r'] = sp.array([activeX,res]).T
 		self.append(self.dataDict['r'], 'r', 2)
 		self.ui.rAutoInterval.setChecked(True)
-		self.SmoothParamDetect(self.dataDict['r'],self.ui.rB_splineS)
+		self.SmoothParamDetect(self.dataDict['r'],self.ui.rB_splineS, self.ui.rB_splineStep, self.ui.rB_splineK)
 		
 	######### averaging ##################################
 	''' Усереднення по заданій кількості вузлів (у %)'''
@@ -416,7 +439,7 @@ class QTR(QtGui.QMainWindow):
 		
 		# auto...
 		self.ui.cAutoInterval.setChecked(True)
-		self.SmoothParamDetect(self.dataDict['c'],self.ui.cB_splineS)
+		self.SmoothParamDetect(self.dataDict['c'],self.ui.cB_splineS, self.ui.cB_splineStep, self.ui.cB_splineK)
 		
 		self.ui.tab_2.setEnabled(True)
 		if self.ui.tab_3.isEnabled():
@@ -436,7 +459,7 @@ class QTR(QtGui.QMainWindow):
 		self.append(self.dataDict['s'], 's', 2)
 		# auto...
 		self.ui.sAutoInterval.setChecked(True)
-		self.SmoothParamDetect(self.dataDict['s'],self.ui.sB_splineS)
+		self.SmoothParamDetect(self.dataDict['s'],self.ui.sB_splineS, self.ui.sB_splineStep, self.ui.sB_splineK)
 		
 		self.ui.tab_3.setEnabled(True)
 		if self.ui.tab_2.isEnabled():
@@ -469,46 +492,48 @@ class QTR(QtGui.QMainWindow):
 		1	:	add
 		2	:	load (reset + create first file)
 		"""
-		
-		self.typeInQcut = type
-		m = action
-		if m == 2 or m == 0:
-			self.indexDict[type] = 0  
-		else:
-			self.indexDict[type] += m 
-		index = self.indexDict[type]
-		if m == 1 or m == 2:
-			self.dataDict[type] = array
-			sp.save("./.tmp/"+type+"Temp"+str(index),array)
-		elif m != 2 : 
-			array = sp.load("./.tmp/"+type+"Temp"+str(index) + ".npy",array)
-			self.dataDict[type] = array
-		else: pass
-		# En/disabeling buttons
-		
-		if type == 'c':
-			buttons = self.ui.cUndo, self.ui.cReset
-		elif type == 's':
-			buttons = self.ui.sUndo, self.ui.sReset
-		elif type == 'r':
-			buttons = self.ui.rUndo, self.ui.rReset
-		else:	pass
-		
-		if self.indexDict[type] == 0 :
-			buttons[0].setEnabled(False)
-			buttons[1].setEnabled(False)
+		try:
+			self.typeInQcut = type
+			m = action
+			if m == 2 or m == 0:
+				self.indexDict[type] = 0  
+			else:
+				self.indexDict[type] += m 
+			index = self.indexDict[type]
+			if m == 1 or m == 2:
+				self.dataDict[type] = array
+				sp.save("./.tmp/"+type+"Temp"+str(index),array)
+			elif m != 2 : 
+				array = sp.load("./.tmp/"+type+"Temp"+str(index) + ".npy",array)
+				self.dataDict[type] = array
+			else: pass
+			# En/disabeling buttons
 			
-		elif not buttons[0].isEnabled() or not buttons[1].isEnabled():
-			buttons[0].setEnabled(True)
-			buttons[1].setEnabled(True)
-		else:	pass
+			if type == 'c':
+				buttons = self.ui.cUndo, self.ui.cReset
+			elif type == 's':
+				buttons = self.ui.sUndo, self.ui.sReset
+			elif type == 'r':
+				buttons = self.ui.rUndo, self.ui.rReset
+			else:	pass
+			
+			if self.indexDict[type] == 0 :
+				buttons[0].setEnabled(False)
+				buttons[1].setEnabled(False)
+				
+			elif not buttons[0].isEnabled() or not buttons[1].isEnabled():
+				buttons[0].setEnabled(True)
+				buttons[1].setEnabled(True)
+			else:	pass
+			
+			if not self.dmw.isVisible():
+				self.dmw.setVisible(True)
+			else:
+				self.dmw.Plot(self.dataDict[type], type)
+			self.ui.statusbar.showMessage('\tType [' + type + ']. Size: (' + str(len(array)) + ').')
+		except ValueError:
+			self.Print("ValueError")
 		
-		if not self.dmw.isVisible():
-			self.dmw.setVisible(True)
-		else:
-			self.dmw.Plot(self.dataDict[type], type)
-		self.ui.statusbar.showMessage('\tType [' + type + ']. Size: (' + str(len(array)) + ').')
-	
 	# Terminal + statusbar print
 	def Print(self, message):
 		print(message)
@@ -523,9 +548,9 @@ class QTR(QtGui.QMainWindow):
 			try:
 				if os.path.isfile(file_path):
 					os.unlink(file_path)
-			except( Exception, e):
+			except( Exception, event):
 				self.Print('Tmp removing error')
-				print( e)
+				print( event)
 				
 		self.dmw.close()
 		app.exit()
