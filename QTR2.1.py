@@ -280,8 +280,13 @@ class QTR(QtGui.QMainWindow):
 		senderName = self.sender().objectName()
 		active = Dict[senderName]
 		XY = self.getData(active[0])
-		y = medfilt(XY[:,1], kernel_size = active[1])
-		self.updateData(array = Array(sp.array([XY[:,0], y]).T, Type = XY.Type, scale = XY.scale))
+		X, Y = XY[:,0], XY[:,1]
+		EQ = sp.poly1d( sp.polyfit(X, Y, 4) ) # можна додати прив’язку до степ. поліному 
+		poly_Y = EQ( X )
+		y_temp = Y - poly_Y
+		y = medfilt(y_temp, kernel_size = active[1])
+		Y = y + poly_Y
+		self.updateData(array = Array(sp.array([XY[:,0], Y]).T, Type = XY.Type, scale = XY.scale))
 	
 	def B_spline(self):
 		Dict = {
