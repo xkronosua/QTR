@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
-import sys, os, signal
+import sys, os
 from PyQt4 import QtGui, QtCore, uic
 import scipy as sp
 from scipy.signal import medfilt
-import glue_designer as qcut
+import glue_designer2 as qcut
 from form import Ui_MainWindow
 
+import signal
 
 class Array(sp.ndarray):
-	Type = None
-	scale = [None, None]
+
 	def __new__(cls, input_array, scale=[None,None], Type = None):
 		# Input array is an already formed ndarray instance
 		# We first cast to be our class type
@@ -20,6 +20,7 @@ class Array(sp.ndarray):
 		obj.Type = Type
 		# Finally, we must return the newly created object:
 		return obj
+
 	def __array_finalize__(self, obj):
 		# see InfoArray.__array_finalize__ for comments
 		if obj is None: return
@@ -38,9 +39,10 @@ class QTR(QtGui.QMainWindow):
 	2 - результат
 	'''
 	Path = ['','','']
-	Root = os.getcwd() 
+	Root = os.getcwd()
 	FiltersPath = "./filters.csv"
-
+	# Кортеж історії змін. Містить списки з типом масштабу та масивами даних
+	# ( [масив даних, [тип масштабу по Х, тип масштабу по Y]])
 	filtersDict = {}
 	filtList = ([1.,1.],[1.,1.])
 	LENGTH = b"1064"
@@ -55,79 +57,68 @@ class QTR(QtGui.QMainWindow):
 		super(QTR, self).__init__()
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
-
 		self.fileDialog = QtGui.QFileDialog(self)
 		
 		self.qcut = qcut.DesignerMainWindow()
-
+		#QtCore.QObject.connect( self.qcut.mplactionSave, QtCore.SIGNAL('triggered()'), self.getBackFromQcut)
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
 		self.qcut.show()
 		##### Signals -> Slots #########################################
+		
 		self.uiConnect()
-
-	def findChilds(self,obj,names, p = ''):
-		if p == 'value': return tuple(self.findChild(obj,name).value() for name in names)
-		elif p == 'checkState': return tuple(self.findChild(obj,name).checkState() for name in names)
-		else: return tuple(self.findChild(obj,name) for name in names)
+		
 	####################################################################
 	########################  Обробка  #################################
 	####################################################################
-	def poly_cut(self, data, N = 10, m = 4, precision = 0.80):
+	def poly_cut(self, data, p, d=0.7, m=6, precision = 0.80):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m	-	степінь полінома
 		p	-	ширина смуги
 		d	-	коефіцієнт уширення
 		'''
 		X, Y = data[:,0], data[:,1]
-		n = int(N)
-		EQ = sp.poly1d( sp.polyfit(X, Y, m) )
-		poly_Y = EQ( X )
-		xnew, ynew = [], []
-		Range = range(0,len(X),n)
-		i = 0
-		for j in list(Range[1:])+[len(X)-1]:
-			x_temp = X[i:j]
-			y_temp = Y[i:j]
-			polyY_temp = poly_Y[i:j]
-			t = True
-			y_old = y_temp - polyY_temp
-			std = sp.std(y_old)
-			window = []
-			width = 0
-			while t:
-				width = ( abs(y_old).max()*precision )
-				window.append( abs(y_old) < width)
-				y_new = y_old[window[-1]]
-				t = ((sp.std(y_new)/std) >= precision)
-				y_old = y_new
-			for i in window:
-				x_temp = x_temp[i] 
-				y_temp = y_temp[i]
-			xnew = xnew + x_temp.tolist()
-			ynew = ynew + (y_temp).tolist()
-			i = j
-		X, Y = xnew, ynew
+		t = True
+		fringe = []
+		while t:
+			EQ = sp.poly1d( sp.polyfit(X, Y, m) )
+			poly_Y = EQ( X )
+			condition = ((abs(Y - poly_Y)<(p * ( d + abs(poly_Y/max(poly_Y))))))!=0
+			fringe.append(sp.std(abs(Y - poly_Y)))
+			print(sp.std(abs(Y - poly_Y)), p * ( d + abs(poly_Y/max(poly_Y))))
+			Y = Y[ condition ]
+			X = X[ condition ]
+			t = ((fringe[-1]/fringe[0])>=precision)
+			if precision == 0:
+				break
+			print(t,fringe[-1]/fringe[0])
+			d *= 0.95
+			p *= 0.95
 		return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
 		
-	def averaging(self, data, Start = 1, End = 2, Step = 1):
+	def averaging(self, data, xi = [], Start = 1, End = 2, Step = 1):
 		'''	Усереднення між заданими вузлами.
 				
 		'''
 		x, y = data[:,0], data[:,1]
-		n = int(Step)
-		EQ = sp.poly1d( sp.polyfit(x, y, 4) )
-		poly_Y = EQ( x )
-		Range = range(0,len(x),n)
-		i = 0
-		xnew, ynew = [], []
-		for j in list(Range[1:])+[len(x)-1]:
-			try:
-				x_temp = x[i:j].mean()
-				xnew.append(x_temp)
-				ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
-			except: pass
-			i = j
-		return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
+		if not any(xi):
+			xi = sp.arange(Start, End,Step)
+		else:
+			xi = sp.sort(xi)
+		xi_1 = sp.insert(xi,-1,xi[-1])
+		EQ = sp.poly1d( sp.polyfit(x, y, 3) )
+		ynew = []
+		for i in range(len(xi_1)-1):
+			window = ( (x>=xi_1[i]) * (x<xi_1[i+1]) )!=0
+			y_w = y[window]
+			if y_w.any():		
+				ynew.append(sp.mean(y_w))
+			else: 
+				if i != 0 and i>3:
+					ynew.append(  sp.mean(sp.array([EQ(xi_1[i])] + ynew[-2:])))
+				else:
+					ynew.append(EQ(xi_1[i]))	
+	
+		return Array(sp.array([xi, sp.array(ynew)]).T, Type = data.Type, scale = data.scale)
 		
 	def b_s(self, data, xi = [], Start = 1, End = 2, Step = 1, sm = 1100000., km = 5):
 		'''	Інтерполяція B-сплайном
@@ -143,15 +134,7 @@ class QTR(QtGui.QMainWindow):
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
-	def interpTypeChanged(self,text):
-		'''Перевірка правильності введення типу інтерполяції для обрахунку результату'''
-		interpTypes = ('linear', 'nearest', 'zero')#, 'cubic', 'slinear')
-		if text.lower().strip().replace(' ','') in interpTypes:
-			self.ui.rButton.setEnabled(True)
-		else: self.ui.rButton.setEnabled(False)
-	
 	def Save(self):
-		'''Збереження активного масиву до текстового файлу'''
 		Dict = {'cSave' : 0, 'sSave' : 1, 'rSave' : 2}
 		senderName = self.sender().objectName()
 		active = Dict[senderName]
@@ -161,18 +144,17 @@ class QTR(QtGui.QMainWindow):
 			sp.savetxt(str(filename), data)
 	
 	def AutoB_splineS(self, state, isSignal = True, senderType = 0, param = 0.95):
-		'''Штучний підбір коефіцієнтів для b-сплайн інтерполяції'''
 		Dict = {
-			'cAutoB_splineS' : (0, 'cB_splineS',  'cB_splineStep', 'cB_splineK'),
-			'sAutoB_splineS' : (1, 'sB_splineS',  'sB_splineStep', 'sB_splineK'),
-			'rAutoB_splineS' : (2, 'rB_splineS',  'rB_splineStep', 'rB_splineK')}
+			'cAutoB_splineS' : (0, self.ui.cB_splineS,  self.ui.cB_splineStep, self.ui.cB_splineK),
+			'sAutoB_splineS' : (1, self.ui.sB_splineS,  self.ui.sB_splineStep, self.ui.sB_splineK),
+			'rAutoB_splineS' : (2, self.ui.rB_splineS,  self.ui.rB_splineStep, self.ui.rB_splineK)}
 		senderName = ''
 		if isSignal:
 			senderName = self.sender().objectName()
 		else:
 			Names = ['c', 's', 'r']
 			senderName = Names[senderType]+'AutoB_splineS'
-		active = (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox,Dict[senderName][1:])
+		active = Dict[senderName]
 		data = self.getData(active[0])
 		if state:
 			active[1].setEnabled(False)
@@ -242,17 +224,13 @@ class QTR(QtGui.QMainWindow):
 			Якщо розміри масивів не співпадають,
 			то усереднюємо довший по вузлах коротшого
 		"""
-		'''
 		Param = (	(self.ui.cStart.value(),  self.ui.cEnd.value(), self.ui.cAverageStep.value()),
 					(self.ui.sStart.value(),  self.ui.sEnd.value(), self.ui.sAverageStep.value()))
-		'''
 		cData = self.getData(0)
 		sData = self.getData(1)
-		
 		if cData.scale == [0,0] and sData.scale == [0,0]:
-			'''
-			if sp.all(cData[:,0] != sData[:,0]):
-				
+			
+			if cData[:,0] != sData[:,0]:
 				cLen = cData[:,0].max() - cData[:,0].min()
 				sLen = sData[:,0].max() - sData[:,0].min()
 				data, xi = [], []
@@ -266,57 +244,41 @@ class QTR(QtGui.QMainWindow):
 					xi = cData[:,0]
 				data = self.averaging(data,xi = xi, Start = active[0], End = active[1], Step = active[2])
 				self.updateData(array = data)
-			
 			cData = self.getData(0)
 			sData = self.getData(1)
-			'''
-			
-			
-			
-			if self.ui.rButton.isEnabled():
-				
-				x = sData[:,0]
-				window = (x>=cData[:,0].min())*(x<=cData[:,0].max())
-				x = x[window]
-				y = sData[:,1]
-				y = y[window]
-				cY_temp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.rEvalType.text().lower())(x)
-				y = y/ cY_temp
-			else: print('ResEval: interpTypeError')
-			
+			x = cData[:,0]
+			y = sData[:,1]/ cData[:,1]
 			self.updateData(array = Array(sp.array([x,y]).T, Type = 2, scale = [0,0]),action = 0)
 		else: print('ResEval: scaleError')
 			
 	def polyCut(self):
-		'''Обрізка [за різними методами]'''
-		Dict = {'cPolyOk' : (0,'cPolyN', 'cPolyP', 'cPolyM'),
-				'sPolyOk' : (1,'sPolyN', 'sPolyP', 'sPolyM')}
+		Dict = {'cPolyOk' : (0,self.ui.cPolyP.value(), self.ui.cPolyD.value(), self.ui.cPolyM.value()),
+				'sPolyOk' : (1,self.ui.sPolyP.value(), self.ui.sPolyD.value(), self.ui.sPolyM.value())}
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
-
+		active = Dict[senderName]
+		precisionParam = ( self.ui.cPolyPrecision, self.ui.sPolyPrecision)
+		Param = 0.
+		if precisionParam[active[0]].isEnabled():
+			Param = precisionParam[active[0]].value()
 		XY = self.getData(active[0])
-		data = self.poly_cut(XY, N = active[1], precision = active[2], m = active[3])
+		data = self.poly_cut(XY, active[1], active[2], active[3], precision = Param)
 		self.updateData(array = data)
 		
 	def Average(self):
-		'''Усереднення за різними методами'''
-		Dict = {'cAverageOk' : (0,'cStart',  'cEnd', 'cAverageStep'),
-				'sAverageOk' : (1,'sStart',  'sEnd', 'sAverageStep')}
+		Dict = {'cAverageOk' : (0,self.ui.cStart.value(),  self.ui.cEnd.value(), self.ui.cAverageStep.value()),
+				'sAverageOk' : (1,self.ui.sStart.value(),  self.ui.sEnd.value(), self.ui.sAverageStep.value())}
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
+		active = Dict[senderName]
 		XY = self.getData(active[0])
 		data = self.averaging(XY, Start = active[1], End = active[2], Step = active[3] )
 		self.updateData(array = data)
 		
 	def medFilt(self):
-		'''Фільтрація медіаною'''
-		Dict = {'cMedFilt' : (0,'cMedFiltS'),
-				'sMedFilt' : (1,'sMedFiltS'),
-				'rMedFilt' : (2,'rMedFiltS')}
+		Dict = {'cMedFilt' : (0,self.ui.cMedFiltS.value()),
+				'sMedFilt' : (1,self.ui.sMedFiltS.value()),
+				'rMedFilt' : (2,self.ui.rMedFiltS.value())	}
 		senderName = self.sender().objectName()
-		active = (Dict[senderName][0], self.findChild(QtGui.QSpinBox, Dict[senderName][1]).value())
+		active = Dict[senderName]
 		XY = self.getData(active[0])
 		X, Y = XY[:,0], XY[:,1]
 		EQ = sp.poly1d( sp.polyfit(X, Y, 4) ) # можна додати прив’язку до степ. поліному 
@@ -327,55 +289,64 @@ class QTR(QtGui.QMainWindow):
 		self.updateData(array = Array(sp.array([XY[:,0], Y]).T, Type = XY.Type, scale = XY.scale))
 	
 	def B_spline(self):
-		'''інтерполяція b-сплайном'''
 		Dict = {
-			'cB_splineOk' : (0,'cStart', 'cEnd', 'cB_splineStep', 'cB_splineS', 'cB_splineK'),
-			'sB_splineOk' : (1,'sStart', 'sEnd', 'sB_splineStep', 'sB_splineS', 'sB_splineK'),
-			'rB_splineOk' : (2,'rStart', 'rEnd', 'rB_splineStep', 'rB_splineS', 'rB_splineK')}
+			'cB_splineOk' : (0,self.ui.cStart.value(), self.ui.cEnd.value(), self.ui.cB_splineStep.value(),
+				self.ui.cB_splineS.value(), self.ui.cB_splineK.value()),
+			'sB_splineOk' : (1,self.ui.sStart.value(), self.ui.sEnd.value(), self.ui.sB_splineStep.value(),
+				self.ui.sB_splineS.value(), self.ui.sB_splineK.value()),
+			'rB_splineOk' : (2,self.ui.rStart.value(), self.ui.rEnd.value(), self.ui.rB_splineStep.value(),
+				self.ui.rB_splineS.value(), self.ui.rB_splineK.value())
+					}
 		senderName = self.sender().objectName()
-		active =  (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox, Dict[senderName][1:],p = 'value')
+		active = Dict[senderName]
 		XY = self.getData(active[0])
-		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3], sm = active[4], km = int(active[5]))
+		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3], sm = active[4], km = active[5])
 		self.updateData(array  = data)
 		
 	def setLogScale(self, state):
+
+		
 		Dict = {
-			'cXLogScale' : 0, 'cYLogScale' : 1,
-			'sXLogScale' : 0, 'sYLogScale' : 1,
-			'rXLogScale' : 0, 'rYLogScale' : 1	}
+			'c' : (0, [int(bool(self.ui.cXLogScale.checkState())),int(bool(self.ui.cYLogScale.checkState()))]),
+			's' : (1, [int(bool(self.ui.sXLogScale.checkState())),int(bool(self.ui.sYLogScale.checkState()))]),
+			'r' : (2, [int(bool(self.ui.rXLogScale.checkState())),int(bool(self.ui.rYLogScale.checkState()))]),
+				}
 		senderName = self.sender().objectName()
-		index = Dict[senderName]
-		state = int(state)
-		Type = {'c':0,'s':1,'r':2}
-		data = self.getData(Type[senderName[0]])
-		
-		
-		xy = Array(data,scale=data.scale, Type = data.Type)
+		key = senderName[0]
+		active = Dict[key]
+		tempLogScale = active[1]
+		data = self.getData(active[0])
+		xy = data.copy()
 		Scale = xy.scale
-		if Scale[index] != state:
-			if state == 1:
-				xy[:,index] = sp.log10(data[:,index])
-			else:
-				xy[:,index] = sp.power(10.,data[:,index])
-			Scale[index] = state
-			t = True
-		self.updateData(array = Array(xy, scale = Scale, Type = data.Type))
-	
+
+		for i in (0,1):
+			if Scale[i] != tempLogScale[i]:
+				if tempLogScale[i] == 1:
+					xy[:,i] = sp.log10(data[:,i])
+				else:
+					xy[:,i] = sp.power(10.,data[:,i])
+				Scale[i] = int(tempLogScale[i])
+
+		self.updateData(array = Array(xy, scale = tempLogScale, Type = data.Type))
+		
 	def Undo(self):
-		Dict = {'cUndo' : 0, 'sUndo' : 1, 'rUndo' : 2}
+		Dict = {'cUndo' : (0,self.ui.cUndo), 'sUndo' : (1,self.ui.sUndo), 'rUndo' : (2,self.ui.rUndo)}
 		senderName = self.sender().objectName()
-		Type = Dict[senderName]
-		if len(self.dataStack[Type])>=2:
+		if len(self.dataStack[Dict[senderName][0]])>=2:
+			Type = Dict[senderName][0]
 			self.updateData(Type = Type, action = -1)
-		else: self.sender().setEnabled(False)
+			
+		else:
+			Dict[senderName][1].setEnabled(False)
 			
 	def Reset(self):
-		Dict = {'cReset' : 0, 'sReset' : 1, 'rReset' : 2}
+		Dict = {'cReset' : (0,self.ui.cReset), 'sReset' : (1,self.ui.sReset), 'rReset' : (2,self.ui.rReset)}
 		senderName = self.sender().objectName()
-		Type = Dict[senderName]
-		if len(self.dataStack[Type])>=2:
+		if len(self.dataStack[Dict[senderName][0]])>=2:
+			Type = Dict[senderName][0]
 			self.updateData(Type = Type, action = 0)
-		else: self.sender().setEnabled(False)
+			
+		else: Dict[senderName][1].setEnabled(False)
 		
 	# Plot current tab
 	def plotCurrent(self, index):
@@ -393,15 +364,14 @@ class QTR(QtGui.QMainWindow):
 	def getBackFromQcut(self):
 		''' Отримання даних, що змінені вручну в QCut'''
 		print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.scale)
-		data, Type, Scale = self.qcut.getData()
-		self.updateData( array = Array(data,  scale=Scale, Type = Type))
+		data, Type, scale = self.qcut.getData()
+		self.updateData( array = Array(data,  scale=scale, Type = Type))
 		
 	def pathTextChanged(self, text):
 		"""Якщо поле з шляхом до файлу для завантаження було змінене"""
-		Dict = {'cPath' : (0, 'cLoad'), 'sPath' : (1, 'sLoad')}
+		Dict = {'cPath' : (0, self.ui.cLoad), 'sPath' : (1, self.ui.sLoad)}
 		sender = self.sender()
-		tmp = Dict[sender.objectName()]
-		active = [tmp[0]] + [self.findChild(QtGui.QPushButton,tmp[1])] 
+		active = Dict[sender.objectName()]
 		
 		if os.path.exists(str(sender.text())):
 			self.Path[active[0]] = str(sender.text())
@@ -411,10 +381,9 @@ class QTR(QtGui.QMainWindow):
 		
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
-		Dict = {'cFile' : (0, 'cPath', 'cLoad'), 'sFile' : (1, 'sPath', 'sLoad')}
+		Dict = {'cFile' : (0, self.ui.cPath, self.ui.cLoad), 'sFile' : (1, self.ui.sPath, self.ui.sLoad)}
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = [tmp[0]] + [self.findChild(QtGui.QLineEdit,tmp[1])] + [self.findChild(QtGui.QPushButton,tmp[2])]
+		active = Dict[senderName]
 		
 		path = str(self.fileDialog.getOpenFileName(self,'Open File', self.Root))
 		if path:
@@ -425,21 +394,23 @@ class QTR(QtGui.QMainWindow):
 			
 	def loadData(self):
 		'''Завантаження даних з файлів'''
-		Dict = {"cLoad" : (0, 'cXColumn', 'cYColumn', 'cMColumn', 'cMCheck','cAutoInterval'),
-				"sLoad" : (1, 'sXColumn', 'sYColumn', 'sMColumn', 'sMCheck','sAutoInterval')}
-		Tabs = ( ('tab_2', 'tab_3','tab_4'),
-			('tab_3', 'tab_2','tab_4'))
-		FiltersKeys = (('cXFilt','cYFilt'),	('sXFilt','sYFilt'))
+		Dict = {"cLoad" : (0, self.ui.cXColumn, self.ui.cYColumn, self.ui.cMColumn, self.ui.cMCheck),\
+			"sLoad" : (1, self.ui.sXColumn, self.ui.sYColumn, self.ui.sMColumn, self.ui.sMCheck)}
+		Tabs = ( (self.ui.tab_2, self.ui.tab_3,self.ui.tab_4),\
+			(self.ui.tab_3, self.ui.tab_2,self.ui.tab_4))
+		FiltersKeys = (
+			(self.ui.cXFilt,self.ui.cYFilt),
+			(self.ui.sXFilt,self.ui.sYFilt)
+					)
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QSpinBox,tmp[1:-2]) + self.findChilds(QtGui.QCheckBox,tmp[-2:])
+		active = Dict[senderName]
 		data = []
 		XY = sp.zeros((0,2))
 		path = self.Path[active[0]]
 		if os.path.exists(path):
 			try:
 				data = sp.loadtxt(path)
-				activeFilt = self.findChilds(QtGui.QLineEdit, FiltersKeys[active[0]])
+				activeFilt = FiltersKeys[active[0]]
 				filtNames = ''
 				
 				if activeFilt[0].isEnabled() and activeFilt[1].isEnabled():
@@ -463,24 +434,21 @@ class QTR(QtGui.QMainWindow):
 				else:
 					XY = sp.array( [data[:,xc], data[:,yc] ]).T
 				XY = XY[XY[:,0] > 0]
-				XY = XY[XY[:,1] > 0]
 				XY = XY[sp.argsort(XY[:,0])]
 				XY[:,0] = XY[:,0]/self.filtList[active[0]][0]
 				XY[:,1] = XY[:,1]/self.filtList[active[0]][1]
 				self.updateData(array = Array(XY,scale=[0,0],Type = active[0]), action = 0)
-				tabs = self.findChilds(QtGui.QWidget,Tabs[active[0]])
-				tabs[0].setEnabled(True)
-				active[5].setChecked(True)
-				if tabs[1].isEnabled():
-					tabs[2].setEnabled(True)
+				Tabs[active[0]][0].setEnabled(True)
+				if Tabs[active[0]][1].isEnabled():
+					Tabs[active[0]][2].setEnabled(True)
 			except (ValueError, IOError, IndexError):
 				print("loadData: readError")
 		else: print('loadData: pathError')
 			
 	def dataListener(self,Type):
 		"""Обробка зміни даних"""
-		Buttons = ( ('cUndo', 'cReset'), ('sUndo', 'sReset'),
-			('rUndo', 'rReset'))
+		Buttons = ( (self.ui.cUndo, self.ui.cReset), (self.ui.sUndo, self.ui.sReset),
+			(self.ui.rUndo, self.ui.rReset))
 		active = self.getData(Type)
 		print("dataChanged: scaleX : %d, scaleY : %s, type : %d, len : %d" %\
 			  (active.scale[0],active.scale[1],active.Type, sp.shape(active)[0]))
@@ -488,20 +456,17 @@ class QTR(QtGui.QMainWindow):
 		#	print(i.scale)
 		
 		if sp.any(active):
-			intervalCheck = ['cAutoInterval', 'sAutoInterval', 'rAutoInterval']
-			b_splineSCheck = ['cAutoB_splineS', 'sAutoB_splineS', 'rAutoB_splineS']
-			intervalObj = self.findChild(QtGui.QCheckBox,intervalCheck[Type])
-			b_splineSObj = self.findChild(QtGui.QCheckBox,b_splineSCheck[Type])
-			self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
-			self.AutoB_splineS(b_splineSObj.checkState(), isSignal = False, senderType = Type )
+			intervalCheck = [self.ui.cAutoInterval, self.ui.sAutoInterval, self.ui.rAutoInterval]
+			b_splineSCheck = [self.ui.cAutoB_splineS, self.ui.sAutoB_splineS, self.ui.rAutoB_splineS]
+			self.AutoInterval(intervalCheck[Type].checkState(), isSignal = False, senderType = Type)
+			self.AutoB_splineS(b_splineSCheck[Type].checkState(), isSignal = False, senderType = Type )
 			##### Undo/Reset
 			hist = self.dataStack[Type]
 			state = False
 			if len(hist)>=2:
 				state = True
-			buttons = self.findChilds(QtGui.QPushButton,Buttons[Type])
-			buttons[0].setEnabled(state)
-			buttons[1].setEnabled(state)
+			Buttons[Type][0].setEnabled(state)
+			Buttons[Type][1].setEnabled(state)
 	
 	def lengthChange(self, text):
 		if text:
@@ -525,7 +490,7 @@ class QTR(QtGui.QMainWindow):
 		if Type is None:
 			if sp.any(array):
 				Type = array.Type
-				#print(sp.shape(array),array.Type)
+				print(sp.shape(array),array.Type)
 		
 		emit = False
 		#print(len(self.dataStack[Type]),action)
@@ -539,50 +504,49 @@ class QTR(QtGui.QMainWindow):
 		elif action == -1 and len(self.dataStack[Type])>=2:
 			self.dataStack[Type].pop()
 			emit = True
-			#print(bool(self.getData(Type).scale[0]))
-			#self.ui.cXLogScale.setChecked(bool(self.getData(Type).scale[0]))
-			#self.setActiveLogScale( Type)
+			self.setActiveLogScale(Type = Type, scale = self.getData(Type).scale)
 		elif action == 0:
 			if sp.any(array) and sp.shape(array)[1] == 2 and sp.shape(array)[0] > 1 and len(self.dataStack[Type])>=1:
+				""" Тут можна спробувати замінити:
+				while len(self.dataStack[Type])>=1:
+					self.dataStack[Type].pop()
+				на
+					self.dataStack[Type][1:] = []
+				
+				"""
+				#while len(self.dataStack[Type])>=1:
+				#	self.dataStack[Type].pop()
 				self.dataStack[Type][0:] = []
 				self.dataStack[Type].append(array)
 				emit = True
 			if not sp.any(array) and len(self.dataStack[Type])>=2:
+				#while len(self.dataStack[Type])>=2:
+				#	self.dataStack[Type].pop()
 				self.dataStack[Type][1:] = []
 				emit = True
-			#self.setActiveLogScale( Type)
-			
+				self.setActiveLogScale(Type = Type, scale = self.getData(Type).scale)
 		else:
 			print("updateData: Error0",len(self.dataStack[Type]))
 			print(sp.shape(self.getData(Type)))
-		try:
-			for i in self.dataStack[Type]: print(i.scale, i.type, i.shape)
-		except:
-			pass
 		if emit:
 			self.data_signal.emit(Type)
 			self.Plot(self.getData(Type) )
 			
 			
-	def setActiveLogScale(self, Type = 0):
-		pass
-		'''
+	def setActiveLogScale(self,scale = [0,0], Type = 0):
 		LogScale = (
-			('cXLogScale', 'cYLogScale'),
-			('sXLogScale', 'sYLogScale'),
-			('rXLogScale', 'rYLogScale'))
-		scale = self.getData(Type).scale
-		tmp = self.findChilds(QtGui.QCheckBox,LogScale[Type])
-		#if [int(bool(tmp[0].checkState())), int(bool(tmp[1].checkState()))] != scale:
-		for i in (0,1): print(tmp[i].checkState(),scale[i]*2)
-		#tmp[0].toggled[bool].disconnect(self.setLogScale)
-		#tmp[1].toggled[bool].disconnect(self.setLogScale)
-		tmp[0].setChecked(scale[0])
-		tmp[1].setChecked(scale[1])
-		for i in (0,1): print(tmp[i].checkState(),scale[i]*2)
-		#tmp[0].toggled[bool].connect(self.setLogScale)
-		#tmp[1].toggled[bool].connect(self.setLogScale)
-		'''
+			(self.ui.cXLogScale, self.ui.cYLogScale),
+			(self.ui.sXLogScale, self.ui.sYLogScale),
+			(self.ui.rXLogScale, self.ui.rYLogScale))
+		tmp = LogScale[Type]
+		print(bool(scale[0]),bool(scale[1]))
+		tmp[0].stateChanged[int].disconnect(self.setLogScale)
+		tmp[1].stateChanged[int].disconnect(self.setLogScale)
+		tmp[0].setChecked(scale[0]*2)
+		tmp[1].setChecked(scale[1]*2)
+		tmp[0].stateChanged[int].connect(self.setLogScale)
+		tmp[1].stateChanged[int].connect(self.setLogScale)
+
 			
 	def getData(self,Type): return self.dataStack[Type][-1]
 	
@@ -604,20 +568,20 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cPath.textChanged.connect(self.pathTextChanged)
 		self.ui.sPath.textChanged.connect(self.pathTextChanged)
 		self.ui.tabWidget.currentChanged[int].connect(self.plotCurrent)
-		self.ui.cMCheck.toggled[bool].connect(self.ui.cMColumn.setEnabled)
-		self.ui.sMCheck.toggled[bool].connect(self.ui.sMColumn.setEnabled)
+		self.ui.cMCheck.stateChanged.connect(self.ui.cMColumn.setEnabled)
+		self.ui.sMCheck.stateChanged.connect(self.ui.sMColumn.setEnabled)
 		self.ui.cUndo.clicked.connect(self.Undo)
 		self.ui.sUndo.clicked.connect(self.Undo)
 		self.ui.rUndo.clicked.connect(self.Undo)
 		self.ui.cReset.clicked.connect(self.Reset)
 		self.ui.sReset.clicked.connect(self.Reset)
 		self.ui.rReset.clicked.connect(self.Reset)
-		self.ui.cXLogScale.toggled[bool].connect(self.setLogScale)
-		self.ui.cYLogScale.toggled[bool].connect(self.setLogScale)
-		self.ui.sXLogScale.toggled[bool].connect(self.setLogScale)
-		self.ui.sYLogScale.toggled[bool].connect(self.setLogScale)
-		self.ui.rXLogScale.toggled[bool].connect(self.setLogScale)
-		self.ui.rYLogScale.toggled[bool].connect(self.setLogScale)
+		self.ui.cXLogScale.stateChanged[int].connect(self.setLogScale)
+		self.ui.cYLogScale.stateChanged[int].connect(self.setLogScale)
+		self.ui.sXLogScale.stateChanged[int].connect(self.setLogScale)
+		self.ui.sYLogScale.stateChanged[int].connect(self.setLogScale)
+		self.ui.rXLogScale.stateChanged[int].connect(self.setLogScale)
+		self.ui.rYLogScale.stateChanged[int].connect(self.setLogScale)
 		self.ui.cPolyOk.clicked.connect(self.polyCut)
 		self.ui.sPolyOk.clicked.connect(self.polyCut)
 		self.ui.cAverageOk.clicked.connect(self.Average)
@@ -629,35 +593,28 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sB_splineOk.clicked.connect(self.B_spline)
 		self.ui.rB_splineOk.clicked.connect(self.B_spline)
 		self.ui.rButton.clicked.connect(self.ResEval)
-		self.ui.cAutoInterval.toggled[bool].connect(self.AutoInterval)
-		self.ui.sAutoInterval.toggled[bool].connect(self.AutoInterval)
-		self.ui.rAutoInterval.toggled[bool].connect(self.AutoInterval)
-		self.ui.cAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
-		self.ui.sAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
-		self.ui.rAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
+		self.ui.cAutoInterval.stateChanged[int].connect(self.AutoInterval)
+		self.ui.sAutoInterval.stateChanged[int].connect(self.AutoInterval)
+		self.ui.rAutoInterval.stateChanged[int].connect(self.AutoInterval)
+		self.ui.cAutoB_splineS.stateChanged[int].connect(self.AutoB_splineS)
+		self.ui.sAutoB_splineS.stateChanged[int].connect(self.AutoB_splineS)
+		self.ui.rAutoB_splineS.stateChanged[int].connect(self.AutoB_splineS)
 		self.ui.cSave.clicked.connect(self.Save)
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
 		self.ui.LENGTH.textChanged[str].connect(self.lengthChange)
-		self.ui.cFilt.toggled[bool].connect(self.ui.cXFilt.setEnabled)
-		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
-		self.ui.sFilt.toggled[bool].connect(self.ui.sXFilt.setEnabled)
-		self.ui.sFilt.toggled[bool].connect(self.ui.sYFilt.setEnabled)
-		self.ui.rEvalType.textChanged[str].connect(self.interpTypeChanged)
+		self.ui.cFilt.stateChanged[int].connect(self.ui.cXFilt.setEnabled)
+		self.ui.cFilt.stateChanged[int].connect(self.ui.cYFilt.setEnabled)
+		self.ui.sFilt.stateChanged[int].connect(self.ui.sXFilt.setEnabled)
+		self.ui.sFilt.stateChanged[int].connect(self.ui.sYFilt.setEnabled)
+		self.ui.cAutoPoly.stateChanged[int].connect(self.ui.cPolyPrecision.setEnabled)
+		self.ui.sAutoPoly.stateChanged[int].connect(self.ui.sPolyPrecision.setEnabled)
 		#________________________________________________
 		self.data_signal[int].connect(self.dataListener)
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	#def setTool(self,objType, objName): return self.findChild(objType,objName)
 	
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal.SIG_DFL)
 	app = QtGui.QApplication(sys.argv)
 	win = QTR()
 	win.show()
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	#win.setTool(QtGui.QLineEdit,'cPath').setText("/home/kronosua/work/QTR/data/CR4FORWA.TXT")
-	#win.setTool(QtGui.QLineEdit,'sPath').setText("/home/kronosua/work/QTR/data/SIFORWAR.TXT")
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
 	sys.exit(app.exec_())
-	
