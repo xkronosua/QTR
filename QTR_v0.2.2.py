@@ -86,6 +86,7 @@ class QTR(QtGui.QMainWindow):
 		Range = range(0,len(X),n)
 		i = 0
 		for j in list(Range[1:])+[len(X)-1]:
+			if j-i<=1: break
 			x_temp = X[i:j]
 			y_temp = Y[i:j]
 			polyY_temp = poly_Y[i:j]
@@ -115,17 +116,18 @@ class QTR(QtGui.QMainWindow):
 		'''
 		x, y = data[:,0], data[:,1]
 		n = int(Step)
-		EQ = sp.poly1d( sp.polyfit(x, y, 4) )
+		EQ = sp.poly1d( sp.polyfit(x, y, 3) )
 		poly_Y = EQ( x )
 		Range = range(0,len(x),n)
 		i = 0
 		xnew, ynew = [], []
 		for j in list(Range[1:])+[len(x)-1]:
-			try:
-				x_temp = x[i:j].mean()
-				xnew.append(x_temp)
-				ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
-			except: pass
+			if j-i <=1:
+				break
+			x_temp = x[i:j].mean()
+			xnew.append(x_temp)
+			ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
+			
 			i = j
 		return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
 		

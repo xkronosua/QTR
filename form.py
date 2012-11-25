@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'form.ui'
 #
-# Created: Sun Nov 25 17:47:58 2012
+# Created: Sun Nov 25 23:39:48 2012
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -320,7 +320,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.label_14, 2, 1, 1, 1)
         self.cAverageStep = QtGui.QDoubleSpinBox(self.groupBox_7)
         self.cAverageStep.setDecimals(0)
-        self.cAverageStep.setMinimum(0.0)
+        self.cAverageStep.setMinimum(1.0)
         self.cAverageStep.setMaximum(999999999.0)
         self.cAverageStep.setSingleStep(1.0)
         self.cAverageStep.setProperty("value", 2.0)
@@ -512,10 +512,10 @@ class Ui_MainWindow(object):
         self.gridLayout_3.addWidget(self.label_26, 2, 1, 1, 1)
         self.sAverageStep = QtGui.QDoubleSpinBox(self.groupBox_15)
         self.sAverageStep.setDecimals(0)
-        self.sAverageStep.setMinimum(0.0)
+        self.sAverageStep.setMinimum(1.0)
         self.sAverageStep.setMaximum(999999999.0)
         self.sAverageStep.setSingleStep(1.0)
-        self.sAverageStep.setProperty("value", 1.0)
+        self.sAverageStep.setProperty("value", 2.0)
         self.sAverageStep.setObjectName(_fromUtf8("sAverageStep"))
         self.gridLayout_3.addWidget(self.sAverageStep, 3, 1, 1, 1)
         self.verticalLayout_24.addLayout(self.gridLayout_3)
