@@ -5,7 +5,7 @@ import sys
 
 from PyQt4 import QtCore, QtGui
 
-from qtdesigner import Ui_MplMainWindow
+from qtdesigner2 import Ui_MplMainWindow
 
 def swap(x,y):
 	return y,x
@@ -94,7 +94,7 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		if pr:
 			print(pr)
 
-		return self.tdata, self.Type, self.logScale 
+		return self.tdata.copy(), self.Type, self.logScale 
 		
 	# Rescale
 	def Rescale(self):

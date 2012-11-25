@@ -1,4 +1,4 @@
-
+#!/usr/bin/python
 import scipy as np
 import matplotlib.pyplot as plt
 import sys
@@ -11,18 +11,15 @@ def swap(x,y):
 	return y,x
 
 class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
-	typeColorDict = ['b', 'g', 'k' ]
+	typeColorDict = { 'c' : 'b', 's' : 'g', 'r' : 'k' }
 	color = 'b'
-	tempShape = (0,0)
-	Type, logScale = 0, [0,0]
-	data_signal = QtCore.pyqtSignal( name = "dataChanged")
 	def __init__(self, parent = None):
 		
 		# initial values for all edited and temp values
 		self.data, self.tdata, self.sdata = \
-			np.zeros((0,2)), \
-			np.zeros((0,2)), \
-			np.zeros((0,2))
+			np.array([], dtype=float), \
+			np.array([], dtype=float), \
+			np.array([], dtype=float)
 		
 		# define lock variables
 		self.lock = 0
@@ -40,6 +37,25 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 
 		# push buttons
 		# Plot button
+		#QtCore.QObject.connect(self.mplpushButton, QtCore.SIGNAL("clicked()"),
+		#					   self.update_graph)
+		# menu entries triggered
+		'''QtCore.QObject.connect(self.mplactionRescale,
+							   QtCore.SIGNAL("triggered()"),
+							   self.Rescale)
+		'''
+		
+		QtCore.QObject.connect(self.mplactionQuit,
+							   QtCore.SIGNAL("triggered()"),
+							   QtGui.qApp, QtCore.SLOT("quit()"))
+
+		# edit entries triggerd
+		QtCore.QObject.connect(self.mplactionUndo,
+							   QtCore.SIGNAL("triggered()"),
+							   self.undo)
+		QtCore.QObject.connect(self.mplactionRestore,
+							   QtCore.SIGNAL("triggered()"),
+							   self.restore)
 		QtCore.QObject.connect(self.mplactionCut_by_line,
 							   QtCore.SIGNAL("triggered()"),
 							   self.cut_line)
@@ -75,43 +91,73 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 	###########################################################################
 	####################### File parsing routines #############################
 	###########################################################################
-
-		
-	def set_data(self,Data = np.zeros((0,2))):
-		self.tdata = Data.copy()
-		self.tempShape = np.shape(self.tdata)
+	def set_data(self,Data = []):
+		self.tdata = Data
+		#self.tdata = DataPrev
 		self.update_graph()
-		self.Type = Data.Type
-		self.logScale = Data.scale
-
-	def Plot(self,Data = np.zeros((0,2))):
-		self.color = self.typeColorDict[Data.Type]
+	def Plot(self,Data = [], type = 'c'):
+		self.color = self.typeColorDict[type]
 		self.set_data(Data)
-		
 		#self.Rescale()
 	
-	def getData(self,pr=""):
-		if pr:
-			print(pr)
-
-		return self.tdata, self.Type, self.logScale 
+	def getData(self,pr):
+		print(pr)
+		return self.tdata
 		
 	# Rescale
 	def Rescale(self):
+		print('rescale')
+		XY = self.tdata
+		xMargin = ( XY[:,0].max() - XY[:,0].min() ) * 0.05
+		yMargin =  ( XY[:,1].max() - XY[:,1].min() ) * 0.05
 		
-		try:
-			XY = self.tdata
-			xMargin = ( XY[:,0].max() - XY[:,0].min() ) * 0.05
-			yMargin =  ( XY[:,1].max() - XY[:,1].min() ) * 0.05
+		self.mpl.canvas.ax.set_xlim( (XY[:,0].min() - xMargin,\
+			XY[:,0].max() + xMargin) )
+		self.mpl.canvas.ax.set_ylim( (XY[:,1].min() - yMargin,\
+			XY[:,1].max() + yMargin) )
 			
-			self.mpl.canvas.ax.set_xlim( (XY[:,0].min() - xMargin,\
-				XY[:,0].max() + xMargin) )
-			self.mpl.canvas.ax.set_ylim( (XY[:,1].min() - yMargin,\
-				XY[:,1].max() + yMargin) )
-		except:
-			pass
 		#self.update_graph()
 
+	'''	
+	def select_file(self):
+		"""Routine uses QtOpenDialog for selecting work file"""
+		file = QtGui.QFileDialog.getOpenFileName()
+		if file:
+			self.parse_file(file)
+			self.mplpushButton.setEnabled(True)
+			self.mplspinBox.setEnabled(True)
+			self.mplspinBox_2.setEnabled(True)
+
+	def parse_file(self, filename):
+		"""Routine performs simple parsing of ascii file
+		File format
+		===========
+		Time Ampl C1 C2 C3 C4
+		{0:f} {1:f} {2:f} {3:f} {4:f} {5:f}
+		"""
+		# clean old values
+		self.data, self.tdata = \
+					np.array([], dtype=float), np.array([], dtype=float)
+		# parse file
+		IFileHandler = open(filename, 'r')
+		ln = 0
+		for line in IFileHandler:
+			tmp = np.array(line.split(), dtype=float)
+			tmp = tmp / tmp[1]	# amplification coefficient
+			self.data = np.append(self.data, tmp[0])
+			self.data = np.append(self.data, tmp[2:])
+			ln += 1
+		IFileHandler.close()
+		# data resizing and gui changing for file purp.
+		ll = tmp.size - 1
+		# set spinBox maximum value to number of data
+		self.mplspinBox.setMaximum(ll)
+		self.mplspinBox_2.setMaximum(ll)
+		self.data = np.resize(self.data, (int(ln), int(ll)))
+		# make shadow copy
+		self.tdata = self.data.copy()
+		self.sdata = self.data.copy()
+	'''
 	###########################################################################
 	######################## Main plot routines ###############################
 	###########################################################################
@@ -119,7 +165,15 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		"""Updates the graph with new X and Y"""
 		# TODO: rewrite this routine, to get better performance
 		
-	
+		'''
+		# cheating plot variables x and y
+		tmp1 = self.mplspinBox.value() - 1
+		tmp2 = self.mplspinBox_2.value() - 1
+		tmp3 = self.mplspinBox_3.value() - 1
+		# check if plot variables changed from last time
+		if tmp1 != self.dlockx or tmp2 != self.dlocky or  tmp3 != self.dlocky_x:
+			self.background = None
+		'''
 		#self.background = \
 		#	self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
 		# save current plot variables
@@ -133,12 +187,15 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 			# save initial x and y limits
 			self.xl = self.mpl.canvas.ax.get_xlim()
 			self.yl = self.mpl.canvas.ax.get_ylim()
-			
 		# clear the axes
 		self.mpl.canvas.ax.clear()
 		# plot graph
-		self.pltdata, = self.mpl.canvas.ax.plot(self.tdata[:, self.dlockx],\
-			self.tdata[:, self.dlocky],self.color + 'o',markersize=self.mplhorizontalSlider_2.value())
+		self.pltdata, = self.mpl.canvas.ax.plot(
+								self.tdata[:, self.dlockx],
+								self.tdata[:, self.dlocky],
+								self.color + 'o',
+								markersize=self.mplhorizontalSlider_2.value()
+								)
 		# creating line
 		self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
 											 animated=True
@@ -172,20 +229,17 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		self.background = \
 			self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
 		# make edit buttons enabled
-		#self.mplactionSave.setEnabled(True)
-		#self.mplactionUndo.setEnabled(True)
+		self.mplactionSave.setEnabled(True)
+		self.mplactionUndo.setEnabled(True)
 		# self.mplactionRescale.setEnabled(True)
-		#self.mplactionRestore.setEnabled(True)
+		self.mplactionRestore.setEnabled(True)
 		self.mplactionCut_by_line.setEnabled(True)
 		self.mplactionCut_by_rect.setEnabled(True)
 		self.mplactionPoint.setEnabled(True)
-		#print(np.shape(self.tdata), np.shape(self.data), np.shape(self.sdata), self.tempShape, self.index)
-		if np.shape(self.tdata) != self.tempShape :
-			self.tempShape = np.shape(self.tdata)
-			self.data_signal.emit()
-			#print(self.index)
-		
-
+        
+            
+            
+        
 	###########################################################################
 	####################### Secondary plot routines ###########################
 	###########################################################################
@@ -273,7 +327,6 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 	###########################################################################
 	############################# Buttons #####################################
 	###########################################################################
-	'''
 	def undo(self):
 		"""Restore previous condition"""
 		if self.sdata.any():
@@ -286,7 +339,7 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		if self.data.any():
 			self.tdata = self.data.copy()
 			self.update_graph()
-	
+
 	def save_file(self):
 		"""Save current X Y values"""
 		file = QtGui.QFileDialog.getSaveFileName()
@@ -299,7 +352,7 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 														   self.tdata[i,tmp2])
 							  )
 		OFileHandler.close()
-	'''
+
 	###########################################################################
 	############################ Events #######################################
 	###########################################################################
@@ -342,7 +395,8 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 					x = self.tdata[i, 0]
 					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
 						(x - self.x2) + self.y2
-					if self.tdata[i, 1] >= y and x > self.x1 and x < self.x2:
+					if self.tdata[i, 1] >= y \
+					   and x > self.x1 and x < self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
 				self.update_graph()
@@ -353,7 +407,8 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 					x = self.tdata[i,0]
 					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
 						(x - self.x2) + self.y2
-					if self.tdata[i, 1] <= y and x > self.x1 and x < self.x2:
+					if self.tdata[i, 1] <= y \
+					   and x > self.x1 and x < self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
 				self.update_graph()
@@ -420,13 +475,15 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 					self.y2 -= delta
 				else:
 					pass
-			if self.y3 <= self.y1 and self.y3 >= self.y2 and self.x3 >= self.x1 and self.x3 <= self.x2 :
+			if self.y3 <= self.y1 and self.y3 >= self.y2 \
+			   and self.x3 >= self.x1 and self.x3 <= self.x2 :
 				# in cut
 				index = np.array([], dtype=int)
 				for i in range(len(self.tdata[:,0])):
 					x = self.tdata[i, 0]
 					y = self.tdata[i, 1]
-					if y <= self.y1 and y >= self.y2 and x >= self.x1 and x <= self.x2:
+					if y <= self.y1 and y >= self.y2 \
+					   and x >= self.x1 and x <= self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
 				self.update_graph()
@@ -436,7 +493,8 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 				for i in range(len(self.tdata[:, 0])):
 					x = self.tdata[i, 0]
 					y = self.tdata[i, 1]
-					if x <= self.x1 or y >= self.y1 or x >= self.x2 or y <= self.y2:
+					if x <= self.x1 or y >= self.y1 \
+					   or x >= self.x2 or y <= self.y2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
 				self.update_graph()

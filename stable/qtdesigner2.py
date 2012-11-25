@@ -233,4 +233,4 @@ class Ui_MplMainWindow(object):
 		#self.mplactionRescale.setText(QtGui.QApplication.translate("MplMainWindow", "Rescale", None, QtGui.QApplication.UnicodeUTF8))
 		self.mplactionPoint.setText(QtGui.QApplication.translate("MplMainWindow", "Point", None, QtGui.QApplication.UnicodeUTF8))
 
-from mplwidget import MplWidget
+from mplwidget2 import MplWidget
