@@ -64,9 +64,9 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 							   QtCore.SIGNAL("stateChanged(int)"),
 							   self.set_y_log)
 
-		#QtCore.QObject.connect(self.mplcheckBox_3,
-		#					   QtCore.SIGNAL("stateChanged(int)"),
-		#					   self.set_y_x)
+		QtCore.QObject.connect(self.mplcheckBox_3,
+							   QtCore.SIGNAL("stateChanged(int)"),
+							   self.set_y_x)
 
 		QtCore.QObject.connect(self.mplcheckBox_4,
 							   QtCore.SIGNAL("stateChanged(int)"),
@@ -165,7 +165,7 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 		# log x log y scale
 		self.set_x_log(flag=1)
 		self.set_y_log(flag=1)
-		#self.set_y_x(flag=1)
+		self.set_y_x(flag=1)
 		# force an image redraw
 		self.mpl.canvas.draw()
 		# copy background

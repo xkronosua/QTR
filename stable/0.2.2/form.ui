@@ -412,7 +412,7 @@
       </widget>
       <widget class="QWidget" name="tab_2">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <attribute name="title">
         <string>Крос</string>
@@ -444,49 +444,37 @@
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_4">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="title">
            <string>Масштаб</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
-            <layout class="QHBoxLayout" name="cScale">
+            <layout class="QHBoxLayout" name="cLogScale">
              <item>
-              <widget class="QCheckBox" name="cY_XScale">
+              <widget class="QLabel" name="label_34">
                <property name="text">
-                <string>Y/X</string>
+                <string>log масштаб:</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QGroupBox" name="cLogScale">
-               <property name="title">
-                <string>Log10</string>
+              <widget class="QCheckBox" name="cXLogScale">
+               <property name="enabled">
+                <bool>false</bool>
                </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item>
-                 <widget class="QCheckBox" name="cXLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>X</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="cYLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Y</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               <property name="text">
+                <string>X</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="cYLogScale">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Y</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -840,7 +828,7 @@
       </widget>
       <widget class="QWidget" name="tab_3">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <attribute name="title">
         <string>Зразок</string>
@@ -872,49 +860,37 @@
         </item>
         <item>
          <widget class="QGroupBox" name="groupBox_14">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
           <property name="title">
            <string>Масштаб</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_23">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <layout class="QHBoxLayout" name="cLogScale_3">
              <item>
-              <widget class="QCheckBox" name="sY_XScale">
+              <widget class="QLabel" name="label_37">
                <property name="text">
-                <string>Y/X</string>
+                <string>log масштаб:</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QGroupBox" name="sLogScale">
-               <property name="title">
-                <string>Log10</string>
+              <widget class="QCheckBox" name="sXLogScale">
+               <property name="enabled">
+                <bool>false</bool>
                </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_6">
-                <item>
-                 <widget class="QCheckBox" name="sYLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Y</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="sXLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>X</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               <property name="text">
+                <string>X</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="sYLogScale">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Y</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -1259,7 +1235,7 @@
       </widget>
       <widget class="QWidget" name="tab_4">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <attribute name="title">
         <string>Результат</string>
@@ -1309,33 +1285,24 @@
         <item>
          <layout class="QHBoxLayout" name="sLogScale_2">
           <item>
-           <widget class="QCheckBox" name="rY_XScale">
+           <widget class="QLabel" name="label_36">
             <property name="text">
-             <string>Y_X</string>
+             <string>log масштаб:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QGroupBox" name="rLogScale">
-            <property name="title">
-             <string>Log10</string>
+           <widget class="QCheckBox" name="rXLogScale">
+            <property name="text">
+             <string>X</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_13">
-             <item>
-              <widget class="QCheckBox" name="rXLogScale">
-               <property name="text">
-                <string>X</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="rYLogScale">
-               <property name="text">
-                <string>Y</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="rYLogScale">
+            <property name="text">
+             <string>Y</string>
+            </property>
            </widget>
           </item>
          </layout>
