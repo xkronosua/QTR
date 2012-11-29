@@ -7,7 +7,7 @@ from scipy.signal import medfilt
 import glue_designer as qcut
 from form import Ui_MainWindow
 
-
+# Масив даних, що буде містити дані, їх масштаб та тип
 class Array(sp.ndarray):
 	
 	def __new__(cls, input_array, scale=[0,0], Type = None):
@@ -19,19 +19,22 @@ class Array(sp.ndarray):
 		obj.scaleX = scale[0]
 		obj.scaleY = scale[1]
 		obj.scale = scale
+		#setattr(obj, 'scale', scale)
 		#obj.scale = sp.array([obj.scaleX, obj.scaleY])
 		# Finally, we must return the newly created object:
 		return obj
 	def __array_finalize__(self, obj):
 		# see InfoArray.__array_finalize__ for comments
-		sp.shape
+		
 		if obj is None: return
 		self.Type = getattr(obj, 'Type', None)
 		self.scaleX= getattr(obj, 'scaleX', None)
 		self.scaleY = getattr(obj, 'scaleY', None)
 		self.scale = getattr(obj, 'scale', None)
+		#self.scale = self.Scale()
 	def Scale(self): return [self.scaleX, self.scaleY]
-		
+
+
 class QTR(QtGui.QMainWindow):
 	''' Ініціалізація змінних.
 	cXXXXXX	-	змінна, що відповідає кросу
@@ -43,21 +46,25 @@ class QTR(QtGui.QMainWindow):
 	1 - зразок
 	2 - результат
 	'''
-	Path = ['','','']
-	Root = os.getcwd() 
-	FiltersPath = "./filters.csv"
+	Path = ['','','']				# Шляхи до файлів
+	Root = os.getcwd()				# Поточний каталог
+	FiltersPath = "./filters.csv"	# База фільтрів
 
-	filtersDict = {}
-	filtList = ([1.,1.],[1.,1.])
-	LENGTH = b"1064"
+	filtersDict = {}				# Словник фільтрів
+	filtList = ([1.,1.],[1.,1.])	# Поточні фільтри
+	LENGTH = b"1064"				# Довжина хвилі за замовчуванням
+	# Стек історії для кроса. зразка і результата
 	dataStack = (
 		[Array(sp.zeros((0,2)), Type = 0, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 1, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 2, scale=[0,0])] )
+	
+	
+	
 	# DataUpdated signal -> slot
+	# Сигнал про зміну в даних
 	data_signal = QtCore.pyqtSignal(int, int, name = "dataChanged")
 	
-	histBlocker = 0
 	def __init__(self):
 		super(QTR, self).__init__()
 		self.ui = Ui_MainWindow()
@@ -66,26 +73,31 @@ class QTR(QtGui.QMainWindow):
 		self.fileDialog = QtGui.QFileDialog(self)
 		
 		self.qcut = qcut.DesignerMainWindow()
-
+		# Відкат даних із QCut
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
 		self.qcut.show()
 		
 		self.ui.tab_2.setEnabled(False)
 		self.ui.tab_3.setEnabled(False)
 		self.ui.tab_4.setEnabled(False)
+		QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Q"), self, self.close)
 		##### Signals -> Slots #########################################
 		self.uiConnect()
-
+	
+	# Пошук однотипних об’єктів графічної форми за кортежем імен
 	def findChilds(self,obj,names, p = ''):
-		'''Додатковий механізм пошуку об’єктів графічної форми'''
+		'''Додатковий механізм пошуку об’єктів графічної форми
+		p	-	атрибут який повертається для кожного елемента
+		'''
 		if p == 'value': return tuple(self.findChild(obj,name).value() for name in names)
 		elif p == 'checkState': return tuple(self.findChild(obj,name).checkState() for name in names)
 		else: return tuple(self.findChild(obj,name) for name in names)
-		
+	def findUi(self, names): return [ getattr(self.ui, i) for i in names ]
 	####################################################################
 	########################  Обробка  #################################
 	####################################################################
 	
+	# Механічна обрізка
 	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4, p = 0.80):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m	-	степінь полінома
@@ -129,8 +141,9 @@ class QTR(QtGui.QMainWindow):
 			ynew = ynew + (y_temp).tolist()
 			i = j
 		X, Y = xnew, ynew
-		return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.Scale())
-		
+		return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
+	
+	# Усереднення
 	def averaging(self, data, Start = None, End = None, N = 1, m = 3):
 		'''	Усереднення між заданими вузлами.
 		m		-	порядок полінома
@@ -157,8 +170,9 @@ class QTR(QtGui.QMainWindow):
 			xnew.append(x_temp)
 			ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
 			i = j
-		return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.Scale())
-		
+		return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
+	
+	# Інтерполяція b-сплайном
 	def b_s(self, data, xi = [], Start = None, End = None, Step = 1, sm = 1100000., km = 5):
 		'''	Інтерполяція B-сплайном
 		sm	-	коефіцієнт згладжування
@@ -170,45 +184,76 @@ class QTR(QtGui.QMainWindow):
 		#Обрізка в заданих межах
 		if not Start is None:
 			if 0 < Start < x.max():
-				x, y = x[x >= Start], y[y >= Start]
+				x, y = x[x >= Start], y[x >= Start]
 		if not End is None:
 			if 0 < End <= x.max():
-				x, y = x[x <= End], y[y <= End]
+				x, y = x[x <= End], y[x <= End]
 				
 		if not any(xi):
 			xi = sp.arange(Start, End,Step)
 		y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
-		return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.Scale())
+		return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
-	def Y_XScale(self, state):
-		Dict = {'cY_XScale' : (0, 'cLogScale'),
-				'sY_XScale' : (1, 'sLogScale'),
-				'rY_XScale' : (2, 'rLogScale')	}
-		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		if len(self.dataStack[tmp[0]])>=1:
-			active = [tmp[0], self.findChild(QtGui.QGroupBox,tmp[1])]
-			data = self.getData(active[0])
-			X, Y = data[:,0], data[:,1]
-			Scale = [data.Scale()[0]]
 	
-			if state:
-				self.data_signal[int,int].disconnect(self.setActiveLogScale)
-				Y = Y / X
-				Scale.append(2)
+	# Повернути масштаб при поверненні в історії
+	def setPrevScale(self, Type, action):
+		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
+		Types = ('c', 's', 'r')
+		if action == 0 or action == -1:
+			data = self.getData(Type)
+			scale = data.Scale()
+			ui_obj = self.findUi(( Types[Type] + i for i in Names))
+			for t in ui_obj[:-1]:
+				t.toggled[bool].disconnect(self.setNewScale)			
+			if scale[1] == 2:
+				ui_obj[0].setChecked(True)
 			else:
-				Y = Y * X
-				Scale.append(0)
-			active[1].setEnabled(not state)
-			out = Array(sp.array([X,Y]).T, scale = Scale, Type = data.Type)
-			self.updateData(array = out)
+				ui_obj[0].setChecked(False)
+				ui_obj[1].setChecked(scale[0])
+				ui_obj[2].setChecked(scale[1])
 			
-			if not state:
-				self.data_signal[int,int].connect(self.setActiveLogScale)
-			
+			ui_obj[0].setEnabled(scale == [0,0])
+			ui_obj[3].setEnabled((scale == [0,0]) or 1 in scale )
+				
+			for t in ui_obj[:-1]:
+				t.toggled[bool].connect(self.setNewScale)
+		else: pass
 		
+	# Змінити масштаб на новий
+	def setNewScale(self, state):
+		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale' )
+		Types = {'c' : 0, 's' : 1, 'r' : 2} 
+		senderName = self.sender().objectName()
+		t, Type = senderName[0], Types[senderName[0]]
+		data = self.getData(Type)
+		Scale = data.Scale()
+		if senderName[1:] == Names[0]:
+			ui_obj = getattr(self.ui, t + "LogScale")
+			if state:
+				Scale[1] = 2
+				data[:,1] = data[:,1] / data[:,0]
+			else:
+				Scale[1] = 0
+				data[:,1] = data[:,1] * data[:,0]
+			ui_obj.setEnabled(not state)
+		else:
+			index = bool(senderName[1] != "X")
+			ui_obj = getattr(self.ui, t + Names[0])
+			if Scale[index] != state:
+				if state == 1:
+					data[:,index] = sp.log10(data[:,index])
+				else:
+					data[:,index] = sp.power(10.,data[:,index])
+				Scale[index] = int(state)
+				ui_obj.setEnabled(Scale == [0,0])
+		self.updateData(array = Array(data, Type = Type, scale = Scale))
+		
+	
+			
+	
+	# Для сигналу про зміну типу інтерполяції кроса при обчисленні результату	
 	def interpTypeChanged(self,text):
 		'''Перевірка правильності введення типу інтерполяції для обрахунку результату'''
 		interpTypes = ('linear', 'nearest', 'zero')#, 'cubic', 'slinear')
@@ -314,7 +359,7 @@ class QTR(QtGui.QMainWindow):
 		cData = self.getData(0)
 		sData = self.getData(1)
 		
-		if cData.Scale() == [0,0] and sData.Scale() == [0,0]:
+		if cData.scale == [0,0] and sData.scale == [0,0]:
 			
 			if self.ui.rButton.isEnabled():
 				x = sData[:,0]
@@ -365,7 +410,7 @@ class QTR(QtGui.QMainWindow):
 		y_temp = Y - poly_Y
 		y = medfilt(y_temp, kernel_size = active[1])
 		Y = y + poly_Y
-		self.updateData(array = Array(sp.array([XY[:,0], Y]).T, Type = XY.Type, scale = XY.Scale()))
+		self.updateData(array = Array(sp.array([XY[:,0], Y]).T, Type = XY.Type, scale = XY.scale))
 	
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
@@ -379,48 +424,6 @@ class QTR(QtGui.QMainWindow):
 		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3], sm = active[4], km = int(active[5]))
 		self.updateData(array  = data)
 		
-	def setScale(self, state):
-		Dict = {
-			'cXLogScale' : 0, 'cYLogScale' : 1,
-			'sXLogScale' : 0, 'sYLogScale' : 1,
-			'rXLogScale' : 0, 'rYLogScale' : 1	}
-		senderName = self.sender().objectName()
-		index = Dict[senderName]
-		state = int(state)
-		Type = {'c':0,'s':1,'r':2}
-		data = self.getData(Type[senderName[0]])
-		
-		# Відключення можливості змінювати масштаб на Y/X, коли активний логарифмічний
-		Y_XState = False
-		
-		
-		xy = data.copy()
-		Scale = xy.Scale()
-		if Scale == [0,0]:
-				print("+")
-				self.findChild(QtGui.QCheckBox, senderName[0] + "Y_XScale").setEnabled(True)
-		if Scale[1] != 2:	
-			if Scale[index] != state:
-				if state == 1:
-					xy[:,index] = sp.log10(data[:,index])
-				else:
-					xy[:,index] = sp.power(10.,data[:,index])
-				Scale[index] = state
-				t = True
-				
-			
-			self.updateData(array = Array(xy, scale = Scale, Type = data.Type))
-			if sum(self.findChilds(QtGui.QCheckBox,	(senderName[0]+"XLogScale",
-								senderName[0]+"YLogScale"), p = "checkState")) == 0:
-				Y_XState = True
-			self.findChild(QtGui.QCheckBox, senderName[0] + "Y_XScale").setEnabled(Y_XState)
-		
-			
-		
-		else:
-			self.findChild(QtGui.QCheckBox, senderName[0] + "Y_XScale").setEnabled(True)
-			self.findChild(QtGui.QGroupBox, senderName[0] + "LogScale").setEnabled(False)
-		
 	def Undo(self):
 		Dict = {'cUndo' : 0, 'sUndo' : 1, 'rUndo' : 2}
 		senderName = self.sender().objectName()
@@ -429,7 +432,7 @@ class QTR(QtGui.QMainWindow):
 			self.updateData(Type = Type, action = -1)
 		else:
 			self.sender().setEnabled(False)
-			#self.findChild(QtGui.QCheckBox, senderName[0] + "Y_XScale").setEnabled(True)
+
 	def Reset(self):
 		Dict = {'cReset' : 0, 'sReset' : 1, 'rReset' : 2}
 		senderName = self.sender().objectName()
@@ -438,8 +441,7 @@ class QTR(QtGui.QMainWindow):
 			self.updateData(Type = Type, action = 0)
 		else:
 			self.sender().setEnabled(False)
-			#self.findChild(QtGui.QCheckBox, senderName[0] + "Y_XScale").setEnabled(True)
-	# Plot current tab
+
 	def plotCurrent(self, index):
 		if index > 0:
 			Type = index-1
@@ -454,7 +456,7 @@ class QTR(QtGui.QMainWindow):
 		
 	def getBackFromQcut(self):
 		''' Отримання даних, що змінені вручну в QCut'''
-		print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.Scale())
+		print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.scale)
 		data, Type, Scale = self.qcut.getData()
 		self.updateData( array = Array(data, Type = Type, scale=Scale)  )
 		
@@ -565,7 +567,8 @@ class QTR(QtGui.QMainWindow):
 			buttons[0].setEnabled(state)
 			buttons[1].setEnabled(state)
 			
-
+	def closeEvent(self, event):
+		self.qcut.close()
 	
 	def lengthChange(self, text):
 		if text:
@@ -618,35 +621,13 @@ class QTR(QtGui.QMainWindow):
 			print("updateData: Error0",len(self.dataStack[Type]))
 			print(sp.shape(self.getData(Type)))
 		try:
-			for i in self.dataStack[Type]: print(i.scale,i.scaleX, i.scaleY, i.Type, i.Scale())
+			for i in self.dataStack[Type]: print(i.scaleX, i.scaleY, i.shape)
 		except:
 			pass
 		if emit:
 			self.data_signal.emit(Type, action)
 			self.Plot(self.getData(Type) )
-			
-			
-	def setActiveLogScale(self, Type , action = 1, scale = None):
-		print("Action",action)
-		if action == 0 or action == -1:
-			LogScale = (
-				('cXLogScale', 'cYLogScale'),
-				('sXLogScale', 'sYLogScale'),
-				('rXLogScale', 'rYLogScale'))
-			if scale is None:
-				data = self.getData(Type)
-				scale = data.Scale() #[data.scaleX, data.scaleY]
-			tmp = self.findChilds(QtGui.QCheckBox,LogScale[Type])
 	
-			tmp[0].toggled[bool].disconnect(self.setScale)
-			tmp[1].toggled[bool].disconnect(self.setScale)
-			
-			tmp[0].setChecked(bool(scale[0]))
-			tmp[1].setChecked(bool(scale[1]))
-			tmp[0].toggled[bool].connect(self.setScale)
-			tmp[1].toggled[bool].connect(self.setScale)
-		else: pass
-			
 	def getData(self,Type): return self.dataStack[Type][-1].copy()
 	
 	def getFilters(self, length="532"):
@@ -675,12 +656,6 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cReset.clicked.connect(self.Reset)
 		self.ui.sReset.clicked.connect(self.Reset)
 		self.ui.rReset.clicked.connect(self.Reset)
-		self.ui.cXLogScale.toggled[bool].connect(self.setScale)
-		self.ui.cYLogScale.toggled[bool].connect(self.setScale)
-		self.ui.sXLogScale.toggled[bool].connect(self.setScale)
-		self.ui.sYLogScale.toggled[bool].connect(self.setScale)
-		self.ui.rXLogScale.toggled[bool].connect(self.setScale)
-		self.ui.rYLogScale.toggled[bool].connect(self.setScale)
 		self.ui.cPolyOk.clicked.connect(self.polyCut)
 		self.ui.sPolyOk.clicked.connect(self.polyCut)
 		self.ui.cAverageOk.clicked.connect(self.Average)
@@ -708,12 +683,22 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sFilt.toggled[bool].connect(self.ui.sYFilt.setEnabled)
 		self.ui.rEvalType.textChanged[str].connect(self.interpTypeChanged)
 		
-		self.ui.cY_XScale.toggled[bool].connect(self.Y_XScale)
-		self.ui.sY_XScale.toggled[bool].connect(self.Y_XScale)
-		self.ui.rY_XScale.toggled[bool].connect(self.Y_XScale)
+		# Масштабування
+		self.ui.cXLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.cYLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.sXLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.sYLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.rXLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.rYLogScale.toggled[bool].connect(self.setNewScale)
+		self.ui.cY_XScale.toggled[bool].connect(self.setNewScale)
+		self.ui.sY_XScale.toggled[bool].connect(self.setNewScale)
+		self.ui.rY_XScale.toggled[bool].connect(self.setNewScale)
+		
+		#self.close.connect(self.closeEvent)
 		#________________________________________________
 		self.data_signal[int,int].connect(self.dataListener)
-		self.data_signal[int,int].connect(self.setActiveLogScale)
+		self.data_signal[int,int].connect(self.setPrevScale)
+		
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	def setTool(self,objType, objName): return self.findChild(objType,objName)
 	
