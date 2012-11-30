@@ -48,7 +48,7 @@ class QTR(QtGui.QMainWindow):
 	'''
 	Path = ['','','']				# Шляхи до файлів
 	Root = os.getcwd()				# Поточний каталог
-	FiltersPath = "./filters.csv"	# База фільтрів
+	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	# База фільтрів
 
 	filtersDict = {}				# Словник фільтрів
 	filtList = ([1.,1.],[1.,1.])	# Поточні фільтри
