@@ -6,7 +6,8 @@ import scipy as sp
 from scipy.signal import medfilt
 import glue_designer as qcut
 from form import Ui_MainWindow
-
+from IntensDialog import IntensDialog
+from calibr import CalibrDialog
 # Масив даних, що буде містити дані, їх масштаб та тип
 class Array(sp.ndarray):
 	
@@ -35,6 +36,8 @@ class Array(sp.ndarray):
 	def Scale(self): return [self.scaleX, self.scaleY]
 
 
+		
+
 class QTR(QtGui.QMainWindow):
 	''' Ініціалізація змінних.
 	cXXXXXX	-	змінна, що відповідає кросу
@@ -49,7 +52,9 @@ class QTR(QtGui.QMainWindow):
 	Path = ['','','']				# Шляхи до файлів
 	Root = os.getcwd()				# Поточний каталог
 	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	# База фільтрів
-
+	Types = {'c': 0, 's': 1, 'r': 2}
+	K = 0.	# Коефіцієнт калібровки
+	#Ai2 = 0.	# Квадрат радіуса пучка по інтенсивності
 	filtersDict = {}				# Словник фільтрів
 	filtList = ([1.,1.],[1.,1.])	# Поточні фільтри
 	LENGTH = b"1064"				# Довжина хвилі за замовчуванням
@@ -76,6 +81,8 @@ class QTR(QtGui.QMainWindow):
 		# Відкат даних із QCut
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
 		self.qcut.show()
+		self.intensDialog = IntensDialog()
+		self.calibrDialog = CalibrDialog(self.Root)
 		
 		self.ui.tab_2.setEnabled(False)
 		self.ui.tab_3.setEnabled(False)
@@ -92,26 +99,35 @@ class QTR(QtGui.QMainWindow):
 		if p == 'value': return tuple(self.findChild(obj,name).value() for name in names)
 		elif p == 'checkState': return tuple(self.findChild(obj,name).checkState() for name in names)
 		else: return tuple(self.findChild(obj,name) for name in names)
-	def findUi(self, names): return [ getattr(self.ui, i) for i in names ]
+	def findUi(self, names, p = ''):
+		if p == 'value': return [ getattr(self.ui, i).value() for i in names ]
+		else: return [ getattr(self.ui, i) for i in names ]
 	####################################################################
 	########################  Обробка  #################################
 	####################################################################
 	
 	# Механічна обрізка
-	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4, p = 0.80):
+	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4, p = 0.80, ASC = 0):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m	-	степінь полінома
 		p	-	відсоток від максимального викиду
-		N	-	кількість вузлів	
+		N	-	кількість вузлів
+		ASC	-	обробити Все, зробити Зріз, Зшити
 		'''
 		X, Y = data[:,0], data[:,1]
-		#Обрізка в заданих межах
-		if not Start is None:
-			if 0 < Start < X.max():
-				X, Y = X[X >= Start], Y[X >= Start]
-		if not End is None:
-			if 0 < End <= X.max():
-				X, Y = X[X <= End], Y[X <= End]
+		if ASC in (1, 2):
+			x, y = X.copy(), Y.copy()
+			#Обрізка в заданих межах
+			
+			if not Start is None:
+				if 0 < Start < X.max():
+					X, Y = X[X >= Start], Y[X >= Start]
+			else: Start = X.min()
+			if not End is None:
+				if 0 < End <= X.max():
+					X, Y = X[X <= End], Y[X <= End]
+			else: End = X.max()
+		else: pass
 		n = int(N)
 		EQ = sp.poly1d( sp.polyfit(X, Y, m) )
 		poly_Y = EQ( X )
@@ -140,14 +156,19 @@ class QTR(QtGui.QMainWindow):
 			xnew = xnew + x_temp.tolist()
 			ynew = ynew + (y_temp).tolist()
 			i = j
-		X, Y = xnew, ynew
+		X, Y = sp.array(xnew), sp.array(ynew)
+		if ASC == 2:
+			less, more = x<X[0], x>X[-1]
+			x1, x2 = x[less], x[more]
+			y1, y2 = y[less], y[more]
+			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
 		return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
 	
 	# Усереднення
 	def averaging(self, data, Start = None, End = None, N = 1, m = 3):
 		'''	Усереднення між заданими вузлами.
-		m		-	порядок полінома
-		Step	-	кількість вузлів
+		m	-	порядок полінома
+		N	-	кількість вузлів
 		'''
 		x, y = data[:,0], data[:,1]
 		#Обрізка в заданих межах
@@ -181,6 +202,7 @@ class QTR(QtGui.QMainWindow):
 		
 		print("B-spline interpolation [s = %.3f, k = %.3f]" % (sm,km))
 		x, y = data[:,0], data[:,1]
+		
 		#Обрізка в заданих межах
 		if not Start is None:
 			if 0 < Start < x.max():
@@ -191,12 +213,22 @@ class QTR(QtGui.QMainWindow):
 				
 		if not any(xi):
 			xi = sp.arange(Start, End,Step)
-		y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
-		return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
+		try:
+			y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
+			return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
+		except:
+			print("ResEval: UnivariateSpline")
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
-	
+	def AllSliceConcat(self, index):
+
+		key = self.sender().objectName()[0]
+		Type = self.Types[key]
+		if index == 0:
+			data = self.getData(Type)
+			getattr(self.ui, key + 'Start').setValue(data[:,0].min())
+			getattr(self.ui, key + 'End').setValue(data[:,0].max())
 	# Повернути масштаб при поверненні в історії
 	def setPrevScale(self, Type, action):
 		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
@@ -249,18 +281,7 @@ class QTR(QtGui.QMainWindow):
 				Scale[index] = int(state)
 				ui_obj.setEnabled(Scale == [0,0])
 		self.updateData(array = Array(data, Type = Type, scale = Scale))
-		
-	
-			
-	
-	# Для сигналу про зміну типу інтерполяції кроса при обчисленні результату	
-	def interpTypeChanged(self,text):
-		'''Перевірка правильності введення типу інтерполяції для обрахунку результату'''
-		interpTypes = ('linear', 'nearest', 'zero')#, 'cubic', 'slinear')
-		if text.lower().strip().replace(' ','') in interpTypes:
-			self.ui.rButton.setEnabled(True)
-		else: self.ui.rButton.setEnabled(False)
-	
+
 	def Save(self):
 		'''Збереження активного масиву до текстового файлу'''
 		Dict = {'cSave' : 0, 'sSave' : 1, 'rSave' : 2}
@@ -302,7 +323,7 @@ class QTR(QtGui.QMainWindow):
 				print("AutoB_splineS: SmoothParamError")
 		else:
 			active[1].setEnabled(True)
-			
+	'''	
 	def AutoInterval(self, state, isSignal = True, senderType = 0):
 		""" визначаємо мінімальний спільний інтервал по Х"""
 		Dict = {
@@ -346,12 +367,9 @@ class QTR(QtGui.QMainWindow):
 		if Max and Min:
 			active[1].setValue(Min)
 			active[2].setValue(Max)
-	
+	'''
 	def ResEval(self):
-		""" Обчислюємо результат.
-			Якщо розміри масивів не співпадають,
-			то усереднюємо довший по вузлах коротшого
-		"""
+		""" Обчислюємо результат."""
 		'''
 		Param = (	(self.ui.cStart.value(),  self.ui.cEnd.value(), self.ui.cAverageStep.value()),
 					(self.ui.sStart.value(),  self.ui.sEnd.value(), self.ui.sAverageStep.value()))
@@ -367,7 +385,7 @@ class QTR(QtGui.QMainWindow):
 				x = x[window]
 				y = sData[:,1]
 				y = y[window]
-				cY_temp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.rEvalType.text().lower())(x)
+				cY_temp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.rEvalType.currentText().lower())(x)
 				y = y/ cY_temp
 			else: print('ResEval: interpTypeError')
 			
@@ -377,12 +395,16 @@ class QTR(QtGui.QMainWindow):
 	def polyCut(self):
 		'''Обрізка [за різними методами]'''
 		Dict = {'cPolyOk' : (0,'cPolyN', 'cPolyP', 'cPolyM', 'cStart',  'cEnd'),
-				'sPolyOk' : (1,'sPolyN', 'sPolyP', 'sPolyM', 'sStart',  'sEnd')}		
+				'sPolyOk' : (1,'sPolyN', 'sPolyP', 'sPolyM', 'sStart',  'sEnd')}
+		Types = {'c': 0, 's' : 1, 'r' : 2}
+		Param = ('PolyN', 'PolyP', 'PolyM', 'Start',  'End')
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
+		Type = Types[senderName[0]]
+		active = [Type] + self.findUi((senderName[0] + i for i in Param),p="value")
 		XY = self.getData(active[0])
-		data = self.poly_cut(XY, N = active[1], p = active[2], m = active[3], Start = active[4], End = active[5])
+		ASC = getattr(self.ui, senderName[0] + "AllSliceConcat").currentIndex()
+		data = self.poly_cut(XY, N = active[1], p = active[2],
+			m = active[3], Start = active[4], End = active[5], ASC = ASC)
 		self.updateData(array = data.copy())
 		
 	def Average(self):
@@ -425,6 +447,7 @@ class QTR(QtGui.QMainWindow):
 		self.updateData(array  = data)
 		
 	def Undo(self):
+		'''Відкат до попередніх даних'''
 		Dict = {'cUndo' : 0, 'sUndo' : 1, 'rUndo' : 2}
 		senderName = self.sender().objectName()
 		Type = Dict[senderName]
@@ -434,6 +457,7 @@ class QTR(QtGui.QMainWindow):
 			self.sender().setEnabled(False)
 
 	def Reset(self):
+		'''Скидання історії'''
 		Dict = {'cReset' : 0, 'sReset' : 1, 'rReset' : 2}
 		senderName = self.sender().objectName()
 		Type = Dict[senderName]
@@ -443,6 +467,7 @@ class QTR(QtGui.QMainWindow):
 			self.sender().setEnabled(False)
 
 	def plotCurrent(self, index):
+		'''Побудова поточної вкладки'''
 		if index > 0:
 			Type = index-1
 			if sp.any(self.getData(Type)):
@@ -489,14 +514,14 @@ class QTR(QtGui.QMainWindow):
 			
 	def loadData(self):
 		'''Завантаження даних з файлів'''
-		Dict = {"cLoad" : (0, 'cXColumn', 'cYColumn', 'cMColumn', 'cMCheck','cAutoInterval'),
-				"sLoad" : (1, 'sXColumn', 'sYColumn', 'sMColumn', 'sMCheck','sAutoInterval')}
+		Dict = {"cLoad" : (0, 'cXColumn', 'cYColumn', 'cMColumn', 'cMCheck'),
+				"sLoad" : (1, 'sXColumn', 'sYColumn', 'sMColumn', 'sMCheck')}
 		Tabs = ( ('tab_2', 'tab_3','tab_4'),
 			('tab_3', 'tab_2','tab_4'))
 		FiltersKeys = (('cXFilt','cYFilt'),	('sXFilt','sYFilt'))
 		senderName = self.sender().objectName()
 		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QSpinBox,tmp[1:-2]) + self.findChilds(QtGui.QCheckBox,tmp[-2:])
+		active = (tmp[0],) + self.findChilds(QtGui.QSpinBox,tmp[1:-1]) + self.findChilds(QtGui.QCheckBox,tmp[-1:])
 		data = []
 		XY = sp.zeros((0,2))
 		path = self.Path[active[0]]
@@ -534,7 +559,7 @@ class QTR(QtGui.QMainWindow):
 				self.updateData(array = Array(XY,Type = active[0]), action = 0)
 				tabs = self.findChilds(QtGui.QWidget,Tabs[active[0]])
 				tabs[0].setEnabled(True)
-				active[5].setChecked(True)
+				
 				if tabs[1].isEnabled():
 					tabs[2].setEnabled(True)
 			except (ValueError, IOError, IndexError):
@@ -545,6 +570,7 @@ class QTR(QtGui.QMainWindow):
 		"""Обробка зміни даних"""
 		Buttons = ( ('cUndo', 'cReset'), ('sUndo', 'sReset'),
 			('rUndo', 'rReset'))
+		Types = ['c','s','r']
 		active = self.getData(Type)
 		print("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d [%d,%d]" %\
 			  (active.scaleX, active.scaleY ,active.Type, sp.shape(active)[0],active.scale[0],active.scale[1]))
@@ -556,7 +582,11 @@ class QTR(QtGui.QMainWindow):
 			b_splineSCheck = ['cAutoB_splineS', 'sAutoB_splineS', 'rAutoB_splineS']
 			intervalObj = self.findChild(QtGui.QCheckBox,intervalCheck[Type])
 			b_splineSObj = self.findChild(QtGui.QCheckBox,b_splineSCheck[Type])
-			self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
+			#self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
+			
+			if getattr(self.ui,Types[Type] + 'AllSliceConcat').currentIndex() == 0:
+				getattr(self.ui,Types[Type] + 'Start').setValue(active[:,0].min())
+				getattr(self.ui,Types[Type] + 'End').setValue(active[:,0].max())
 			self.AutoB_splineS(b_splineSObj.checkState(), isSignal = False, senderType = Type )
 			##### Undo/Reset
 			hist = self.dataStack[Type]
@@ -569,11 +599,61 @@ class QTR(QtGui.QMainWindow):
 			
 	def closeEvent(self, event):
 		self.qcut.close()
+		if hasattr(self, 'intensDialog' ):
+			self.intensDialog.close()
 	
 	def lengthChange(self, text):
+		'''Перевірка правильності запису довжини хвилі'''
 		if text:
 			self.LENGTH = text.strip().encode('utf-8')
 		else: print("lengthChange: LengthError")
+	
+	#======================= intens  =============================
+	def calibrChanged(self):
+		text = self.sender().text()
+		K = 0.
+		try:
+			K = float(text)
+		except:
+			K = self.K
+			self.sender().setText(str(K))
+		self.K = K
+		
+	def typeExp(self, index):
+		if index == 0:
+			self.ui.recalcCalibr.setEnabled(True)
+		if index == 1:
+			k = 0
+			try:
+				k = float(self.ui.calibr.text())
+			except:
+				pass
+			if k:
+				self.K = k
+			self.ui.recalcCalibr.setEnabled(False)
+	def recalcCalibr(self):
+		self.calibrDialog.show()
+		
+	def recalcForIntens(self):
+		
+		self.intensDialog.show()
+		print(self.intensDialog.Ai2)
+		
+		#self.ui_intensDialog = Ui_Dialog()
+		#self.ui_intensDialog.setupUi(self)
+		#self.ui_intensDialog.
+	def getIntens(self):
+		Ai2 = self.intensDialog.Ai2
+		K = self.K
+		data = self.getData(2)
+		data[:,0] *= K/sp.pi/Ai2
+		self.updateData(Array(data, scale = data.scale, Type = 2))
+		self.intensDialog.hide()
+	def getCalibr(self):
+		self.K = self.calibrDialog.K
+		self.ui.calibr.setText(str(self.K))
+		self.calibrDialog.hide()
+		self.calibrDialog.qcut.hide()
 	####################################################################
 	########################  Допоміжні методи  ########################
 	####################################################################
@@ -595,17 +675,20 @@ class QTR(QtGui.QMainWindow):
 		
 		emit = False
 		#print(len(self.dataStack[Type]),action)
+		# Запис в історію
 		if action == 1:
 			if sp.any(array) and sp.shape(array)[1] == 2 and sp.shape(array)[0] > 1:
 				self.dataStack[Type].append(array)
 				emit = True
 
 			else: print('updateData: arrayError',sp.any(array) , sp.shape(array)[1] == 2 , sp.shape(array)[0] > 1)
-			
+		
+		# Видалення останнього запису
 		elif action == -1 and len(self.dataStack[Type])>=2:
 			self.dataStack[Type].pop()
 			emit = True
 			#self.setActiveLogScale( Type)
+		# Скидання історії, або запис першого елемента історії
 		elif action == 0:
 			print(0)
 			if sp.any(array) and sp.shape(array)[1] == 2 and sp.shape(array)[0] > 1 and len(self.dataStack[Type])>=1:
@@ -624,6 +707,7 @@ class QTR(QtGui.QMainWindow):
 			for i in self.dataStack[Type]: print(i.scaleX, i.scaleY, i.shape)
 		except:
 			pass
+		# Емітувати повідомлення про зміу даних
 		if emit:
 			self.data_signal.emit(Type, action)
 			self.Plot(self.getData(Type) )
@@ -641,6 +725,7 @@ class QTR(QtGui.QMainWindow):
 		return  sp.multiply.reduce( [ self.filtersDict[i.encode('utf-8')] for i in filters.split(",")] )
 	
 	def uiConnect(self):
+		'''Пов’язвння сигналів з слотами'''
 		self.ui.cFile.clicked.connect(self.getFilePath)
 		self.ui.sFile.clicked.connect(self.getFilePath)
 		self.ui.cLoad.clicked.connect(self.loadData)
@@ -667,9 +752,9 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sB_splineOk.clicked.connect(self.B_spline)
 		self.ui.rB_splineOk.clicked.connect(self.B_spline)
 		self.ui.rButton.clicked.connect(self.ResEval)
-		self.ui.cAutoInterval.toggled[bool].connect(self.AutoInterval)
-		self.ui.sAutoInterval.toggled[bool].connect(self.AutoInterval)
-		self.ui.rAutoInterval.toggled[bool].connect(self.AutoInterval)
+		#self.ui.cAutoInterval.toggled[bool].connect(self.AutoInterval)
+		#self.ui.sAutoInterval.toggled[bool].connect(self.AutoInterval)
+		#self.ui.rAutoInterval.toggled[bool].connect(self.AutoInterval)
 		self.ui.cAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
 		self.ui.sAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
 		self.ui.rAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
@@ -681,7 +766,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
 		self.ui.sFilt.toggled[bool].connect(self.ui.sXFilt.setEnabled)
 		self.ui.sFilt.toggled[bool].connect(self.ui.sYFilt.setEnabled)
-		self.ui.rEvalType.textChanged[str].connect(self.interpTypeChanged)
+		#self.ui.rEvalType.activated[str].connect(self.interpTypeChanged)
 		
 		# Масштабування
 		self.ui.cXLogScale.toggled[bool].connect(self.setNewScale)
@@ -693,17 +778,28 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cY_XScale.toggled[bool].connect(self.setNewScale)
 		self.ui.sY_XScale.toggled[bool].connect(self.setNewScale)
 		self.ui.rY_XScale.toggled[bool].connect(self.setNewScale)
-		
+		self.ui.cAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
+		self.ui.sAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
+		self.ui.rAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
 		#self.close.connect(self.closeEvent)
 		#________________________________________________
 		self.data_signal[int,int].connect(self.dataListener)
 		self.data_signal[int,int].connect(self.setPrevScale)
 		
+		#+++++++++++++++++++  Intensity     ++++++++++++++++++++++++++++++++++++++++++++++++
+		self.ui.typeExp.currentIndexChanged[int].connect(self.typeExp)
+		self.ui.calibr.editingFinished.connect(self.calibrChanged)
+		####################  intensDialog  ################################################
+		self.ui.recalcForIntens.clicked.connect(self.recalcForIntens)
+		self.intensDialog.ui.buttonBox.accepted.connect(self.getIntens)
+		####################  calibrDialog  ################################################
+		self.calibrDialog.ui.ok.clicked.connect(self.getCalibr)
+		self.ui.recalcCalibr.clicked.connect(self.recalcCalibr)
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	def setTool(self,objType, objName): return self.findChild(objType,objName)
 	
 if __name__ == "__main__":
-	signal.signal(signal.SIGINT, signal.SIG_DFL)
+	signal.signal(signal.SIGINT, signal.SIG_DFL) # Застосування Ctrl+C в терміналі
 	app = QtGui.QApplication(sys.argv)
 	win = QTR()
 	win.show()

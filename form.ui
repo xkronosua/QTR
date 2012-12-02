@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>586</width>
-    <height>704</height>
+    <width>507</width>
+    <height>740</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -450,46 +450,42 @@
           <property name="title">
            <string>Масштаб</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_10">
+          <layout class="QHBoxLayout" name="horizontalLayout_15">
            <item>
-            <layout class="QHBoxLayout" name="cScale">
-             <item>
-              <widget class="QCheckBox" name="cY_XScale">
-               <property name="text">
-                <string>Y/X</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="cLogScale">
-               <property name="title">
-                <string>Log10</string>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_3">
-                <item>
-                 <widget class="QCheckBox" name="cXLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>X</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="cYLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Y</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QCheckBox" name="cY_XScale">
+             <property name="text">
+              <string>Y/X</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="cLogScale">
+             <property name="title">
+              <string>Log10</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QCheckBox" name="cXLogScale">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="cYLogScale">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -499,52 +495,57 @@
           <property name="title">
            <string>Межі</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_12">
+          <layout class="QHBoxLayout" name="horizontalLayout_17">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <widget class="QComboBox" name="cAllSliceConcat">
              <item>
-              <widget class="QCheckBox" name="cAutoInterval">
-               <property name="text">
-                <string>авто межі</string>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Увесь діапазон</string>
+              </property>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="cStart">
-               <property name="minimum">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>99999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.010000000000000</double>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Вирізати</string>
+              </property>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="cEnd">
-               <property name="minimum">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>9999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.010000000000000</double>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Обробити частину</string>
+              </property>
              </item>
-            </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="cStart">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="cEnd">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -554,89 +555,85 @@
           <property name="title">
            <string>Обрізання вздовж поліном. апроксимації</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_11">
-           <item>
-            <layout class="QGridLayout" name="gridLayout_6">
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_12">
-               <property name="text">
-                <string>Степ. полін</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string>Кількість вузлів</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_11">
-               <property name="text">
-                <string>%</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="cPolyP">
-               <property name="toolTip">
-                <string>Відсоток від максимального відхилення</string>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.900000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QDoubleSpinBox" name="cPolyN">
-               <property name="toolTip">
-                <string>Розмір порцій, для яких буде проводитись обробка</string>
-               </property>
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>9999.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>80.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QPushButton" name="cPolyOk">
-               <property name="text">
-                <string>Обрізати</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QDoubleSpinBox" name="cPolyM">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="value">
-                <double>6.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>Кількість вузлів</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_12">
+             <property name="text">
+              <string>Степ. полін</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="cPolyOk">
+             <property name="text">
+              <string>Обрізати</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="cPolyP">
+             <property name="toolTip">
+              <string>Відсоток від максимального відхилення</string>
+             </property>
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.900000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="cPolyM">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="value">
+              <double>6.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_11">
+             <property name="text">
+              <string>%</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="cPolyN">
+             <property name="toolTip">
+              <string>Розмір порцій, для яких буде проводитись обробка</string>
+             </property>
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>80.000000000000000</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -646,46 +643,42 @@
           <property name="title">
            <string> Усереднення</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_13">
-           <item>
-            <layout class="QGridLayout" name="gridLayout">
-             <item row="3" column="2">
-              <widget class="QPushButton" name="cAverageOk">
-               <property name="text">
-                <string>Усереднити</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="label_14">
-               <property name="text">
-                <string>крок</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="cAverageStep">
-               <property name="toolTip">
-                <string>Розмір порцій, для яких буде проводитись усереднення</string>
-               </property>
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="minimum">
-                <double>1.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>1.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>2.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_14">
+             <property name="text">
+              <string>крок</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="cAverageStep">
+             <property name="toolTip">
+              <string>Розмір порцій, для яких буде проводитись усереднення</string>
+             </property>
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>2.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="cAverageOk">
+             <property name="text">
+              <string>Усереднити</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -695,96 +688,92 @@
           <property name="title">
            <string>В-spline</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_14">
-           <item>
-            <layout class="QGridLayout" name="gridLayout_7">
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_17">
-               <property name="text">
-                <string>Коеф. згладж.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QDoubleSpinBox" name="cB_splineS">
-               <property name="decimals">
-                <number>4</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.050000000000000</double>
-               </property>
-               <property name="value">
-                <double>1500000.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_16">
-               <property name="text">
-                <string>крок</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="3">
-              <widget class="QPushButton" name="cB_splineOk">
-               <property name="text">
-                <string>Інтерполювати</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="label_4">
-               <property name="text">
-                <string>Степ. полін.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="cB_splineStep">
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>1.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QCheckBox" name="cAutoB_splineS">
-               <property name="text">
-                <string>авто</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QDoubleSpinBox" name="cB_splineK">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <double>5.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>4.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout_7">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>крок</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Коеф. згладж.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Степ. полін.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="cB_splineStep">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="cB_splineS">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.050000000000000</double>
+             </property>
+             <property name="value">
+              <double>1500000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="cB_splineK">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <double>5.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="cAutoB_splineS">
+             <property name="text">
+              <string>авто</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="cB_splineOk">
+             <property name="text">
+              <string>Інтерполювати</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -794,37 +783,33 @@
           <property name="title">
            <string>Медіанний фільтр</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_15">
+          <layout class="QHBoxLayout" name="horizontalLayout_12">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
-             <item>
-              <widget class="QLabel" name="label_18">
-               <property name="text">
-                <string>Розмір ядра:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="cMedFiltS">
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="singleStep">
-                <number>2</number>
-               </property>
-               <property name="value">
-                <number>3</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="cMedFilt">
-               <property name="text">
-                <string>Фільтрувати</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QLabel" name="label_18">
+             <property name="text">
+              <string>Розмір ядра:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="cMedFiltS">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="singleStep">
+              <number>2</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="cMedFilt">
+             <property name="text">
+              <string>Фільтрувати</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -878,46 +863,42 @@
           <property name="title">
            <string>Масштаб</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_23">
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5">
-             <item>
-              <widget class="QCheckBox" name="sY_XScale">
-               <property name="text">
-                <string>Y/X</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="sLogScale">
-               <property name="title">
-                <string>Log10</string>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_6">
-                <item>
-                 <widget class="QCheckBox" name="sYLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Y</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="sXLogScale">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>X</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QCheckBox" name="sY_XScale">
+             <property name="text">
+              <string>Y/X</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="sLogScale">
+             <property name="title">
+              <string>Log10</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
+              <item>
+               <widget class="QCheckBox" name="sYLogScale">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="sXLogScale">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -927,52 +908,57 @@
           <property name="title">
            <string>Межі</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_22">
+          <layout class="QHBoxLayout" name="horizontalLayout_9">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_17">
+            <widget class="QComboBox" name="sAllSliceConcat">
              <item>
-              <widget class="QCheckBox" name="sAutoInterval">
-               <property name="text">
-                <string>авто межі</string>
-               </property>
-               <property name="checked">
-                <bool>false</bool>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Увесь діапазон</string>
+              </property>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="sStart">
-               <property name="minimum">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>99999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.010000000000000</double>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Вирізати</string>
+              </property>
              </item>
              <item>
-              <widget class="QDoubleSpinBox" name="sEnd">
-               <property name="minimum">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>9999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.010000000000000</double>
-               </property>
-              </widget>
+              <property name="text">
+               <string>Обробити частину</string>
+              </property>
              </item>
-            </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="sStart">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="sEnd">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -982,83 +968,79 @@
           <property name="title">
            <string>Обрізання вздовж поліном. апроксимації</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_20">
-           <item>
-            <layout class="QGridLayout" name="gridLayout_10">
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_22">
-               <property name="text">
-                <string>Степ. полін</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_23">
-               <property name="text">
-                <string>Кількість вузлів</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_24">
-               <property name="text">
-                <string>%</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="sPolyP">
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.900000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QDoubleSpinBox" name="sPolyN">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>9999.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>80.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QPushButton" name="sPolyOk">
-               <property name="text">
-                <string>Обрізати</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QDoubleSpinBox" name="sPolyM">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="value">
-                <double>6.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout_10">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>Кількість вузлів</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_24">
+             <property name="text">
+              <string>%</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_22">
+             <property name="text">
+              <string>Степ. полін</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="sPolyN">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>80.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="sPolyP">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.900000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="sPolyM">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="value">
+              <double>6.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="sPolyOk">
+             <property name="text">
+              <string>Обрізати</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1068,43 +1050,39 @@
           <property name="title">
            <string> Усереднення</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_24">
+          <layout class="QHBoxLayout" name="horizontalLayout_19">
            <item>
-            <layout class="QGridLayout" name="gridLayout_3">
-             <item row="3" column="2">
-              <widget class="QPushButton" name="sAverageOk">
-               <property name="text">
-                <string>Усереднити</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="label_26">
-               <property name="text">
-                <string>крок</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="sAverageStep">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="minimum">
-                <double>1.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>1.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>2.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QDoubleSpinBox" name="sAverageStep">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="minimum">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>1.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>2.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_26">
+             <property name="text">
+              <string>крок</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="sAverageOk">
+             <property name="text">
+              <string>Усереднити</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1114,96 +1092,92 @@
           <property name="title">
            <string>В-spline</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_19">
-           <item>
-            <layout class="QGridLayout" name="gridLayout_9">
-             <item row="0" column="2">
-              <widget class="QLabel" name="label_20">
-               <property name="text">
-                <string>Коеф. згладж.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QDoubleSpinBox" name="sB_splineS">
-               <property name="decimals">
-                <number>4</number>
-               </property>
-               <property name="minimum">
-                <double>0.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.050000000000000</double>
-               </property>
-               <property name="value">
-                <double>1500000.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_21">
-               <property name="text">
-                <string>крок</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="3">
-              <widget class="QPushButton" name="sB_splineOk">
-               <property name="text">
-                <string>Інтерполювати</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="label_5">
-               <property name="text">
-                <string>Степ. полін.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="sB_splineStep">
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>999999999.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-               <property name="value">
-                <double>1.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2">
-              <widget class="QCheckBox" name="sAutoB_splineS">
-               <property name="text">
-                <string>авто</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QDoubleSpinBox" name="sB_splineK">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <double>5.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>4.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_21">
+             <property name="text">
+              <string>крок</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_20">
+             <property name="text">
+              <string>Коеф. згладж.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Степ. полін.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="sB_splineStep">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="sB_splineS">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.050000000000000</double>
+             </property>
+             <property name="value">
+              <double>1500000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="sB_splineK">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <double>5.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="sAutoB_splineS">
+             <property name="text">
+              <string>авто</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="sB_splineOk">
+             <property name="text">
+              <string>Інтерполювати</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1213,37 +1187,33 @@
           <property name="title">
            <string>Медіанний фільтр</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_21">
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_15">
-             <item>
-              <widget class="QLabel" name="label_25">
-               <property name="text">
-                <string>Розмір ядра:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="sMedFiltS">
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="singleStep">
-                <number>2</number>
-               </property>
-               <property name="value">
-                <number>3</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="sMedFilt">
-               <property name="text">
-                <string>Фільтрувати</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
+          <layout class="QGridLayout" name="gridLayout_9">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_25">
+             <property name="text">
+              <string>Розмір ядра:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QSpinBox" name="sMedFiltS">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="singleStep">
+              <number>2</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QPushButton" name="sMedFilt">
+             <property name="text">
+              <string>Фільтрувати</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -1275,13 +1245,22 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="rEvalType">
-            <property name="toolTip">
-             <string>Тип інтерполяції для неузгоджених вузлів. Допустимі значення: linear, zero, nearest</string>
-            </property>
-            <property name="text">
-             <string>linear</string>
-            </property>
+           <widget class="QComboBox" name="rEvalType">
+            <item>
+             <property name="text">
+              <string>linear</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>nearest</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>zero</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item>
@@ -1307,213 +1286,288 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="sLogScale_2">
-          <item>
-           <widget class="QCheckBox" name="rY_XScale">
-            <property name="text">
-             <string>Y_X</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="rLogScale">
-            <property name="title">
-             <string>Log10</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_13">
-             <item>
-              <widget class="QCheckBox" name="rXLogScale">
-               <property name="text">
-                <string>X</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QCheckBox" name="rYLogScale">
-               <property name="text">
-                <string>Y</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_16">
-          <item>
-           <widget class="QCheckBox" name="rAutoInterval">
-            <property name="text">
-             <string>авто межі</string>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="rStart">
-            <property name="minimum">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>9999999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.500000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="rEnd">
-            <property name="minimum">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>9999999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.500000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_51">
-          <property name="text">
-           <string>В-spline</string>
+         <widget class="QGroupBox" name="groupBox_17">
+          <property name="title">
+           <string>Масштаб</string>
           </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_16">
+           <item>
+            <widget class="QCheckBox" name="rY_XScale">
+             <property name="text">
+              <string>Y_X</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="rLogScale">
+             <property name="title">
+              <string>Log10</string>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_13">
+              <item>
+               <widget class="QCheckBox" name="rXLogScale">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="rYLogScale">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout_17">
-          <item row="0" column="3">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Степ. полін.</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_49">
-            <property name="text">
-             <string>Коеф. згладж.</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QDoubleSpinBox" name="rB_splineS">
-            <property name="decimals">
-             <number>4</number>
-            </property>
-            <property name="minimum">
-             <double>0.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>999999999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.010000000000000</double>
-            </property>
-            <property name="value">
-             <double>10.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="label_50">
-            <property name="text">
-             <string>крок</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QPushButton" name="rB_splineOk">
-            <property name="text">
-             <string>Інтерполювати</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="rB_splineStep">
-            <property name="decimals">
-             <number>4</number>
-            </property>
-            <property name="minimum">
-             <double>0.001000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>99999.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.500000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QCheckBox" name="rAutoB_splineS">
-            <property name="text">
-             <string>авто</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QDoubleSpinBox" name="rB_splineK">
-            <property name="decimals">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <double>5.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>4.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <widget class="QGroupBox" name="groupBox_18">
+          <property name="title">
+           <string>Межі</string>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_18">
+           <item>
+            <widget class="QComboBox" name="rAllSliceConcat">
+             <item>
+              <property name="text">
+               <string>Увесь діапазон</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Вирізати</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Обробити частину</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="rStart">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="rEnd">
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.010000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_31">
-          <property name="text">
+         <widget class="QGroupBox" name="groupBox_19">
+          <property name="title">
+           <string>B-spline</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_8">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_50">
+             <property name="text">
+              <string>крок</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_49">
+             <property name="text">
+              <string>Коеф. згладж.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLabel" name="label_8">
+             <property name="text">
+              <string>Степ. полін.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QDoubleSpinBox" name="rB_splineStep">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.001000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.500000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDoubleSpinBox" name="rB_splineS">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>10.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QDoubleSpinBox" name="rB_splineK">
+             <property name="decimals">
+              <number>0</number>
+             </property>
+             <property name="maximum">
+              <double>5.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="rAutoB_splineS">
+             <property name="text">
+              <string>авто</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QPushButton" name="rB_splineOk">
+             <property name="text">
+              <string>Інтерполювати</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_20">
+          <property name="title">
            <string>Медіанний фільтр</string>
           </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <item>
+            <widget class="QLabel" name="label_30">
+             <property name="text">
+              <string>Розмір ядра</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="rMedFiltS">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="singleStep">
+              <number>2</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="rMedFilt">
+             <property name="text">
+              <string>Фільтрувати</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_14">
-          <item>
-           <widget class="QLabel" name="label_30">
-            <property name="text">
-             <string>Розмір ядра</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QSpinBox" name="rMedFiltS">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="singleStep">
-             <number>2</number>
-            </property>
-            <property name="value">
-             <number>3</number>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="rMedFilt">
-            <property name="text">
-             <string>Фільтрувати</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <widget class="QGroupBox" name="groupBox_16">
+          <property name="title">
+           <string>Інтенсивність</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Тип експерименту:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="typeExp">
+             <item>
+              <property name="text">
+               <string>CW</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>PICO</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_9">
+             <property name="text">
+              <string>Коефіцієнт калібровки:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="calibr"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QPushButton" name="recalcCalibr">
+             <property name="text">
+              <string>Обчислити коеф. калібр.</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QPushButton" name="recalcForIntens">
+             <property name="text">
+              <string>Інтенсивність</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_10">

@@ -1,6 +1,6 @@
 
 import scipy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import sys
 
 from PyQt4 import QtCore, QtGui
@@ -14,7 +14,8 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 	typeColorDict = ['b', 'g', 'k' ]
 	color = 'b'
 	tempShape = (0,0)
-	Type, logScale = 0, [0,0]
+	Type, logScale = None, None
+	paramKeep = []
 	data_signal = QtCore.pyqtSignal( name = "dataChanged")
 	def __init__(self, parent = None):
 		
@@ -77,25 +78,33 @@ class DesignerMainWindow(QtGui.QMainWindow, Ui_MplMainWindow):
 	###########################################################################
 
 		
-	def set_data(self,Data = np.zeros((0,2))):
+	def set_data(self,Data = np.zeros((0,2)), params = []):
 		self.tdata = Data.copy()
 		self.tempShape = np.shape(self.tdata)
 		self.update_graph()
-		self.Type = Data.Type
-		self.logScale = Data.scale
+		if len(params)>=1:
+			self.paramKeep = params
+		if hasattr(Data, 'Type') and hasattr(Data, 'scale'):
+			self.Type = Data.Type
+			self.logScale = Data.scale
 
-	def Plot(self,Data = np.zeros((0,2))):
-		self.color = self.typeColorDict[Data.Type]
-		self.set_data(Data)
+	def Plot(self,Data = np.zeros((0,2)), params = []):
+		if hasattr(Data, 'Type') and hasattr(Data, 'scale'):
+			self.color = self.typeColorDict[Data.Type]
+		else:
+			self.color = self.typeColorDict[1]
+		self.set_data(Data, params = params)
 		
 		#self.Rescale()
 	
 	def getData(self,pr=""):
 		if pr:
 			print(pr)
-
-		return self.tdata, self.Type, self.logScale 
-		
+		if not self.Type is None and not self.logScale is None:
+			return self.tdata, self.Type, self.logScale 
+		elif len(self.paramKeep)>=1:
+			return self.tdata, self.paramKeep
+		else: return self.tdata
 	# Rescale
 	def Rescale(self):
 		

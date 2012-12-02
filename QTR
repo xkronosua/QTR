@@ -1,1 +1,4 @@
-QTR_v0.2.3.py
+#!/bin/bash
+
+cd ~/work/QTR/
+./QTR_v0.2.*.py
