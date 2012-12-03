@@ -41,7 +41,6 @@ class CalibrDialog(QtGui.QDialog):
 			for data in self.data:
 				X.append(data[0][:,1].mean())
 				Y.append(data[1])
-			print(X,Y)
 			k = sp.polyfit(X, Y, 1)[0]
 			if k:
 				self.K = k
@@ -63,7 +62,6 @@ class CalibrDialog(QtGui.QDialog):
 					power = float(name)/100.
 					data.append([tmp, power])
 				except: pass
-			print(data)
 			if len(data)>=1:
 				self.data = data
 				self.ui.calc.setEnabled(True)

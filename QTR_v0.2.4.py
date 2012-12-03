@@ -553,9 +553,14 @@ class QTR(QtGui.QMainWindow):
 					XY = sp.array( [data[:,xc], data[:,yc] ]).T
 				XY = XY[XY[:,0] > 0]
 				XY = XY[XY[:,1] > 0]
+				if getattr(self.ui,senderName[0]+'CutForward').isChecked():
+					p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
+					print(p)
+					XY = XY[:p,:]
 				XY = XY[sp.argsort(XY[:,0])]
 				XY[:,0] = XY[:,0]/self.filtList[active[0]][0]
 				XY[:,1] = XY[:,1]/self.filtList[active[0]][1]
+				
 				self.updateData(array = Array(XY,Type = active[0]), action = 0)
 				tabs = self.findChilds(QtGui.QWidget,Tabs[active[0]])
 				tabs[0].setEnabled(True)
