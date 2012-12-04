@@ -4,7 +4,7 @@ import sys, os, signal
 from PyQt4 import QtGui, QtCore, uic
 import scipy as sp
 from scipy.signal import medfilt
-import glue_designer as qcut
+from glue_designer import  DesignerMainWindow
 from form import Ui_MainWindow
 from IntensDialog import IntensDialog
 from calibr import CalibrDialog
@@ -70,17 +70,21 @@ class QTR(QtGui.QMainWindow):
 	# Сигнал про зміну в даних
 	data_signal = QtCore.pyqtSignal(int, int, name = "dataChanged")
 	
-	def __init__(self):
-		super(QTR, self).__init__()
+	def __init__(self, parent = None):
+		super(QTR, self).__init__(parent)
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		
 		self.fileDialog = QtGui.QFileDialog(self)
 		
-		self.qcut = qcut.DesignerMainWindow()
+		self.qcut = DesignerMainWindow(parent = self)
+		
+		self.ui.mpl.canvas.ax.plot([0,1],[5,4])
+		self.ui.mpl.canvas.draw()
+		#self.qcut.show()
 		# Відкат даних із QCut
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
-		self.qcut.show()
+		#self.qcut.show()
 		self.intensDialog = IntensDialog()
 		self.calibrDialog = CalibrDialog(self.Root)
 		
@@ -323,51 +327,7 @@ class QTR(QtGui.QMainWindow):
 				print("AutoB_splineS: SmoothParamError")
 		else:
 			active[1].setEnabled(True)
-	'''	
-	def AutoInterval(self, state, isSignal = True, senderType = 0):
-		""" визначаємо мінімальний спільний інтервал по Х"""
-		Dict = {
-			'cAutoInterval' : (0, self.ui.cStart, self.ui.cEnd),
-			'sAutoInterval' : (1, self.ui.sStart, self.ui.sEnd),
-			'rAutoInterval' : (2, self.ui.rStart, self.ui.rEnd)}
-		senderName = ''
-		if isSignal:
-			senderName = self.sender().objectName()
-		else:
-			Names = ['c', 's', 'r']
-			senderName = Names[senderType]+'AutoInterval'
-		active = Dict[senderName]
-		Min, Max = 0, 0
-		if state and active[0] == 0:
-			active[1].setEnabled(False); active[2].setEnabled(False)
-			if sp.any(self.getData(1)):
-				cMin, cMax = self.getData(0)[:,0].min(), self.getData(0)[:,0].max()
-				sMin, sMax = self.getData(1)[:,0].min(), self.getData(1)[:,0].max()
-				Max = min(cMax, sMax)
-				Min = max(cMin, sMin)
-			else: Min, Max = self.getData(0)[:,0].min(), self.getData(0)[:,0].max()
-		elif not state and active[0] == 0:
-			active[1].setEnabled(True); active[2].setEnabled(True)
-		elif state and active[0] == 1:
-			active[1].setEnabled(False); active[2].setEnabled(False)
-			if sp.any(self.getData(0)):
-				cMin, cMax = self.getData(0)[:,0].min(), self.getData(0)[:,0].max()
-				sMin, sMax = self.getData(1)[:,0].min(), self.getData(1)[:,0].max()
-				Max = min(cMax, sMax)
-				Min = max(cMin, sMin)
-			else: Min, Max = self.getData(1)[:,0].min(), self.getData(1)[:,0].max()
-		elif not state and active[0] == 1:
-			active[1].setEnabled(True); active[2].setEnabled(True)
-		elif state and sp.any(self.getData(2)):
-			active[1].setEnabled(False); active[2].setEnabled(False)
-			Min, Max = self.getData(2)[:,0].min(), self.getData(2)[:,0].max()
-		elif not state and sp.any(self.getData(2)):
-			active[1].setEnabled(True); active[2].setEnabled(True)
-
-		if Max and Min:
-			active[1].setValue(Min)
-			active[2].setValue(Max)
-	'''
+	
 	def ResEval(self):
 		""" Обчислюємо результат."""
 		'''
@@ -472,9 +432,9 @@ class QTR(QtGui.QMainWindow):
 			Type = index-1
 			if sp.any(self.getData(Type)):
 				active = self.getData(Type);
-				if not self.qcut.isVisible():
-					self.qcut.setVisible(True)
-				else: pass
+				#if not self.qcut.isVisible():
+				#	self.qcut.setVisible(True)
+				#else: pass
 				self.Plot(active)
 			else: pass
 		else: pass
@@ -603,7 +563,7 @@ class QTR(QtGui.QMainWindow):
 			buttons[1].setEnabled(state)
 			
 	def closeEvent(self, event):
-		self.qcut.close()
+		#self.qcut.close()
 		if hasattr(self, 'intensDialog' ):
 			self.intensDialog.close()
 	
