@@ -225,6 +225,41 @@ class QTR(QtGui.QMainWindow):
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
+	def applyFilt(self):
+		'''Застосування фільтрів із бази для відповідних XY'''
+		key = self.sender().objectName()[0]
+		index = self.Types[key]
+		active = self.findUi([key + i + 'Filt' for i in ('X','Y')])
+		if not len(self.filtersDict)>0:
+			self.filtersDict = self.getFilters(length = self.LENGTH)
+		filtBaseNames = list(self.filtersDict.keys())
+		print(filtBaseNames)
+		M = [1.,1.]
+		for i in (0,1):
+			Filt = active[i].text().upper().strip().replace(" ","").replace('+',',').split(',')
+			check = []
+			if len(Filt)>=1:
+				for j in Filt:
+					print(j)
+					check.append(j.encode('utf-8') in filtBaseNames)
+			else:
+				Filt = ['1']
+				check = [1.]
+			print(check)
+			check = sp.multiply.reduce(check)
+			print(check)
+			temp = 1.
+			if check:
+				M[i] = self.resFilters(Filt)
+				
+		if M[0]!=1. or M[1]!=1.:
+			for i in [0,1]:	self.filtList[index][i] = M[i]
+			data = self.getData(index)
+			data[:,0] = data[:,0]/self.filtList[index][0]
+			data[:,1] = data[:,1]/self.filtList[index][1]
+			self.updateData(array = data)
+			print("Filters [X,Y]:",self.filtList[index])
+	
 	def AllSliceConcat(self, index):
 
 		key = self.sender().objectName()[0]
@@ -249,9 +284,8 @@ class QTR(QtGui.QMainWindow):
 				ui_obj[0].setChecked(False)
 				ui_obj[1].setChecked(scale[0])
 				ui_obj[2].setChecked(scale[1])
-			
-			ui_obj[0].setEnabled(scale == [0,0])
-			ui_obj[3].setEnabled((scale == [0,0]) or 1 in scale )
+			ui_obj[0].setEnabled( not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
+			ui_obj[3].setEnabled( not ui_obj[0].isChecked() )
 				
 			for t in ui_obj[:-1]:
 				t.toggled[bool].connect(self.setNewScale)
@@ -259,31 +293,32 @@ class QTR(QtGui.QMainWindow):
 		
 	# Змінити масштаб на новий
 	def setNewScale(self, state):
-		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale' )
+		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
 		Types = {'c' : 0, 's' : 1, 'r' : 2} 
 		senderName = self.sender().objectName()
 		t, Type = senderName[0], Types[senderName[0]]
 		data = self.getData(Type)
 		Scale = data.Scale()
+		ui_obj = self.findUi([t + i for i in Names])
 		if senderName[1:] == Names[0]:
-			ui_obj = getattr(self.ui, t + "LogScale")
+			#ui_obj = getattr(self.ui, t + "LogScale")
 			if state:
 				Scale[1] = 2
 				data[:,1] = data[:,1] / data[:,0]
 			else:
 				Scale[1] = 0
 				data[:,1] = data[:,1] * data[:,0]
-			ui_obj.setEnabled(not state)
+			ui_obj[3].setEnabled(not ui_obj[0].isChecked())
 		else:
 			index = bool(senderName[1] != "X")
-			ui_obj = getattr(self.ui, t + Names[0])
+			#ui_obj = getattr(self.ui, t + Names[0])
 			if Scale[index] != state:
 				if state == 1:
 					data[:,index] = sp.log10(data[:,index])
 				else:
 					data[:,index] = sp.power(10.,data[:,index])
 				Scale[index] = int(state)
-				ui_obj.setEnabled(Scale == [0,0])
+				ui_obj[0].setEnabled(not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
 		self.updateData(array = Array(data, Type = Type, scale = Scale))
 
 	def Save(self):
@@ -474,20 +509,20 @@ class QTR(QtGui.QMainWindow):
 			
 	def loadData(self):
 		'''Завантаження даних з файлів'''
-		Dict = {"cLoad" : (0, 'cXColumn', 'cYColumn', 'cMColumn', 'cMCheck'),
-				"sLoad" : (1, 'sXColumn', 'sYColumn', 'sMColumn', 'sMCheck')}
 		Tabs = ( ('tab_2', 'tab_3','tab_4'),
 			('tab_3', 'tab_2','tab_4'))
-		FiltersKeys = (('cXFilt','cYFilt'),	('sXFilt','sYFilt'))
+		uiObj = ('XColumn', 'YColumn', 'MColumn', 'MCheck')
+		
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QSpinBox,tmp[1:-1]) + self.findChilds(QtGui.QCheckBox,tmp[-1:])
+		key = senderName[0]
+		active = [self.Types[key]] + self.findUi( [key + i for i in uiObj])
 		data = []
 		XY = sp.zeros((0,2))
 		path = self.Path[active[0]]
 		if os.path.exists(path):
 			try:
 				data = sp.loadtxt(path)
+				'''
 				activeFilt = self.findChilds(QtGui.QLineEdit, FiltersKeys[active[0]])
 				filtNames = ''
 				
@@ -504,6 +539,7 @@ class QTR(QtGui.QMainWindow):
 				else:
 					self.filtList[active[0]][:] = [1., 1.]
 				print("Filters [X,Y]:",self.filtList[active[0]])
+				'''
 				xc = active[1].value()
 				yc = active[2].value()
 				mc = active[3].value()
@@ -518,11 +554,12 @@ class QTR(QtGui.QMainWindow):
 					print(p)
 					XY = XY[:p,:]
 				XY = XY[sp.argsort(XY[:,0])]
+				'''
 				XY[:,0] = XY[:,0]/self.filtList[active[0]][0]
 				XY[:,1] = XY[:,1]/self.filtList[active[0]][1]
-				
+				'''
 				self.updateData(array = Array(XY,Type = active[0]), action = 0)
-				tabs = self.findChilds(QtGui.QWidget,Tabs[active[0]])
+				tabs = self.findUi(Tabs[active[0]])
 				tabs[0].setEnabled(True)
 				
 				if tabs[1].isEnabled():
@@ -687,7 +724,7 @@ class QTR(QtGui.QMainWindow):
 	
 	def resFilters(self,filters):
 		"""Перерахунок для різних комбінацій фільтрів"""
-		return  sp.multiply.reduce( [ self.filtersDict[i.encode('utf-8')] for i in filters.split(",")] )
+		return  sp.multiply.reduce( [ self.filtersDict[i.encode('utf-8')] for i in filters] )
 	
 	def uiConnect(self):
 		'''Пов’язвння сигналів з слотами'''
@@ -727,10 +764,14 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
 		self.ui.LENGTH.textChanged[str].connect(self.lengthChange)
+		'''
 		self.ui.cFilt.toggled[bool].connect(self.ui.cXFilt.setEnabled)
 		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
 		self.ui.sFilt.toggled[bool].connect(self.ui.sXFilt.setEnabled)
 		self.ui.sFilt.toggled[bool].connect(self.ui.sYFilt.setEnabled)
+		'''
+		self.ui.cFiltOk.clicked.connect(self.applyFilt)
+		self.ui.sFiltOk.clicked.connect(self.applyFilt)
 		#self.ui.rEvalType.activated[str].connect(self.interpTypeChanged)
 		
 		# Масштабування
