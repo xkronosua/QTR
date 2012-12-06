@@ -70,7 +70,7 @@
       </property>
       <property name="baseSize">
        <size>
-        <width>430</width>
+        <width>312</width>
         <height>0</height>
        </size>
       </property>
@@ -215,6 +215,13 @@
          </widget>
         </item>
         <item>
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="groupBox_2">
           <property name="title">
            <string>Зразок</string>
@@ -256,7 +263,7 @@
                 <number>0</number>
                </property>
                <property name="maximum">
-                <number>100</number>
+                <number>50</number>
                </property>
                <property name="value">
                 <number>1</number>
@@ -269,7 +276,7 @@
                 <number>0</number>
                </property>
                <property name="maximum">
-                <number>100</number>
+                <number>50</number>
                </property>
                <property name="value">
                 <number>4</number>
@@ -282,7 +289,7 @@
                 <number>0</number>
                </property>
                <property name="maximum">
-                <number>100</number>
+                <number>50</number>
                </property>
                <property name="value">
                 <number>5</number>
@@ -354,34 +361,34 @@
          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="groupBox_3">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>175</height>
-           </size>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_3">
           <property name="title">
            <string>Додаткові параметри</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_9">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_4">
-             <item>
-              <widget class="QLabel" name="label_32">
-               <property name="text">
-                <string>Довжина хвилі: </string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="LENGTH">
-               <property name="text">
-                <string>1064</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
+            <widget class="QLabel" name="label_32">
+             <property name="text">
+              <string>Довжина хвилі: </string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="LENGTH">
+             <property name="text">
+              <string>1064</string>
+             </property>
+             <property name="maxLength">
+              <number>50</number>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -425,12 +432,6 @@
           <property name="enabled">
            <bool>true</bool>
           </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>82</height>
-           </size>
-          </property>
           <property name="title">
            <string>Масштаб</string>
           </property>
@@ -443,10 +444,14 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="cLogScale">
-             <property name="title">
-              <string>Log10</string>
+            <widget class="QLabel" name="label_31">
+             <property name="text">
+              <string>log10:</string>
              </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="cLogScale" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
                <widget class="QCheckBox" name="cXLogScale">
@@ -502,10 +507,10 @@
            <item>
             <widget class="QDoubleSpinBox" name="cStart">
              <property name="minimum">
-              <double>0.010000000000000</double>
+              <double>-1000.000000000000000</double>
              </property>
              <property name="maximum">
-              <double>99999999.000000000000000</double>
+              <double>9999.000000000000000</double>
              </property>
              <property name="singleStep">
               <double>0.500000000000000</double>
@@ -518,7 +523,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="cEnd">
              <property name="minimum">
-              <double>0.010000000000000</double>
+              <double>-1000.000000000000000</double>
              </property>
              <property name="maximum">
               <double>9999999.000000000000000</double>
@@ -703,7 +708,7 @@
               <double>0.001000000000000</double>
              </property>
              <property name="maximum">
-              <double>999999999.000000000000000</double>
+              <double>99999.000000000000000</double>
              </property>
              <property name="singleStep">
               <double>0.500000000000000</double>
@@ -816,6 +821,9 @@
              <property name="enabled">
               <bool>true</bool>
              </property>
+             <property name="maxLength">
+              <number>100</number>
+             </property>
             </widget>
            </item>
            <item>
@@ -829,6 +837,9 @@
             <widget class="QLineEdit" name="cYFilt">
              <property name="enabled">
               <bool>true</bool>
+             </property>
+             <property name="maxLength">
+              <number>100</number>
              </property>
             </widget>
            </item>
@@ -900,10 +911,14 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="sLogScale">
-             <property name="title">
-              <string>Log10</string>
+            <widget class="QLabel" name="label_34">
+             <property name="text">
+              <string>log10:</string>
              </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="sLogScale" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
                <widget class="QCheckBox" name="sYLogScale">
@@ -959,7 +974,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="sStart">
              <property name="minimum">
-              <double>0.010000000000000</double>
+              <double>-1000.000000000000000</double>
              </property>
              <property name="maximum">
               <double>99999999.000000000000000</double>
@@ -975,7 +990,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="sEnd">
              <property name="minimum">
-              <double>0.010000000000000</double>
+              <double>1000.000000000000000</double>
              </property>
              <property name="maximum">
               <double>9999999.000000000000000</double>
@@ -984,7 +999,7 @@
               <double>0.500000000000000</double>
              </property>
              <property name="value">
-              <double>0.010000000000000</double>
+              <double>1000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -1371,10 +1386,14 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="rLogScale">
-             <property name="title">
-              <string>Log10</string>
+            <widget class="QLabel" name="label_35">
+             <property name="text">
+              <string>Log10:</string>
              </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QWidget" name="rLogScale" native="true">
              <layout class="QHBoxLayout" name="horizontalLayout_13">
               <item>
                <widget class="QCheckBox" name="rXLogScale">
@@ -1622,7 +1641,11 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QLineEdit" name="calibr"/>
+            <widget class="QLineEdit" name="calibr">
+             <property name="maxLength">
+              <number>50</number>
+             </property>
+            </widget>
            </item>
            <item row="2" column="0">
             <widget class="QPushButton" name="recalcCalibr">
@@ -1663,6 +1686,145 @@
       </widget>
      </widget>
     </item>
+    <item>
+     <widget class="QFrame" name="frame">
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_21">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinimumSize</enum>
+         </property>
+         <item>
+          <widget class="QCheckBox" name="mplactionCut_by_line">
+           <property name="text">
+            <string>Лінія</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="mplactionCut_by_rect">
+           <property name="text">
+            <string>Прямокутник</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>Розмір точок: </string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="mplhorizontalSlider">
+           <property name="value">
+            <number>3</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="autoScale">
+           <property name="text">
+            <string>Автомасштаб</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_15">
+           <property name="text">
+            <string>Log10:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="xLogScale">
+           <property name="text">
+            <string>X</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="yLogScale">
+           <property name="text">
+            <string>Y</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="MplWidget" name="mpl" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -1672,154 +1834,6 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-  </widget>
-  <widget class="QDockWidget" name="dockWidget_2">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="floating">
-    <bool>false</bool>
-   </property>
-   <property name="features">
-    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="MplWidget" name="mpl" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_21">
-       <property name="spacing">
-        <number>1</number>
-       </property>
-       <property name="sizeConstraint">
-        <enum>QLayout::SetMinimumSize</enum>
-       </property>
-       <item>
-        <widget class="QCheckBox" name="mplactionCut_by_line">
-         <property name="text">
-          <string>Лінія</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="mplactionCut_by_rect">
-         <property name="text">
-          <string>Прямокутник</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_13">
-         <property name="text">
-          <string>Розмір точок: </string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSlider" name="mplhorizontalSlider">
-         <property name="value">
-          <number>3</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="autoScale">
-         <property name="text">
-          <string>Автомасштаб</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_15">
-         <property name="text">
-          <string>Log10:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="xLogScale">
-         <property name="text">
-          <string>X</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="yLogScale">
-         <property name="text">
-          <string>Y</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </widget>
   </widget>
  </widget>
  <customwidgets>
