@@ -57,9 +57,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 
 		self.ui.yLogScale.toggled[bool].connect(self.set_y_log)
 
-		#QtCore.QObject.connect(self.ui.mplcheckBox_3,
-		#					   QtCore.SIGNAL("stateChanged(int)"),
-		#					   self.set_y_x)
+		
 
 		self.ui.autoScale.toggled[bool].connect(self.set_autoScale)
 
@@ -100,8 +98,8 @@ class DesignerMainWindow(QtGui.QWidget ):
 		
 		try:
 			XY = self.tdata
-			xMargin = ( XY[:,0].max() - XY[:,0].min() ) * 0.05
-			yMargin =  ( XY[:,1].max() - XY[:,1].min() ) * 0.05
+			xMargin = abs( XY[:,0].max() - XY[:,0].min() ) * 0.05
+			yMargin =  abs( XY[:,1].max() - XY[:,1].min() ) * 0.05
 			
 			self.ui.mpl.canvas.ax.set_xlim( (XY[:,0].min() - xMargin,\
 				XY[:,0].max() + xMargin) )
@@ -124,29 +122,32 @@ class DesignerMainWindow(QtGui.QWidget ):
 		# save current plot variables
 		if self.autoscale:
 			self.Rescale()
-
+		
 		if self.background != None:
 			# save initial x and y limits
 			self.xl = self.ui.mpl.canvas.ax.get_xlim()
 			self.yl = self.ui.mpl.canvas.ax.get_ylim()
-			
+		
 		# clear the axes
 		self.ui.mpl.canvas.ax.clear()
 		# plot graph
 		self.pltdata, = self.ui.mpl.canvas.ax.plot(self.tdata[:, 0],\
 			self.tdata[:, 1],self.color + 'o',markersize=self.ui.mplhorizontalSlider.value())
-		# creating line
-		self.line, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
-											 animated=True
-											)
-		# creating rectangle
-		self.rectab, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
+		
+		if not hasattr(self, 'line'):
+			# creating line
+			self.line, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
 											 animated=True)
-		self.rectbc, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
-													 animated=True)
-		self.rectcd, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
-													 animated=True)
-		self.rectda, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
+		
+		if not hasattr(self.ui, 'rectab') :								
+			# creating rectangle
+			self.rectab, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
+												 animated=True)
+			self.rectbc, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
+														 animated=True)
+			self.rectcd, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
+														 animated=True)
+			self.rectda, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
 													 animated=True)
 		# TODO: create a circle
 		# enable grid
@@ -157,35 +158,31 @@ class DesignerMainWindow(QtGui.QWidget ):
 			# set x and y limits
 			self.ui.mpl.canvas.ax.set_xlim(self.xl)
 			self.ui.mpl.canvas.ax.set_ylim(self.yl)
-				
-		# log x log y scale
-		#self.set_x_log(flag=)
-		#self.set_y_log(flag=1)
-		#self.set_y_x(flag=1)
+		
+		
+		self.set_x_log(self.ui.xLogScale.isChecked(), redraw = False)
+		self.set_y_log(self.ui.yLogScale.isChecked(), redraw = False)
 		# force an image redraw
 		self.ui.mpl.canvas.draw()
+		
 		# copy background
 		self.background = \
 			self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
 		# make edit buttons enabled
-		#self.ui.mplactionSave.setEnabled(True)
-		#self.ui.mplactionUndo.setEnabled(True)
-		# self.ui.mplactionRescale.setEnabled(True)
-		#self.ui.mplactionRestore.setEnabled(True)
-		self.ui.mplactionCut_by_line.setEnabled(True)
-		self.ui.mplactionCut_by_rect.setEnabled(True)
-		#self.ui.mplactionPoint.setEnabled(True)
-		#print(np.shape(self.tdata), np.shape(self.data), np.shape(self.sdata), self.tempShape, self.index)
+		
+		self.ui.mplactionCut_by_line.setEnabled(self.background != None)
+		self.ui.mplactionCut_by_rect.setEnabled(self.background != None)
+
 		if np.shape(self.tdata) != self.tempShape :
 			self.tempShape = np.shape(self.tdata)
 			self.data_signal.emit()
-			#print(self.index)
+
 		
 
 	###########################################################################
 	####################### Secondary plot routines ###########################
 	###########################################################################
-	def set_x_log(self, flag):
+	def set_x_log(self, flag, redraw = True):
 		"""change X scale (log<=>line)"""
 		if flag :
 			self.ui.mpl.canvas.ax.set_xscale('log')
@@ -193,9 +190,10 @@ class DesignerMainWindow(QtGui.QWidget ):
 		else :
 			self.ui.mpl.canvas.ax.set_xscale('linear')
 			self.xlog = 0
-		self.ui.mpl.canvas.draw()
+		if redraw:
+			self.ui.mpl.canvas.draw()
 
-	def set_y_log(self, flag):
+	def set_y_log(self, flag, redraw = True):
 		"""change Y scale (log<=>line)"""
 		if flag :
 			self.ui.mpl.canvas.ax.set_yscale('log')
@@ -203,7 +201,8 @@ class DesignerMainWindow(QtGui.QWidget ):
 		else :
 			self.ui.mpl.canvas.ax.set_yscale('linear')
 			self.ylog = 0
-		self.ui.mpl.canvas.draw()
+		if redraw:
+			self.ui.mpl.canvas.draw()
 	
 			
 	def set_autoScale(self, flag):
@@ -214,7 +213,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 			self.Rescale()
 		else :
 			self.autoscale = False
-			#self.ylog = 0
+
 
 	
 	def draw_line(self):
@@ -284,6 +283,14 @@ class DesignerMainWindow(QtGui.QWidget ):
 				(self.x3 - self.x2) + self.y2
 			if self.y3 >= y:
 				# up cut
+				X = self.tdata[:,0]
+				Y = self.tdata[:,1]
+				yy =  ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+						(X - self.x2) + self.y2
+				
+				w = (X>=self.x1) * (X<=self.x2) * (Y>=yy) 
+				self.tdata = self.tdata[~w,:]
+				'''
 				index = np.array([], dtype=int)
 				for i in range(len(self.tdata[:, 0])):
 					x = self.tdata[i, 0]
@@ -292,9 +299,18 @@ class DesignerMainWindow(QtGui.QWidget ):
 					if self.tdata[i, 1] >= y and x > self.x1 and x < self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
+				'''
 				self.update_graph()
 			else:
 				#down cut
+				X = self.tdata[:,0]
+				Y = self.tdata[:,1]
+				yy =  ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+						(X - self.x2) + self.y2
+				
+				w = (X>=self.x1) * (X<=self.x2) * (Y<=yy) 
+				self.tdata = self.tdata[~w,:]
+				'''
 				index = np.array([], dtype=int)
 				for i in range(len(self.tdata[:,0])):
 					x = self.tdata[i,0]
@@ -303,6 +319,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 					if self.tdata[i, 1] <= y and x > self.x1 and x < self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
+				'''
 				self.update_graph()
 			self.issecond = 0
 			self.ui.mplactionCut_by_line.setChecked(False)
@@ -370,6 +387,11 @@ class DesignerMainWindow(QtGui.QWidget ):
 					pass
 			if self.y3 <= self.y1 and self.y3 >= self.y2 and self.x3 >= self.x1 and self.x3 <= self.x2 :
 				# in cut
+				X = self.tdata[:,0]
+				Y = self.tdata[:,1]
+				w = (X>=self.x1) * (X<=self.x2) * (Y<=self.y1) * (Y>=self.y2)
+				self.tdata = self.tdata[~w,:]
+				'''
 				index = np.array([], dtype=int)
 				for i in range(len(self.tdata[:,0])):
 					x = self.tdata[i, 0]
@@ -377,9 +399,16 @@ class DesignerMainWindow(QtGui.QWidget ):
 					if y <= self.y1 and y >= self.y2 and x >= self.x1 and x <= self.x2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
+				'''
 				self.update_graph()
 			else:
 				#out cut
+				X = self.tdata[:,0]
+				Y = self.tdata[:,1]
+				w = (X>=self.x1) * (X<=self.x2) * (Y<=self.y1) * (Y>=self.y2)
+				self.tdata = self.tdata[w,:]
+
+				'''
 				index = np.array([], dtype=int)
 				for i in range(len(self.tdata[:, 0])):
 					x = self.tdata[i, 0]
@@ -387,6 +416,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 					if x <= self.x1 or y >= self.y1 or x >= self.x2 or y <= self.y2:
 						index = np.append(index, i)
 				self.tdata = np.delete(self.tdata, index, axis=0)
+				'''
 				self.update_graph()
 			self.issecond = 0
 			self.ui.mplactionCut_by_rect.setChecked(False)
