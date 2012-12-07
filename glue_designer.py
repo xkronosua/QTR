@@ -18,7 +18,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 	paramKeep = []
 	data_signal = QtCore.pyqtSignal( name = "dataChanged")
 	autoscale = 0
-
+	x1,x2,x3,x4,y1,y2,y3,y4 = (0.,0.,0.,0.,0.,0.,0.,0.)
 	def __init__(self, parent = None):
 		
 		# initial values for all edited and temp values
@@ -253,95 +253,114 @@ class DesignerMainWindow(QtGui.QWidget ):
 	def cut_line(self,state):
 		"""start cut the line"""
 		if state:
+			
 			self.sdata = self.tdata.copy()
 			self.cidpress = self.ui.mpl.canvas.mpl_connect(
 					'button_press_event', self.on_press)
 			self.cidrelease = self.ui.mpl.canvas.mpl_connect(
 					'button_release_event', self.on_release)
-
+		else:
+			self.issecond = 0
+			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+			self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
+			if hasattr(self,'cidmotion'):
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+			self.update_graph()
+		self.ui.mplactionCut_by_rect.setEnabled(not state)
+		self.ui.tabWidget.setEnabled(not state)
+			
 	def on_press(self, event):
 		"""on button press event for line
 		"""
-		# copy background
-		self.background = \
-			self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
-		if self.issecond == 0:
-			self.x1 = event.xdata
-			self.y1 = event.ydata
-			self.cidmotion = self.ui.mpl.canvas.mpl_connect(
-				   'motion_notify_event', self.on_motion)
-			return
+		if not event.xdata is None and not event.ydata is None:
+			# copy background
+			self.background = \
+				self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
+			if self.issecond == 0:
+				self.x1 = event.xdata
+				self.y1 = event.ydata
+				self.cidmotion = self.ui.mpl.canvas.mpl_connect(
+					   'motion_notify_event', self.on_motion)
+				return
+	
+			if self.issecond == 1 :
+				self.x3 = event.xdata
+				self.y3 = event.ydata
+				# point swap
+				if self.x1 >= self.x2:
+					self.x1, self.x2 = swap(self.x1, self.x2)
+					self.y1, self.y2 = swap(self.y1, self.y2)
+				try:
+					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+						(self.x3 - self.x2) + self.y2
+					X = self.tdata[:,0]
+					Y = self.tdata[:,1]
+					yy =  ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+							(X - self.x2) + self.y2
+				except:
+					y = 0.
+				if self.y3 >= y:
+					# up cut
+					w = (X>=self.x1) * (X<=self.x2) * (Y>=yy) 
+					self.tdata = self.tdata[~w,:]
+					'''
+					index = np.array([], dtype=int)
+					for i in range(len(self.tdata[:, 0])):
+						x = self.tdata[i, 0]
+						y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+							(x - self.x2) + self.y2
+						if self.tdata[i, 1] >= y and x > self.x1 and x < self.x2:
+							index = np.append(index, i)
+					self.tdata = np.delete(self.tdata, index, axis=0)
+					'''
 
-		if self.issecond == 1 :
-			self.x3 = event.xdata
-			self.y3 = event.ydata
-			# point swap
-			if self.x1 >= self.x2:
-				self.x1, self.x2 = swap(self.x1, self.x2)
-				self.y1, self.y2 = swap(self.y1, self.y2)
-			y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-				(self.x3 - self.x2) + self.y2
-			if self.y3 >= y:
-				# up cut
-				X = self.tdata[:,0]
-				Y = self.tdata[:,1]
-				yy =  ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						(X - self.x2) + self.y2
+				else:
+					#down cut					
+					w = (X>=self.x1) * (X<=self.x2) * (Y<=yy) 
+					self.tdata = self.tdata[~w,:]
+					'''
+					index = np.array([], dtype=int)
+					for i in range(len(self.tdata[:,0])):
+						x = self.tdata[i,0]
+						y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
+							(x - self.x2) + self.y2
+						if self.tdata[i, 1] <= y and x > self.x1 and x < self.x2:
+							index = np.append(index, i)
+					self.tdata = np.delete(self.tdata, index, axis=0)
+					'''
 				
-				w = (X>=self.x1) * (X<=self.x2) * (Y>=yy) 
-				self.tdata = self.tdata[~w,:]
-				'''
-				index = np.array([], dtype=int)
-				for i in range(len(self.tdata[:, 0])):
-					x = self.tdata[i, 0]
-					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						(x - self.x2) + self.y2
-					if self.tdata[i, 1] >= y and x > self.x1 and x < self.x2:
-						index = np.append(index, i)
-				self.tdata = np.delete(self.tdata, index, axis=0)
-				'''
-				self.update_graph()
-			else:
-				#down cut
-				X = self.tdata[:,0]
-				Y = self.tdata[:,1]
-				yy =  ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						(X - self.x2) + self.y2
 				
-				w = (X>=self.x1) * (X<=self.x2) * (Y<=yy) 
-				self.tdata = self.tdata[~w,:]
-				'''
-				index = np.array([], dtype=int)
-				for i in range(len(self.tdata[:,0])):
-					x = self.tdata[i,0]
-					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						(x - self.x2) + self.y2
-					if self.tdata[i, 1] <= y and x > self.x1 and x < self.x2:
-						index = np.append(index, i)
-				self.tdata = np.delete(self.tdata, index, axis=0)
-				'''
-				self.update_graph()
-			self.issecond = 0
+				self.ui.mplactionCut_by_line.setChecked(False)
+		else:
+			
 			self.ui.mplactionCut_by_line.setChecked(False)
-			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
-		return
+			return
 
 	def on_motion(self, event):
 		'''on motion we will move the rect if the mouse is over us'''
-		self.x2 = event.xdata
-		self.y2 = event.ydata
-		self.draw_line()
+		if not event.xdata is None and not event.ydata is None:
+			self.x2 = event.xdata
+			self.y2 = event.ydata
+			self.draw_line()
+		else:
+			self.ui.mplactionCut_by_line.setChecked(False)
 
 	def on_release(self, event):
 		'''on release we reset the press data'''
-		self.x2 = event.xdata
-		self.y2 = event.ydata
-		self.issecond = 1
-		self.draw_line()
-		if self.x1 and self.x2 and self.y1 and self.y2:
-			self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
-			self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
-
+		if not event.xdata is None and not event.ydata is None:
+			self.x2 = event.xdata
+			self.y2 = event.ydata
+			self.issecond = 1
+			self.draw_line()
+			if self.x1 and self.x2 and self.y1 and self.y2:
+				#self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
+			else:
+				self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+		else:
+			self.ui.mplactionCut_by_line.setChecked(False)
+		
 	############################### Rect ####################################
 	def cut_rect(self, state):
 		if state:
@@ -351,94 +370,113 @@ class DesignerMainWindow(QtGui.QWidget ):
 					'button_press_event', self.on_press2)
 			self.cidrelease = self.ui.mpl.canvas.mpl_connect(
 					'button_release_event', self.on_release2)
-
+		else:
+			self.issecond = 0
+			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+			self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
+			if hasattr(self,'cidmotion'):
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+			self.update_graph()
+		self.ui.mplactionCut_by_line.setEnabled(not state)
+		self.ui.tabWidget.setEnabled(not state)
+		
 	def on_press2(self, event):
 		"""on button press event for rectangle
 		"""
-		# copy background
-		self.background = \
-			self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
-		# first press
-		if self.issecond == 0:
-			self.x1 = event.xdata
-			self.y1 = event.ydata
-			self.cidmotion = self.ui.mpl.canvas.mpl_connect(
-			  'motion_notify_event', self.on_motion2)
-			return
-		# second press
-		if self.issecond == 1 :
-			self.x3 = event.xdata
-			self.y3 = event.ydata
-			# point swap
-			if self.x1 > self.x2:
-				self.x1, self.x2 = swap(self.x1, self.x2)
-				if self.y1 < self.y2:
-					self.y1, self.y2 = swap(self.y1, self.y2)
+		if not event.xdata is None and not event.ydata is None:
+			# copy background
+			self.background = \
+				self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
+			# first press
+			if self.issecond == 0:
+				self.x1 = event.xdata
+				self.y1 = event.ydata
+				
+				self.cidmotion = self.ui.mpl.canvas.mpl_connect(
+				  'motion_notify_event', self.on_motion2)
+				return
+			# second press
+			if self.issecond == 1 :
+				self.x3 = event.xdata
+				self.y3 = event.ydata
+				# point swap
+				if self.x1 > self.x2:
+					self.x1, self.x2 = swap(self.x1, self.x2)
+					if self.y1 < self.y2:
+						self.y1, self.y2 = swap(self.y1, self.y2)
+					else:
+						delta = self.y1 - self.y2
+						self.y1 -= delta
+						self.y2 += delta
 				else:
-					delta = self.y1 - self.y2
-					self.y1 -= delta
-					self.y2 += delta
-			else:
-				if self.y1 < self.y2:
-					delta = self.y2 - self.y1
-					self.y1 += delta
-					self.y2 -= delta
-				else:
-					pass
-			if self.y3 <= self.y1 and self.y3 >= self.y2 and self.x3 >= self.x1 and self.x3 <= self.x2 :
-				# in cut
+					if self.y1 < self.y2:
+						delta = self.y2 - self.y1
+						self.y1 += delta
+						self.y2 -= delta
+					else:
+						pass
 				X = self.tdata[:,0]
 				Y = self.tdata[:,1]
 				w = (X>=self.x1) * (X<=self.x2) * (Y<=self.y1) * (Y>=self.y2)
-				self.tdata = self.tdata[~w,:]
-				'''
-				index = np.array([], dtype=int)
-				for i in range(len(self.tdata[:,0])):
-					x = self.tdata[i, 0]
-					y = self.tdata[i, 1]
-					if y <= self.y1 and y >= self.y2 and x >= self.x1 and x <= self.x2:
-						index = np.append(index, i)
-				self.tdata = np.delete(self.tdata, index, axis=0)
-				'''
-				self.update_graph()
-			else:
-				#out cut
-				X = self.tdata[:,0]
-				Y = self.tdata[:,1]
-				w = (X>=self.x1) * (X<=self.x2) * (Y<=self.y1) * (Y>=self.y2)
-				self.tdata = self.tdata[w,:]
+				if self.y3 <= self.y1 and self.y3 >= self.y2 and self.x3 >= self.x1 and self.x3 <= self.x2 :
+					# in cut
+					self.tdata = self.tdata[~w,:]
+					'''
+					index = np.array([], dtype=int)
+					for i in range(len(self.tdata[:,0])):
+						x = self.tdata[i, 0]
+						y = self.tdata[i, 1]
+						if y <= self.y1 and y >= self.y2 and x >= self.x1 and x <= self.x2:
+							index = np.append(index, i)
+					self.tdata = np.delete(self.tdata, index, axis=0)
+					'''
+				else:
+					#out cut
+					self.tdata = self.tdata[w,:]
+	
+					'''
+					index = np.array([], dtype=int)
+					for i in range(len(self.tdata[:, 0])):
+						x = self.tdata[i, 0]
+						y = self.tdata[i, 1]
+						if x <= self.x1 or y >= self.y1 or x >= self.x2 or y <= self.y2:
+							index = np.append(index, i)
+					self.tdata = np.delete(self.tdata, index, axis=0)
+					'''
 
-				'''
-				index = np.array([], dtype=int)
-				for i in range(len(self.tdata[:, 0])):
-					x = self.tdata[i, 0]
-					y = self.tdata[i, 1]
-					if x <= self.x1 or y >= self.y1 or x >= self.x2 or y <= self.y2:
-						index = np.append(index, i)
-				self.tdata = np.delete(self.tdata, index, axis=0)
-				'''
-				self.update_graph()
-			self.issecond = 0
+				
+				self.ui.mplactionCut_by_rect.setChecked(False)
+
+		else:
 			self.ui.mplactionCut_by_rect.setChecked(False)
-			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
 		return
 
 	def on_motion2(self, event):
 		'''on motion we will move the rect if the mouse is over us'''
-		self.x2 = event.xdata
-		self.y2 = event.ydata
-		self.draw_rect()
+		if not event.xdata is None and not event.ydata is None:
+			self.x2 = event.xdata
+			self.y2 = event.ydata
+			self.draw_rect()
+		else:
+			self.ui.mplactionCut_by_rect.setChecked(False)
 
 	def on_release2(self, event):
 		'''on release we reset the press data'''
-		self.x2 = event.xdata
-		self.y2 = event.ydata
-		self.issecond = 1
-		self.draw_rect()
-		if self.x1 and self.x2 and self.y1 and self.y2:
-			self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
-			self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
-
+		if not event.xdata is None and not event.ydata is None:
+			self.x2 = event.xdata
+			self.y2 = event.ydata
+			self.issecond = 1
+			self.draw_rect()
+			if self.x1 and self.x2 and self.y1 and self.y2:
+				#self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
+			else:
+				self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+		else:
+			self.ui.mplactionCut_by_rect.setChecked(False)
+		
+	'''
 	############################### Point ####################################
 	# TODO: Point cut
 	def cut_point(self):
@@ -468,6 +506,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 	def on_release3(self, event):
 		self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
 		self.ui.mpl.canvas.mpl_disconnect(self.cidrelease)
+	'''
 '''
 if __name__ == '__main__' :
 	app = QtGui.QApplication(sys.argv)

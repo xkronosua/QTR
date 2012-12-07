@@ -68,9 +68,15 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <property name="maximumSize">
+       <size>
+        <width>360</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="baseSize">
        <size>
-        <width>312</width>
+        <width>299</width>
         <height>0</height>
        </size>
       </property>
@@ -179,7 +185,7 @@
                 <bool>true</bool>
                </property>
                <property name="text">
-                <string>Множник</string>
+                <string>Коеф. підс.</string>
                </property>
                <property name="checkable">
                 <bool>true</bool>
@@ -325,7 +331,7 @@
                 <bool>true</bool>
                </property>
                <property name="text">
-                <string>Множник</string>
+                <string>Коеф. підс.</string>
                </property>
                <property name="checkable">
                 <bool>true</bool>
@@ -372,21 +378,30 @@
           <property name="title">
            <string>Додаткові параметри</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_9">
-           <item>
+          <layout class="QGridLayout" name="gridLayout_11">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="LENGTH">
+             <item>
+              <property name="text">
+               <string>1064</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>532</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>633</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="0">
             <widget class="QLabel" name="label_32">
              <property name="text">
               <string>Довжина хвилі: </string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="LENGTH">
-             <property name="text">
-              <string>1064</string>
-             </property>
-             <property name="maxLength">
-              <number>50</number>
              </property>
             </widget>
            </item>
@@ -548,7 +563,7 @@
            <item row="0" column="0">
             <widget class="QLabel" name="label_10">
              <property name="text">
-              <string>Кількість вузлів</string>
+              <string>Кільк. вузлів</string>
              </property>
             </widget>
            </item>
@@ -595,6 +610,9 @@
             <widget class="QLabel" name="label_11">
              <property name="text">
               <string>%</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -688,7 +706,7 @@
            <item row="0" column="1">
             <widget class="QLabel" name="label_17">
              <property name="text">
-              <string>Коеф. згладж.</string>
+              <string>Згладжув.</string>
              </property>
             </widget>
            </item>
@@ -753,7 +771,7 @@
            <item row="1" column="3">
             <widget class="QPushButton" name="cB_splineOk">
              <property name="text">
-              <string>Інтерполювати</string>
+              <string>Інтерп.</string>
              </property>
             </widget>
            </item>
@@ -1015,7 +1033,7 @@
            <item row="0" column="0">
             <widget class="QLabel" name="label_23">
              <property name="text">
-              <string>Кількість вузлів</string>
+              <string>Кільк. вузлів</string>
              </property>
             </widget>
            </item>
@@ -1023,6 +1041,9 @@
             <widget class="QLabel" name="label_24">
              <property name="text">
               <string>%</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -1146,7 +1167,7 @@
            <item row="0" column="1">
             <widget class="QLabel" name="label_20">
              <property name="text">
-              <string>Коеф. згладж.</string>
+              <string>Згладжув.</string>
              </property>
             </widget>
            </item>
@@ -1211,7 +1232,7 @@
            <item row="1" column="3">
             <widget class="QPushButton" name="sB_splineOk">
              <property name="text">
-              <string>Інтерполювати</string>
+              <string>Інтерпол.</string>
              </property>
             </widget>
            </item>
@@ -1844,6 +1865,105 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>cPath</tabstop>
+  <tabstop>cFile</tabstop>
+  <tabstop>cXColumn</tabstop>
+  <tabstop>cYColumn</tabstop>
+  <tabstop>cMColumn</tabstop>
+  <tabstop>cMCheck</tabstop>
+  <tabstop>cCutForward</tabstop>
+  <tabstop>cLoad</tabstop>
+  <tabstop>sPath</tabstop>
+  <tabstop>sFile</tabstop>
+  <tabstop>sXColumn</tabstop>
+  <tabstop>sYColumn</tabstop>
+  <tabstop>sMColumn</tabstop>
+  <tabstop>sMCheck</tabstop>
+  <tabstop>sCutForward</tabstop>
+  <tabstop>sLoad</tabstop>
+  <tabstop>LENGTH</tabstop>
+  <tabstop>cReset</tabstop>
+  <tabstop>cUndo</tabstop>
+  <tabstop>cY_XScale</tabstop>
+  <tabstop>cXLogScale</tabstop>
+  <tabstop>cYLogScale</tabstop>
+  <tabstop>cAllSliceConcat</tabstop>
+  <tabstop>cStart</tabstop>
+  <tabstop>cEnd</tabstop>
+  <tabstop>cPolyN</tabstop>
+  <tabstop>cPolyP</tabstop>
+  <tabstop>cPolyM</tabstop>
+  <tabstop>cPolyOk</tabstop>
+  <tabstop>cAverageStep</tabstop>
+  <tabstop>cAverageOk</tabstop>
+  <tabstop>cB_splineStep</tabstop>
+  <tabstop>cB_splineS</tabstop>
+  <tabstop>cB_splineK</tabstop>
+  <tabstop>cAutoB_splineS</tabstop>
+  <tabstop>cB_splineOk</tabstop>
+  <tabstop>cMedFiltS</tabstop>
+  <tabstop>cMedFilt</tabstop>
+  <tabstop>cXFilt</tabstop>
+  <tabstop>cYFilt</tabstop>
+  <tabstop>cFiltOk</tabstop>
+  <tabstop>cSave</tabstop>
+  <tabstop>sReset</tabstop>
+  <tabstop>sUndo</tabstop>
+  <tabstop>sY_XScale</tabstop>
+  <tabstop>sYLogScale</tabstop>
+  <tabstop>sXLogScale</tabstop>
+  <tabstop>sAllSliceConcat</tabstop>
+  <tabstop>sStart</tabstop>
+  <tabstop>sEnd</tabstop>
+  <tabstop>sPolyN</tabstop>
+  <tabstop>sPolyP</tabstop>
+  <tabstop>sPolyM</tabstop>
+  <tabstop>sPolyOk</tabstop>
+  <tabstop>sAverageStep</tabstop>
+  <tabstop>sAverageOk</tabstop>
+  <tabstop>sB_splineStep</tabstop>
+  <tabstop>sB_splineS</tabstop>
+  <tabstop>sB_splineK</tabstop>
+  <tabstop>sAutoB_splineS</tabstop>
+  <tabstop>sB_splineOk</tabstop>
+  <tabstop>sMedFiltS</tabstop>
+  <tabstop>sMedFilt</tabstop>
+  <tabstop>sXFilt</tabstop>
+  <tabstop>sYFilt</tabstop>
+  <tabstop>sFiltOk</tabstop>
+  <tabstop>sSave</tabstop>
+  <tabstop>rButton</tabstop>
+  <tabstop>rEvalType</tabstop>
+  <tabstop>rReset</tabstop>
+  <tabstop>rUndo</tabstop>
+  <tabstop>rY_XScale</tabstop>
+  <tabstop>rXLogScale</tabstop>
+  <tabstop>rYLogScale</tabstop>
+  <tabstop>rAllSliceConcat</tabstop>
+  <tabstop>rStart</tabstop>
+  <tabstop>rEnd</tabstop>
+  <tabstop>rB_splineStep</tabstop>
+  <tabstop>rB_splineS</tabstop>
+  <tabstop>rB_splineK</tabstop>
+  <tabstop>rAutoB_splineS</tabstop>
+  <tabstop>rB_splineOk</tabstop>
+  <tabstop>rMedFiltS</tabstop>
+  <tabstop>rMedFilt</tabstop>
+  <tabstop>typeExp</tabstop>
+  <tabstop>calibr</tabstop>
+  <tabstop>recalcCalibr</tabstop>
+  <tabstop>recalcForIntens</tabstop>
+  <tabstop>rPlot</tabstop>
+  <tabstop>rSave</tabstop>
+  <tabstop>mplactionCut_by_line</tabstop>
+  <tabstop>mplactionCut_by_rect</tabstop>
+  <tabstop>mplhorizontalSlider</tabstop>
+  <tabstop>autoScale</tabstop>
+  <tabstop>xLogScale</tabstop>
+  <tabstop>yLogScale</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

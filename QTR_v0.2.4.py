@@ -54,6 +54,7 @@ class QTR(QtGui.QMainWindow):
 	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	# База фільтрів
 	Types = {'c': 0, 's': 1, 'r': 2}
 	K = 0.	# Коефіцієнт калібровки
+	kPICODict = {b'1064':5.03*10**-3, b'532':0.002,b"633" : 0.003}
 	#Ai2 = 0.	# Квадрат радіуса пучка по інтенсивності
 	filtersDict = {}				# Словник фільтрів
 	filtList = ([1.,1.],[1.,1.])	# Поточні фільтри
@@ -78,16 +79,13 @@ class QTR(QtGui.QMainWindow):
 		self.fileDialog = QtGui.QFileDialog(self)
 		
 		self.qcut = DesignerMainWindow(parent = self)
-		
-		self.ui.mpl.canvas.ax.plot([0,1],[5,4])
-		self.ui.mpl.canvas.draw()
 		#self.qcut.show()
 		# Відкат даних із QCut
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
 		#self.qcut.show()
 		self.intensDialog = IntensDialog()
 		self.calibrDialog = CalibrDialog(self.Root)
-		
+
 		self.ui.tab_2.setEnabled(False)
 		self.ui.tab_3.setEnabled(False)
 		self.ui.tab_4.setEnabled(False)
@@ -221,10 +219,18 @@ class QTR(QtGui.QMainWindow):
 			y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
 			return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
 		except:
-			print("ResEval: UnivariateSpline")
+			self.print(error="ResEvalError", message="UnivariateSpline")
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
+	def setLength(self, length):
+		'''Вибір довжини хвилі зі списку'''
+		self.LENGTH = length.encode('utf_8')
+		if self.ui.typeExp.currentIndex() == 1:
+			self.K = self.kPICODict[self.LENGTH]
+			self.ui.calibr.setText(str(self.K))
+		else: pass
+	
 	def applyFilt(self):
 		'''Застосування фільтрів із бази для відповідних XY'''
 		key = self.sender().objectName()[0]
@@ -240,14 +246,14 @@ class QTR(QtGui.QMainWindow):
 			check = []
 			if len(Filt)>=1:
 				for j in Filt:
-					print(j)
+					#print(j)
 					check.append(j.encode('utf-8') in filtBaseNames)
 			else:
 				Filt = ['1']
 				check = [1.]
-			print(check)
+			#print(check)
 			check = sp.multiply.reduce(check)
-			print(check)
+			#print(check)
 			temp = 1.
 			if check:
 				M[i] = self.resFilters(Filt)
@@ -258,7 +264,7 @@ class QTR(QtGui.QMainWindow):
 			data[:,0] = data[:,0]/self.filtList[index][0]
 			data[:,1] = data[:,1]/self.filtList[index][1]
 			self.updateData(array = data)
-			print("Filters [X,Y]:",self.filtList[index])
+			self.print("Filters [X,Y]: %s" % str(self.filtList[index]))
 	
 	def AllSliceConcat(self, index):
 
@@ -476,9 +482,12 @@ class QTR(QtGui.QMainWindow):
 		
 	def getBackFromQcut(self):
 		''' Отримання даних, що змінені вручну в QCut'''
-		print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.scale)
-		data, Type, Scale = self.qcut.getData()
-		self.updateData( array = Array(data, Type = Type, scale=Scale)  )
+		try:
+			print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.scale)
+			data, Type, Scale = self.qcut.getData()
+			self.updateData( array = Array(data, Type = Type, scale=Scale)  )
+		except:
+			pass
 		
 	def pathTextChanged(self, text):
 		"""Якщо поле з шляхом до файлу для завантаження було змінене"""
@@ -565,8 +574,8 @@ class QTR(QtGui.QMainWindow):
 				if tabs[1].isEnabled():
 					tabs[2].setEnabled(True)
 			except (ValueError, IOError, IndexError):
-				print("loadData: readError")
-		else: print('loadData: pathError')
+				self.print("loadData: readError")
+		else: self.mprint('loadData: pathError')
 			
 	def dataListener(self,Type, action):
 		"""Обробка зміни даних"""
@@ -574,15 +583,15 @@ class QTR(QtGui.QMainWindow):
 			('rUndo', 'rReset'))
 		Types = ['c','s','r']
 		active = self.getData(Type)
-		print("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d [%d,%d]" %\
-			  (active.scaleX, active.scaleY ,active.Type, sp.shape(active)[0],active.scale[0],active.scale[1]))
+		self.print("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d, action : %d" %\
+			  (active.scaleX, active.scaleY ,active.Type, sp.shape(active)[0],action))
 		#for i in self.dataStack[Type]:
 		#	print(i.scale)
 		
 		if sp.any(active):
-			intervalCheck = ['cAutoInterval', 'sAutoInterval', 'rAutoInterval']
+			#intervalCheck = ['cAutoInterval', 'sAutoInterval', 'rAutoInterval']
 			b_splineSCheck = ['cAutoB_splineS', 'sAutoB_splineS', 'rAutoB_splineS']
-			intervalObj = self.findChild(QtGui.QCheckBox,intervalCheck[Type])
+			#intervalObj = self.findChild(QtGui.QCheckBox,intervalCheck[Type])
 			b_splineSObj = self.findChild(QtGui.QCheckBox,b_splineSCheck[Type])
 			#self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
 			
@@ -604,12 +613,6 @@ class QTR(QtGui.QMainWindow):
 		if hasattr(self, 'intensDialog' ):
 			self.intensDialog.close()
 	
-	def lengthChange(self, text):
-		'''Перевірка правильності запису довжини хвилі'''
-		if text:
-			self.LENGTH = text.strip().encode('utf-8')
-		else: print("lengthChange: LengthError")
-	
 	#======================= intens  =============================
 	def calibrChanged(self):
 		text = self.sender().text()
@@ -625,6 +628,9 @@ class QTR(QtGui.QMainWindow):
 		if index == 0:
 			self.ui.recalcCalibr.setEnabled(True)
 		if index == 1:
+			self.K = self.kPICODict[self.LENGTH]
+			self.ui.calibr.setText(str(self.K))
+			'''
 			k = 0
 			try:
 				k = float(self.ui.calibr.text())
@@ -632,7 +638,9 @@ class QTR(QtGui.QMainWindow):
 				pass
 			if k:
 				self.K = k
+			'''
 			self.ui.recalcCalibr.setEnabled(False)
+	
 	def recalcCalibr(self):
 		self.calibrDialog.show()
 		
@@ -659,6 +667,11 @@ class QTR(QtGui.QMainWindow):
 	####################################################################
 	########################  Допоміжні методи  ########################
 	####################################################################
+	def print(self,m = ''):
+		'''Вивід повідомлень в поле статусу'''
+		self.ui.statusbar.showMessage(m)
+		print(m)
+	
 	def Plot(self, array):
 		self.qcut.Plot(array)
 
@@ -763,7 +776,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cSave.clicked.connect(self.Save)
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
-		self.ui.LENGTH.textChanged[str].connect(self.lengthChange)
+
 		'''
 		self.ui.cFilt.toggled[bool].connect(self.ui.cXFilt.setEnabled)
 		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
@@ -788,6 +801,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
 		self.ui.rAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
 		#self.close.connect(self.closeEvent)
+		self.ui.LENGTH.currentIndexChanged[str].connect(self.setLength)
 		#________________________________________________
 		self.data_signal[int,int].connect(self.dataListener)
 		self.data_signal[int,int].connect(self.setPrevScale)
