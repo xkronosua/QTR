@@ -521,6 +521,9 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="cStart">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
               <double>-1000.000000000000000</double>
              </property>
@@ -537,6 +540,9 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="cEnd">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
               <double>-1000.000000000000000</double>
              </property>
@@ -991,6 +997,9 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="sStart">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
               <double>-1000.000000000000000</double>
              </property>
@@ -1007,8 +1016,11 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="sEnd">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
-              <double>1000.000000000000000</double>
+              <double>-1000.000000000000000</double>
              </property>
              <property name="maximum">
               <double>9999999.000000000000000</double>
@@ -1463,6 +1475,9 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="rStart">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
               <double>0.010000000000000</double>
              </property>
@@ -1479,6 +1494,9 @@
            </item>
            <item>
             <widget class="QDoubleSpinBox" name="rEnd">
+             <property name="inputMethodHints">
+              <set>Qt::ImhFormattedNumbersOnly|Qt::ImhPreferNumbers</set>
+             </property>
              <property name="minimum">
               <double>0.010000000000000</double>
              </property>

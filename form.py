@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'form.ui'
 #
-# Created: Fri Dec  7 17:16:11 2012
+# Created: Mon Dec 10 15:45:00 2012
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -253,6 +253,7 @@ class Ui_MainWindow(object):
         self.cAllSliceConcat.addItem(_fromUtf8(""))
         self.horizontalLayout_17.addWidget(self.cAllSliceConcat)
         self.cStart = QtGui.QDoubleSpinBox(self.groupBox_6)
+        self.cStart.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
         self.cStart.setMinimum(-1000.0)
         self.cStart.setMaximum(9999.0)
         self.cStart.setSingleStep(0.5)
@@ -260,6 +261,7 @@ class Ui_MainWindow(object):
         self.cStart.setObjectName(_fromUtf8("cStart"))
         self.horizontalLayout_17.addWidget(self.cStart)
         self.cEnd = QtGui.QDoubleSpinBox(self.groupBox_6)
+        self.cEnd.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
         self.cEnd.setMinimum(-1000.0)
         self.cEnd.setMaximum(9999999.0)
         self.cEnd.setSingleStep(0.5)
@@ -464,6 +466,7 @@ class Ui_MainWindow(object):
         self.sAllSliceConcat.addItem(_fromUtf8(""))
         self.horizontalLayout_9.addWidget(self.sAllSliceConcat)
         self.sStart = QtGui.QDoubleSpinBox(self.groupBox_13)
+        self.sStart.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
         self.sStart.setMinimum(-1000.0)
         self.sStart.setMaximum(99999999.0)
         self.sStart.setSingleStep(0.5)
@@ -471,7 +474,8 @@ class Ui_MainWindow(object):
         self.sStart.setObjectName(_fromUtf8("sStart"))
         self.horizontalLayout_9.addWidget(self.sStart)
         self.sEnd = QtGui.QDoubleSpinBox(self.groupBox_13)
-        self.sEnd.setMinimum(1000.0)
+        self.sEnd.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
+        self.sEnd.setMinimum(-1000.0)
         self.sEnd.setMaximum(9999999.0)
         self.sEnd.setSingleStep(0.5)
         self.sEnd.setProperty("value", 1000.0)
@@ -679,6 +683,7 @@ class Ui_MainWindow(object):
         self.rAllSliceConcat.addItem(_fromUtf8(""))
         self.horizontalLayout_18.addWidget(self.rAllSliceConcat)
         self.rStart = QtGui.QDoubleSpinBox(self.groupBox_18)
+        self.rStart.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
         self.rStart.setMinimum(0.01)
         self.rStart.setMaximum(99999999.0)
         self.rStart.setSingleStep(0.5)
@@ -686,6 +691,7 @@ class Ui_MainWindow(object):
         self.rStart.setObjectName(_fromUtf8("rStart"))
         self.horizontalLayout_18.addWidget(self.rStart)
         self.rEnd = QtGui.QDoubleSpinBox(self.groupBox_18)
+        self.rEnd.setInputMethodHints(QtCore.Qt.ImhFormattedNumbersOnly|QtCore.Qt.ImhPreferNumbers)
         self.rEnd.setMinimum(0.01)
         self.rEnd.setMaximum(9999999.0)
         self.rEnd.setSingleStep(0.5)
