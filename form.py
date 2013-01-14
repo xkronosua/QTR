@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'form.ui'
 #
-# Created: Mon Dec 10 15:45:00 2012
+# Created: Mon Jan 14 20:17:17 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,13 +17,13 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(1216, 730)
+        MainWindow.resize(1211, 720)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.MinimumExpanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setMinimumSize(QtCore.QSize(448, 730))
+        MainWindow.setMinimumSize(QtCore.QSize(448, 720))
         MainWindow.setBaseSize(QtCore.QSize(900, 620))
         MainWindow.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
         MainWindow.setDocumentMode(False)
@@ -815,6 +815,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout_21.addWidget(self.mplactionCut_by_rect)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_21.addItem(spacerItem)
+        self.tmpShow = QtGui.QCheckBox(self.frame)
+        self.tmpShow.setObjectName(_fromUtf8("tmpShow"))
+        self.horizontalLayout_21.addWidget(self.tmpShow)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_21.addItem(spacerItem1)
         self.label_13 = QtGui.QLabel(self.frame)
         self.label_13.setObjectName(_fromUtf8("label_13"))
         self.horizontalLayout_21.addWidget(self.label_13)
@@ -823,14 +828,14 @@ class Ui_MainWindow(object):
         self.mplhorizontalSlider.setOrientation(QtCore.Qt.Horizontal)
         self.mplhorizontalSlider.setObjectName(_fromUtf8("mplhorizontalSlider"))
         self.horizontalLayout_21.addWidget(self.mplhorizontalSlider)
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_21.addItem(spacerItem1)
+        spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_21.addItem(spacerItem2)
         self.autoScale = QtGui.QCheckBox(self.frame)
         self.autoScale.setChecked(True)
         self.autoScale.setObjectName(_fromUtf8("autoScale"))
         self.horizontalLayout_21.addWidget(self.autoScale)
-        spacerItem2 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_21.addItem(spacerItem2)
+        spacerItem3 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_21.addItem(spacerItem3)
         self.label_15 = QtGui.QLabel(self.frame)
         self.label_15.setObjectName(_fromUtf8("label_15"))
         self.horizontalLayout_21.addWidget(self.label_15)
@@ -1092,6 +1097,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4), QtGui.QApplication.translate("MainWindow", "Результат", None, QtGui.QApplication.UnicodeUTF8))
         self.mplactionCut_by_line.setText(QtGui.QApplication.translate("MainWindow", "Лінія", None, QtGui.QApplication.UnicodeUTF8))
         self.mplactionCut_by_rect.setText(QtGui.QApplication.translate("MainWindow", "Прямокутник", None, QtGui.QApplication.UnicodeUTF8))
+        self.tmpShow.setText(QtGui.QApplication.translate("MainWindow", "Показувати допоміжні побудови", None, QtGui.QApplication.UnicodeUTF8))
         self.label_13.setText(QtGui.QApplication.translate("MainWindow", "Розмір точок: ", None, QtGui.QApplication.UnicodeUTF8))
         self.autoScale.setText(QtGui.QApplication.translate("MainWindow", "Автомасштаб", None, QtGui.QApplication.UnicodeUTF8))
         self.label_15.setText(QtGui.QApplication.translate("MainWindow", "Log10:", None, QtGui.QApplication.UnicodeUTF8))

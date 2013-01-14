@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1216</width>
-    <height>730</height>
+    <width>1211</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>448</width>
-    <height>730</height>
+    <height>720</height>
    </size>
   </property>
   <property name="baseSize">
@@ -648,6 +648,13 @@
              </property>
             </widget>
            </item>
+           <item row="0" column="3">
+            <widget class="QCheckBox" name="cDiscrete">
+             <property name="text">
+              <string>дискр.</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -1115,6 +1122,13 @@
             <widget class="QPushButton" name="sPolyOk">
              <property name="text">
               <string>Обрізати</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QCheckBox" name="sDiscrete">
+             <property name="text">
+              <string>дискр.</string>
              </property>
             </widget>
            </item>
@@ -1764,6 +1778,26 @@
          </item>
          <item>
           <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="tmpShow">
+           <property name="text">
+            <string>Показувати допоміжні побудови</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>

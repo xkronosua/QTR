@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
 import sys, os, signal
-from PyQt4 import QtGui, QtCore, uic
+from PyQt4 import QtGui, QtCore#, uic
 import scipy as sp
 from scipy.signal import medfilt
 from glue_designer import  DesignerMainWindow
@@ -64,7 +64,7 @@ class QTR(QtGui.QMainWindow):
 		[Array(sp.zeros((0,2)), Type = 0, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 1, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 2, scale=[0,0])] )
-	
+	showTmp = False		# Показувати проміжні  побудови
 	
 	
 	# DataUpdated signal -> slot
@@ -109,7 +109,8 @@ class QTR(QtGui.QMainWindow):
 	####################################################################
 	
 	# Механічна обрізка
-	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4, p = 0.80, ASC = 0):
+	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4,
+			p = 0.80, ASC=0):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m	-	степінь полінома
 		p	-	відсоток від максимального викиду
@@ -117,6 +118,7 @@ class QTR(QtGui.QMainWindow):
 		ASC	-	обробити Все, зробити Зріз, Зшити
 		'''
 		X, Y = data[:,0], data[:,1]
+		tmpData = []
 		if ASC in (1, 2):
 			x, y = X.copy(), Y.copy()
 			#Обрізка в заданих межах
@@ -131,6 +133,7 @@ class QTR(QtGui.QMainWindow):
 			else: End = X.max()
 		else: pass
 		n = int(N)
+		if self.showTmp: tmpData = (X,  Y)
 		EQ = sp.poly1d( sp.polyfit(X, Y, m) )
 		poly_Y = EQ( X )
 		xnew, ynew = [], []
@@ -153,7 +156,7 @@ class QTR(QtGui.QMainWindow):
 				t = ((sp.std(y_new)/std) >= p)
 				y_old = y_new
 				if not t: break
-				
+			
 			for i in window:	x_temp, y_temp = x_temp[i], y_temp[i]
 			xnew = xnew + x_temp.tolist()
 			ynew = ynew + (y_temp).tolist()
@@ -164,7 +167,11 @@ class QTR(QtGui.QMainWindow):
 			x1, x2 = x[less], x[more]
 			y1, y2 = y[less], y[more]
 			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
-		return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
+		if self.showTmp:
+			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale),\
+				tmpData,  poly_Y    
+		else:	
+			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
 	
 	# Усереднення
 	def averaging(self, data, Start = None, End = None, N = 1, m = 3):
@@ -193,10 +200,14 @@ class QTR(QtGui.QMainWindow):
 			xnew.append(x_temp)
 			ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
 			i = j
-		return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
+		if self.showTmp:
+			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale),  x, y, poly_Y
+		else:
+			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
 	
 	# Інтерполяція b-сплайном
-	def b_s(self, data, xi = [], Start = None, End = None, Step = 1, sm = 1100000., km = 5):
+	def b_s(self, data, xi = [], Start = None, End = None, Step = 1,
+			sm = 1100000., km = 5):
 		'''	Інтерполяція B-сплайном
 		sm	-	коефіцієнт згладжування
 		km	-	степінь полінома
@@ -217,12 +228,20 @@ class QTR(QtGui.QMainWindow):
 			xi = sp.arange(Start, End,Step)
 		try:
 			y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
-			return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
+			if self.showTmp:
+				return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale),  x,  y
+			else:	return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
 		except:
-			self.print(error="ResEvalError", message="UnivariateSpline")
+			pass
+			self.mprint(error="ResEvalError", message="UnivariateSpline")
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
+	def plotTmp(self, state):
+		'''Проміжні побудови'''
+		self.showTmp = state
+		if not state: self.qcut.update_graph()
+		
 	def setLength(self, length):
 		'''Вибір довжини хвилі зі списку'''
 		self.LENGTH = length.encode('utf_8')
@@ -254,7 +273,7 @@ class QTR(QtGui.QMainWindow):
 			#print(check)
 			check = sp.multiply.reduce(check)
 			#print(check)
-			temp = 1.
+
 			if check:
 				M[i] = self.resFilters(Filt)
 				
@@ -264,7 +283,7 @@ class QTR(QtGui.QMainWindow):
 			data[:,0] = data[:,0]/self.filtList[index][0]
 			data[:,1] = data[:,1]/self.filtList[index][1]
 			self.updateData(array = data)
-			self.print("Filters [X,Y]: %s" % str(self.filtList[index]))
+			#self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
 	
 	def AllSliceConcat(self, index):
 
@@ -395,8 +414,9 @@ class QTR(QtGui.QMainWindow):
 			
 	def polyCut(self):
 		'''Обрізка [за різними методами]'''
-		Dict = {'cPolyOk' : (0,'cPolyN', 'cPolyP', 'cPolyM', 'cStart',  'cEnd'),
+		'''Dict = {'cPolyOk' : (0,'cPolyN', 'cPolyP', 'cPolyM', 'cStart',  'cEnd'),
 				'sPolyOk' : (1,'sPolyN', 'sPolyP', 'sPolyM', 'sStart',  'sEnd')}
+		'''
 		Types = {'c': 0, 's' : 1, 'r' : 2}
 		Param = ('PolyN', 'PolyP', 'PolyM', 'Start',  'End')
 		senderName = self.sender().objectName()
@@ -406,8 +426,16 @@ class QTR(QtGui.QMainWindow):
 		ASC = getattr(self.ui, senderName[0] + "AllSliceConcat").currentIndex()
 		data = self.poly_cut(XY, N = active[1], p = active[2],
 			m = active[3], Start = active[4], End = active[5], ASC = ASC)
+		
+		if self.showTmp:
+			data,  tmp,  poly_Y = data
 		self.updateData(array = data.copy())
 		
+		if self.showTmp:
+			self.ui.mpl.canvas.ax.plot(tmp[0],  tmp[1], '.m',  alpha=0.2,  zorder=1)
+			self.ui.mpl.canvas.ax.plot(  tmp[0],  poly_Y,  'r')
+			self.ui.mpl.canvas.draw()
+			
 	def Average(self):
 		'''Усереднення за різними методами'''
 		Dict = {'cAverageOk' : (0,'cStart',  'cEnd', 'cAverageStep'),
@@ -417,8 +445,15 @@ class QTR(QtGui.QMainWindow):
 		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
 		XY = self.getData(active[0])
 		data = self.averaging(XY, Start = active[1], End = active[2], N = active[3] )
+		if self.showTmp:
+			data, x, y, poly_Y = data
 		self.updateData(array = data)
 		
+		if self.showTmp:
+			self.ui.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
+			self.ui.mpl.canvas.ax.plot(  x,  poly_Y,  'r')
+			self.ui.mpl.canvas.draw()
+			
 	def medFilt(self):
 		'''Фільтрація медіаною'''
 		Dict = {'cMedFilt' : (0,'cMedFiltS'),
@@ -432,9 +467,15 @@ class QTR(QtGui.QMainWindow):
 		poly_Y = EQ( X )
 		y_temp = Y - poly_Y
 		y = medfilt(y_temp, kernel_size = active[1])
-		Y = y + poly_Y
-		self.updateData(array = Array(sp.array([XY[:,0], Y]).T, Type = XY.Type, scale = XY.scale))
-	
+		Y_new = y + poly_Y
+		self.updateData(array = Array(sp.array([X, Y_new]).T, Type = XY.Type, scale = XY.scale))
+		
+		if self.showTmp:
+			self.ui.mpl.canvas.ax.plot(X,  Y, '.m',  alpha=0.2,  zorder=1)
+			self.ui.mpl.canvas.ax.plot(  X,  poly_Y,  'r')
+			self.ui.mpl.canvas.draw()
+			
+		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
 		Dict = {
@@ -444,8 +485,16 @@ class QTR(QtGui.QMainWindow):
 		senderName = self.sender().objectName()
 		active =  (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox, Dict[senderName][1:],p = 'value')
 		XY = self.getData(active[0])
-		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3], sm = active[4], km = int(active[5]))
+		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3],
+					sm = active[4], km = int(active[5]))
+		if self.showTmp:
+			data,  x, y = data
 		self.updateData(array  = data)
+		
+		if self.showTmp:
+			self.ui.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.5,  zorder=1)
+			self.ui.mpl.canvas.draw()
+			
 		
 	def Undo(self):
 		'''Відкат до попередніх даних'''
@@ -574,8 +623,8 @@ class QTR(QtGui.QMainWindow):
 				if tabs[1].isEnabled():
 					tabs[2].setEnabled(True)
 			except (ValueError, IOError, IndexError):
-				self.print("loadData: readError")
-		else: self.mprint('loadData: pathError')
+				self.mprint("loadData: readError")
+		else:  self.mprint('loadData: pathError')
 			
 	def dataListener(self,Type, action):
 		"""Обробка зміни даних"""
@@ -583,7 +632,7 @@ class QTR(QtGui.QMainWindow):
 			('rUndo', 'rReset'))
 		Types = ['c','s','r']
 		active = self.getData(Type)
-		self.print("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d, action : %d" %\
+		self.mprint("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d, action : %d" %\
 			  (active.scaleX, active.scaleY ,active.Type, sp.shape(active)[0],action))
 		#for i in self.dataStack[Type]:
 		#	print(i.scale)
@@ -667,7 +716,7 @@ class QTR(QtGui.QMainWindow):
 	####################################################################
 	########################  Допоміжні методи  ########################
 	####################################################################
-	def print(self,m = ''):
+	def mprint(self, m):
 		'''Вивід повідомлень в поле статусу'''
 		self.ui.statusbar.showMessage(m)
 		print(m)
@@ -776,7 +825,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cSave.clicked.connect(self.Save)
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
-
+		self.ui.tmpShow.toggled[bool].connect(self.plotTmp)
 		'''
 		self.ui.cFilt.toggled[bool].connect(self.ui.cXFilt.setEnabled)
 		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
