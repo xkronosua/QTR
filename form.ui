@@ -557,6 +557,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QCheckBox" name="cDiscrete">
+             <property name="text">
+              <string>дискр</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -645,13 +652,6 @@
             <widget class="QPushButton" name="cPolyOk">
              <property name="text">
               <string>Обрізати</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="cDiscrete">
-             <property name="text">
-              <string>дискр.</string>
              </property>
             </widget>
            </item>
@@ -1040,6 +1040,13 @@
              </property>
             </widget>
            </item>
+           <item>
+            <widget class="QCheckBox" name="sDiscrete">
+             <property name="text">
+              <string>дискр.</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -1122,13 +1129,6 @@
             <widget class="QPushButton" name="sPolyOk">
              <property name="text">
               <string>Обрізати</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="sDiscrete">
-             <property name="text">
-              <string>дискр.</string>
              </property>
             </widget>
            </item>

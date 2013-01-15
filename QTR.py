@@ -65,7 +65,7 @@ class QTR(QtGui.QMainWindow):
 		[Array(sp.zeros((0,2)), Type = 1, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 2, scale=[0,0])] )
 	showTmp = False		# Показувати проміжні  побудови
-	
+
 	
 	# DataUpdated signal -> slot
 	# Сигнал про зміну в даних
@@ -110,7 +110,7 @@ class QTR(QtGui.QMainWindow):
 	
 	# Механічна обрізка
 	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4,
-			p = 0.80, ASC=0):
+			p = 0.80, ASC=0,  discrete=False):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m	-	степінь полінома
 		p	-	відсоток від максимального викиду
@@ -119,6 +119,7 @@ class QTR(QtGui.QMainWindow):
 		'''
 		X, Y = data[:,0], data[:,1]
 		tmpData = []
+		tmpPoly = [[], []]
 		if ASC in (1, 2):
 			x, y = X.copy(), Y.copy()
 			#Обрізка в заданих межах
@@ -141,11 +142,16 @@ class QTR(QtGui.QMainWindow):
 		i = 0
 		for j in list(Range[1:])+[len(X)-1]:
 			if j-i<=1: break
-			x_temp = X[i:j]
-			y_temp = Y[i:j]
-			polyY_temp = poly_Y[i:j]
+			x_tmp = X[i:j]
+			y_tmp = Y[i:j]
+			if discrete:
+				polyY_tmp = sp.poly1d( sp.polyfit(x_tmp, y_tmp, m) )(x_tmp)
+				tmpPoly[0] += x_tmp.tolist()
+				tmpPoly[1] += polyY_tmp.tolist()
+			else:	
+				polyY_tmp = poly_Y[i:j]
 			t = True
-			y_old = y_temp - polyY_temp
+			y_old = y_tmp - polyY_tmp
 			std = sp.std(y_old)
 			window = []
 			width = 0
@@ -157,9 +163,9 @@ class QTR(QtGui.QMainWindow):
 				y_old = y_new
 				if not t: break
 			
-			for i in window:	x_temp, y_temp = x_temp[i], y_temp[i]
-			xnew = xnew + x_temp.tolist()
-			ynew = ynew + (y_temp).tolist()
+			for i in window:	x_tmp, y_tmp = x_tmp[i], y_tmp[i]
+			xnew = xnew + x_tmp.tolist()
+			ynew = ynew + (y_tmp).tolist()
 			i = j
 		X, Y = sp.array(xnew), sp.array(ynew)
 		if ASC == 2:
@@ -168,13 +174,16 @@ class QTR(QtGui.QMainWindow):
 			y1, y2 = y[less], y[more]
 			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
 		if self.showTmp:
+			if discrete:
+				poly = (tmpPoly[0],  tmpPoly[1])
+			else: poly = (tmpData[0],  poly_Y)
 			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale),\
-				tmpData,  poly_Y    
+				tmpData,  poly    
 		else:	
 			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
 	
 	# Усереднення
-	def averaging(self, data, Start = None, End = None, N = 1, m = 3):
+	def averaging(self, data, Start = None, End = None, N = 1, m = 3,  discrete=False):
 		'''	Усереднення між заданими вузлами.
 		m	-	порядок полінома
 		N	-	кількість вузлів
@@ -194,14 +203,27 @@ class QTR(QtGui.QMainWindow):
 		Range = range(0,len(x),n)
 		i = 0
 		xnew, ynew = [], []
+		poly = [[], []]
 		for j in list(Range[1:])+[len(x)-1]:
 			if j-i <=1:	break
-			x_temp = x[i:j].mean()
+			x_t = x[i:j]
+			y_t = y[i:j]
+			if discrete:
+				EQ = sp.poly1d( sp.polyfit(x_t, y_t, m) )
+				polyY_tmp = EQ(x_t)
+				poly[0] += x_t.tolist()
+				poly[1] += polyY_tmp.tolist()
+			else:	
+				polyY_tmp = poly_Y[i:j]
+			x_temp = x_t.mean()
 			xnew.append(x_temp)
-			ynew.append( (y[i:j] - poly_Y[i:j]).mean() + EQ(x_temp))
+			ynew.append( (y_t - polyY_tmp).mean() + EQ(x_temp))
 			i = j
 		if self.showTmp:
-			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale),  x, y, poly_Y
+			if not discrete:
+				poly = (x,  poly_Y)
+			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale),\
+				x, y, poly
 		else:
 			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
 	
@@ -424,16 +446,17 @@ class QTR(QtGui.QMainWindow):
 		active = [Type] + self.findUi((senderName[0] + i for i in Param),p="value")
 		XY = self.getData(active[0])
 		ASC = getattr(self.ui, senderName[0] + "AllSliceConcat").currentIndex()
+		discrete = getattr(self.ui, senderName[0] + 'Discrete' ).checkState()
 		data = self.poly_cut(XY, N = active[1], p = active[2],
-			m = active[3], Start = active[4], End = active[5], ASC = ASC)
+			m = active[3], Start = active[4], End = active[5], ASC = ASC,  discrete=discrete)
 		
 		if self.showTmp:
-			data,  tmp,  poly_Y = data
+			data,  tmp,  poly = data
 		self.updateData(array = data.copy())
 		
 		if self.showTmp:
 			self.ui.mpl.canvas.ax.plot(tmp[0],  tmp[1], '.m',  alpha=0.2,  zorder=1)
-			self.ui.mpl.canvas.ax.plot(  tmp[0],  poly_Y,  'r')
+			self.ui.mpl.canvas.ax.plot(  poly[0],  poly[1],  'r')
 			self.ui.mpl.canvas.draw()
 			
 	def Average(self):
@@ -444,14 +467,16 @@ class QTR(QtGui.QMainWindow):
 		tmp = Dict[senderName]
 		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
 		XY = self.getData(active[0])
-		data = self.averaging(XY, Start = active[1], End = active[2], N = active[3] )
+		M = getattr(self.ui,  senderName[0]+'PolyM').value()
+		discrete = getattr(self.ui, senderName[0] + 'Discrete' ).checkState()
+		data = self.averaging(XY, Start=active[1], End=active[2], N=active[3],  m=M, discrete=discrete )
 		if self.showTmp:
-			data, x, y, poly_Y = data
+			data, x, y, poly = data
 		self.updateData(array = data)
 		
 		if self.showTmp:
 			self.ui.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
-			self.ui.mpl.canvas.ax.plot(  x,  poly_Y,  'r')
+			self.ui.mpl.canvas.ax.plot(  poly[0],  poly[1],  'r')
 			self.ui.mpl.canvas.draw()
 			
 	def medFilt(self):

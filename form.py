@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'form.ui'
 #
-# Created: Mon Jan 14 20:17:17 2013
+# Created: Tue Jan 15 01:34:20 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -268,6 +268,9 @@ class Ui_MainWindow(object):
         self.cEnd.setProperty("value", 0.01)
         self.cEnd.setObjectName(_fromUtf8("cEnd"))
         self.horizontalLayout_17.addWidget(self.cEnd)
+        self.cDiscrete = QtGui.QCheckBox(self.groupBox_6)
+        self.cDiscrete.setObjectName(_fromUtf8("cDiscrete"))
+        self.horizontalLayout_17.addWidget(self.cDiscrete)
         self.verticalLayout_2.addWidget(self.groupBox_6)
         self.groupBox_5 = QtGui.QGroupBox(self.tab_2)
         self.groupBox_5.setObjectName(_fromUtf8("groupBox_5"))
@@ -481,6 +484,9 @@ class Ui_MainWindow(object):
         self.sEnd.setProperty("value", 1000.0)
         self.sEnd.setObjectName(_fromUtf8("sEnd"))
         self.horizontalLayout_9.addWidget(self.sEnd)
+        self.sDiscrete = QtGui.QCheckBox(self.groupBox_13)
+        self.sDiscrete.setObjectName(_fromUtf8("sDiscrete"))
+        self.horizontalLayout_9.addWidget(self.sDiscrete)
         self.verticalLayout_3.addWidget(self.groupBox_13)
         self.groupBox_11 = QtGui.QGroupBox(self.tab_3)
         self.groupBox_11.setObjectName(_fromUtf8("groupBox_11"))
@@ -1001,6 +1007,7 @@ class Ui_MainWindow(object):
         self.cAllSliceConcat.setItemText(0, QtGui.QApplication.translate("MainWindow", "Увесь діапазон", None, QtGui.QApplication.UnicodeUTF8))
         self.cAllSliceConcat.setItemText(1, QtGui.QApplication.translate("MainWindow", "Вирізати", None, QtGui.QApplication.UnicodeUTF8))
         self.cAllSliceConcat.setItemText(2, QtGui.QApplication.translate("MainWindow", "Обробити частину", None, QtGui.QApplication.UnicodeUTF8))
+        self.cDiscrete.setText(QtGui.QApplication.translate("MainWindow", "дискр", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_5.setTitle(QtGui.QApplication.translate("MainWindow", "Обрізання вздовж поліном. апроксимації", None, QtGui.QApplication.UnicodeUTF8))
         self.label_10.setText(QtGui.QApplication.translate("MainWindow", "Кільк. вузлів", None, QtGui.QApplication.UnicodeUTF8))
         self.label_12.setText(QtGui.QApplication.translate("MainWindow", "Степ. полін", None, QtGui.QApplication.UnicodeUTF8))
@@ -1038,6 +1045,7 @@ class Ui_MainWindow(object):
         self.sAllSliceConcat.setItemText(0, QtGui.QApplication.translate("MainWindow", "Увесь діапазон", None, QtGui.QApplication.UnicodeUTF8))
         self.sAllSliceConcat.setItemText(1, QtGui.QApplication.translate("MainWindow", "Вирізати", None, QtGui.QApplication.UnicodeUTF8))
         self.sAllSliceConcat.setItemText(2, QtGui.QApplication.translate("MainWindow", "Обробити частину", None, QtGui.QApplication.UnicodeUTF8))
+        self.sDiscrete.setText(QtGui.QApplication.translate("MainWindow", "дискр.", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_11.setTitle(QtGui.QApplication.translate("MainWindow", "Обрізання вздовж поліном. апроксимації", None, QtGui.QApplication.UnicodeUTF8))
         self.label_23.setText(QtGui.QApplication.translate("MainWindow", "Кільк. вузлів", None, QtGui.QApplication.UnicodeUTF8))
         self.label_24.setText(QtGui.QApplication.translate("MainWindow", "%", None, QtGui.QApplication.UnicodeUTF8))
