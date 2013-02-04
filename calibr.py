@@ -1,10 +1,11 @@
 # _*_ coding: utf-8 _*_
 
-from calibrDialog import Ui_Dialog
-from PyQt4 import QtGui, QtCore, uic
+from ui.calibrDialog import Ui_Dialog
+from PyQt4 import QtGui#, QtCore, uic
 from glue_designer import DesignerMainWindow
 import scipy as sp
 import os
+
 class CalibrDialog(QtGui.QDialog):
 	K = 0.
 	Root = "./"

@@ -1,12 +1,12 @@
 
 import scipy as np
 #import matplotlib.pyplot as plt
-import sys
+#import sys
 
 from PyQt4 import QtCore, QtGui
 
 #from qtdesigner import Ui_MplMainWindow
-from qcut import Ui_Form
+from ui.Ui_qcut import Ui_Form
 def swap(x,y):
 	return y,x
 

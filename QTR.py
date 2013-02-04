@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 # _*_ coding: utf-8 _*_
 import sys, os, signal
-from PyQt4 import QtGui, QtCore#, uic
+from PyQt4 import QtGui, QtCore  #, uic
 import scipy as sp
 from scipy.signal import medfilt
 from glue_designer import  DesignerMainWindow
-from form import Ui_MainWindow
-from IntensDialog import IntensDialog
-from calibr import CalibrDialog
+from ui.Ui_form import Ui_MainWindow
+from intens import IntensDialog
+from settings import SettingsDialog
+from createProject import ProjectDialog
+#from setName import NameDialog
+
+#from calibr import CalibrDialog
 # Масив даних, що буде містити дані, їх масштаб та тип
 class Array(sp.ndarray):
 	
 	def __new__(cls, input_array, scale=[0,0], Type = None):
-		# Input array is an already formed ndarray instance
+		# Input array is an already formed ndarray instan ce
 		# We first cast to be our class type
 		obj = sp.asarray(input_array).view(cls)
 		# add the new attribute to the created instance
@@ -49,15 +53,15 @@ class QTR(QtGui.QMainWindow):
 	1 - зразок
 	2 - результат
 	'''
+	projects = {}
 	Path = ['','','']				# Шляхи до файлів
 	Root = os.getcwd()				# Поточний каталог
 	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	# База фільтрів
 	Types = {'c': 0, 's': 1, 'r': 2}
-	K = 0.	# Коефіцієнт калібровки
-	kPICODict = {b'1064':5.03*10**-3, b'532':0.002,b"633" : 0.003}
+	
 	#Ai2 = 0.	# Квадрат радіуса пучка по інтенсивності
 	filtersDict = {}				# Словник фільтрів
-	filtList = ([1.,1.],[1.,1.])	# Поточні фільтри
+	filtList = ([1.,1.], [1.,1.])	# Поточні фільтри
 	LENGTH = b"1064"				# Довжина хвилі за замовчуванням
 	# Стек історії для кроса. зразка і результата
 	dataStack = (
@@ -65,74 +69,87 @@ class QTR(QtGui.QMainWindow):
 		[Array(sp.zeros((0,2)), Type = 1, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 2, scale=[0,0])] )
 	showTmp = False		# Показувати проміжні  побудови
-
+	confDict = dict(
+		Scale=[0, 0], 
+		Reset=False,
+		Undo=False
+		)
+	dataConfigs = (confDict.copy(), confDict.copy(), confDict.copy())
+	
+	OPT = {	'proc' : False, 
+			'defaultTabType' : 0, 
+			'projN' : 0
+			}
 	
 	# DataUpdated signal -> slot
 	# Сигнал про зміну в даних
 	data_signal = QtCore.pyqtSignal(int, int, name = "dataChanged")
 	
-	def __init__(self, parent = None):
+	def __init__(self, parent=None):
 		super(QTR, self).__init__(parent)
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		
 		self.fileDialog = QtGui.QFileDialog(self)
 		
-		self.qcut = DesignerMainWindow(parent = self)
+		self.qcut = DesignerMainWindow(parent=self)
 		#self.qcut.show()
 		# Відкат даних із QCut
 		self.qcut.dataChanged.connect(self.getBackFromQcut)
 		#self.qcut.show()
-		self.intensDialog = IntensDialog()
-		self.calibrDialog = CalibrDialog(self.Root)
-
+		self.intensDialog = IntensDialog(parent=self)
+		
+		
+		
 		self.ui.tab_2.setEnabled(False)
 		self.ui.tab_3.setEnabled(False)
 		self.ui.tab_4.setEnabled(False)
-		QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Q"), self, self.close)
+		
+		self.settings = SettingsDialog(parent=self)
+		#QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Q"), self, self.close)
 		##### Signals -> Slots #########################################
 		self.uiConnect()
 	
-	# Пошук однотипних об’єктів графічної форми за кортежем імен
-	def findChilds(self,obj,names, p = ''):
-		'''Додатковий механізм пошуку об’єктів графічної форми
-		p	-	атрибут який повертається для кожного елемента
-		'''
-		if p == 'value': return tuple(self.findChild(obj,name).value() for name in names)
-		elif p == 'checkState': return tuple(self.findChild(obj,name).checkState() for name in names)
-		else: return tuple(self.findChild(obj,name) for name in names)
-	def findUi(self, names, p = ''):
-		if p == 'value': return [ getattr(self.ui, i).value() for i in names ]
-		else: return [ getattr(self.ui, i) for i in names ]
 	####################################################################
 	########################  Обробка  #################################
 	####################################################################
-	
-	# Механічна обрізка
-	def poly_cut(self, data, Start = None, End = None, N = 10, m = 4,
-			p = 0.80, ASC=0,  discrete=False):
-		'''	Обрізка вздовж кривої апроксиміції поліномом.
-		m	-	степінь полінома
-		p	-	відсоток від максимального викиду
-		N	-	кількість вузлів
-		ASC	-	обробити Все, зробити Зріз, Зшити
-		'''
-		X, Y = data[:,0], data[:,1]
-		tmpData = []
-		tmpPoly = [[], []]
-		if ASC in (1, 2):
+	def cutConcatView(self, X, Y, x=None, y=None, state=True):
+		if state:
+			Start, End = self.ui.mpl.canvas.ax.get_xlim()
 			x, y = X.copy(), Y.copy()
 			#Обрізка в заданих межах
 			
 			if not Start is None:
 				if 0 < Start < X.max():
 					X, Y = X[X >= Start], Y[X >= Start]
-			else: Start = X.min()
+			else: pass  #Start = X.min()
 			if not End is None:
 				if 0 < End <= X.max():
 					X, Y = X[X <= End], Y[X <= End]
-			else: End = X.max()
-		else: pass
+			else: pass  #End = X.max()
+			return X, Y, x, y
+		else:
+			less, more = x<X[0], x>X[-1]
+			x1, x2 = x[less], x[more]
+			y1, y2 = y[less], y[more]
+			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
+			return X, Y
+			
+	# Механічна обрізка
+	def poly_cut(self, data, N=10, m=4,
+			p=0.80, AC=False,  discrete=False):
+		'''	Обрізка вздовж кривої апроксиміції поліномом.
+		m		-	степінь полінома
+		p		-	відсоток від максимального викиду
+		N		-	кількість вузлів
+		AC	-	обробити Все, зробити Зріз, Зшити
+		'''
+		X, Y = data[:,0], data[:,1]
+		tmpData = []
+		tmpPoly = [[], []]
+		if AC:
+			X, Y, x, y = self.cutConcatView(X, Y)
+		
 		n = int(N)
 		if self.showTmp: tmpData = (X,  Y)
 		EQ = sp.poly1d( sp.polyfit(X, Y, m) )
@@ -168,97 +185,192 @@ class QTR(QtGui.QMainWindow):
 			ynew = ynew + (y_tmp).tolist()
 			i = j
 		X, Y = sp.array(xnew), sp.array(ynew)
-		if ASC == 2:
-			less, more = x<X[0], x>X[-1]
-			x1, x2 = x[less], x[more]
-			y1, y2 = y[less], y[more]
-			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
+		if AC:
+			X, Y = self.cutConcatView(X, Y, x=x, y=y, state=False)
 		if self.showTmp:
 			if discrete:
 				poly = (tmpPoly[0],  tmpPoly[1])
 			else: poly = (tmpData[0],  poly_Y)
-			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale),\
-				tmpData,  poly    
+			return Array(sp.array([X, Y]).T, Type = data.Type,
+				scale = data.scale),	tmpData, poly    
 		else:	
-			return Array(sp.array([X, Y]).T, Type = data.Type, scale = data.scale)
+			return Array(sp.array([X, Y]).T, Type = data.Type,
+				scale = data.scale)
 	
 	# Усереднення
-	def averaging(self, data, Start = None, End = None, N = 1, m = 3,  discrete=False):
+	def averaging(self, data, N=1, m=3,
+				discrete=False, step=0.1, AC=False):
 		'''	Усереднення між заданими вузлами.
 		m	-	порядок полінома
 		N	-	кількість вузлів
+		step - крок усереднення
 		'''
-		x, y = data[:,0], data[:,1]
+		X, Y = data[:,0], data[:,1]
 		#Обрізка в заданих межах
-		if not Start is None:
-			if 0 < Start < x.max():
-				x, y = x[x >= Start], y[x >= Start]
-		if not End is None:
-			if 0 < End <= x.max():
-				x, y = x[x <= End], y[x <= End]
+		if AC:
+			X, Y, x, y = self.cutConcatView(X, Y)
+		if step:
+			#n = int(N)
+			EQ = sp.poly1d( sp.polyfit(X, Y, m) )
+			poly_Y = EQ( X )
+			Range = sp.arange(X.min(), X.max(), step)#range(0,len(X),n)
+			xnew, ynew = [], []
+			poly = [[], []]
+			for j in Range:
+				#if j-i <=1:	break
+				w = ((X>=j) * (X<(j+step)))
+				x_t = X[w]
+				if len(x_t)>=1 and (j+step<=X.max()):
+					#print(len(x_t), "--------------------------------")
+					y_t = Y[w]
+					print(y_t)
+					if discrete and len(y_t)>=3:
+						eq = sp.poly1d( sp.polyfit(x_t, y_t, m) )
+						polyY_tmp = eq(x_t)
+						poly[0] += x_t.tolist()
+						poly[1] += polyY_tmp.tolist()
+					else:
+						eq = EQ
+						polyY_tmp = poly_Y[w]
+					x_temp = x_t.mean()
+					xnew.append(x_temp)
+					ynew.append( (y_t - polyY_tmp).mean() + eq(x_temp))
+				else: pass  #print("==========")
+			if self.showTmp:
+				if not discrete:
+					poly = (X,  poly_Y)
+				
+				if AC:
+					xnew, ynew = self.cutConcatView(xnew, ynew, x=x, y=y, state=False)
+				return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale),\
+					X, Y, poly
+			else:
+				if AC:
+					xnew, ynew = self.cutConcatView(xnew, ynew, x=x, y=y, state=False)
+				return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
 		
-		n = int(N)
-		EQ = sp.poly1d( sp.polyfit(x, y, m) )
-		poly_Y = EQ( x )
-		Range = range(0,len(x),n)
-		i = 0
-		xnew, ynew = [], []
-		poly = [[], []]
-		for j in list(Range[1:])+[len(x)-1]:
-			if j-i <=1:	break
-			x_t = x[i:j]
-			y_t = y[i:j]
-			if discrete:
-				EQ = sp.poly1d( sp.polyfit(x_t, y_t, m) )
-				polyY_tmp = EQ(x_t)
-				poly[0] += x_t.tolist()
-				poly[1] += polyY_tmp.tolist()
-			else:	
-				polyY_tmp = poly_Y[i:j]
-			x_temp = x_t.mean()
-			xnew.append(x_temp)
-			ynew.append( (y_t - polyY_tmp).mean() + EQ(x_temp))
-			i = j
-		if self.showTmp:
-			if not discrete:
-				poly = (x,  poly_Y)
-			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale),\
-				x, y, poly
-		else:
-			return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
-	
 	# Інтерполяція b-сплайном
-	def b_s(self, data, xi = [], Start = None, End = None, Step = 1,
-			sm = 1100000., km = 5):
+	def b_s(self, data, xi = [], Step = 1,
+			sm = 1100000., km = 5, AC=False):
 		'''	Інтерполяція B-сплайном
 		sm	-	коефіцієнт згладжування
 		km	-	степінь полінома
 		'''
 		
 		print("B-spline interpolation [s = %.3f, k = %.3f]" % (sm,km))
-		x, y = data[:,0], data[:,1]
+		X, Y = data[:,0], data[:,1]
 		
 		#Обрізка в заданих межах
-		if not Start is None:
-			if 0 < Start < x.max():
-				x, y = x[x >= Start], y[x >= Start]
-		if not End is None:
-			if 0 < End <= x.max():
-				x, y = x[x <= End], y[x <= End]
-				
+		if AC:
+			X, Y, x, y = self.cutConcatView(X, Y)
 		if not any(xi):
-			xi = sp.arange(Start, End,Step)
+			
+			xi = sp.arange(X.min(), X.max(),Step)
 		try:
-			y_interp = sp.interpolate.UnivariateSpline(x, y, s = sm, k = km)(xi)
+			y_interp = sp.interpolate.UnivariateSpline(X, Y, s = sm, k = km)(xi)
+			if AC:
+				xi, y_interp = self.cutConcatView(xi, y_interp, x=x, y=y, state=False)
 			if self.showTmp:
-				return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale),  x,  y
+				return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale),  X,  Y
 			else:	return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
 		except:
 			pass
 			self.mprint(error="ResEvalError", message="UnivariateSpline")
+			
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
+	def toggleTabs(self, state):
+		'''
+		self.ui.tab_1.setVisible(state)
+		self.ui.tab_2.setVisible(state)
+		self.ui.tab_3.setVisible(state)
+		self.ui.tab_4.setVisible(state)
+		'''
+		self.sender().setText([">>", "<<"][state])
+		self.ui.tabWidget.setVisible(state)
+	
+	def addToProj(self):
+		name = self.sender().objectName()
+		print(self.projects.keys(),"name:",  name)
+		proj = self.projects[name[4:]]
+		Type = self.currentType()
+		proj.addToList(self.getData(Type))
+		
+	def createProj(self):
+		#setName = NameDialog(self)
+		#setName.exec_()
+		name = "newProj"#setName.name
+		while name in self.projects.keys():
+			if name[-1].isdigit():
+				name = name[:-1] + str(int(name[-1])+1)
+			else: name += '0'
+
+		project = ProjectDialog(self, name=name)
+		
+		
+		#if not name:
+		name = 'new'
+		Type = self.currentType()
+		if Type >= 0:
+			project.addToList(self.getData(Type), name=name)
+			project.show()
+
+		self.projects.update({project.projName : project})
+		print(self.projects)
+		
+		
+	def rYInPercents(self, state):
+		''' Певеведення у відсотки Y результату '''
+		data = self.getData(2)
+		if state:
+			data[:, 1] *= 100.
+		else:
+			data[:, 1] /= 100.
+		self.updateData(array=data)
+	
+	def norm_FirstPoint(self):
+		''' Нормування на першу точку '''
+		Type = self.currentType()
+		if Type != -1:
+			data = self.getData(Type)
+			try:
+				data[:, 1] /= data[0, 1]
+				self.updateData(array=data)
+				xl = self.ui.mpl.canvas.ax.get_xlim()
+				self.ui.mpl.canvas.ax.plot(xl, [1]*2, 'r')
+				self.ui.mpl.canvas.ax.plot(data[0, 0], 1, 'ro', markersize=6)
+				self.ui.mpl.canvas.draw()
+			except:
+				pass
+	def norm_Max(self):
+		''' Нормування на максимум '''
+		Type = self.currentType()
+		if Type != -1:
+			data = self.getData(Type)
+			try:
+				data[:, 1] /= data[:, 1].max()
+				self.updateData(array=data)
+			except:
+				pass
+				
+	def norm_Point(self):
+		''' Нормувати на вказану точку '''
+		Type = self.currentType()
+		if Type != -1:
+			self.tdata = self.getData(Type)
+			self.cidpress = self.ui.mpl.canvas.mpl_connect(
+					'button_press_event', self.on_press)
+	def on_press(self, event):
+		''' Отримання координат точки для нормування на точку '''
+		if not event.xdata is None and not event.ydata is None:
+			self.tdata[:, 1] /= event.ydata
+			self.updateData(array=self.tdata)
+			xl = self.ui.mpl.canvas.ax.get_xlim()
+			self.ui.mpl.canvas.ax.plot(xl, [1]*2, 'r')
+			self.ui.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
+			self.ui.mpl.canvas.draw()
+			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
 	def plotTmp(self, state):
 		'''Проміжні побудови'''
 		self.showTmp = state
@@ -267,18 +379,19 @@ class QTR(QtGui.QMainWindow):
 	def setLength(self, length):
 		'''Вибір довжини хвилі зі списку'''
 		self.LENGTH = length.encode('utf_8')
+		self.intensDialog.ui.length.setValue(float(self.LENGTH))
+		'''
 		if self.ui.typeExp.currentIndex() == 1:
 			self.K = self.kPICODict[self.LENGTH]
 			self.ui.calibr.setText(str(self.K))
 		else: pass
-	
+		'''
 	def applyFilt(self):
 		'''Застосування фільтрів із бази для відповідних XY'''
 		key = self.sender().objectName()[0]
 		index = self.Types[key]
 		active = self.findUi([key + i + 'Filt' for i in ('X','Y')])
-		if not len(self.filtersDict)>0:
-			self.filtersDict = self.getFilters(length = self.LENGTH)
+		self.filtersDict = self.getFilters(length = self.LENGTH)
 		filtBaseNames = list(self.filtersDict.keys())
 		print(filtBaseNames)
 		M = [1.,1.]
@@ -307,74 +420,116 @@ class QTR(QtGui.QMainWindow):
 			self.updateData(array = data)
 			#self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
 	
-	def AllSliceConcat(self, index):
-
-		key = self.sender().objectName()[0]
-		Type = self.Types[key]
-		if index == 0:
-			data = self.getData(Type)
-			getattr(self.ui, key + 'Start').setValue(data[:,0].min())
-			getattr(self.ui, key + 'End').setValue(data[:,0].max())
+	
 	# Повернути масштаб при поверненні в історії
 	def setPrevScale(self, Type, action):
-		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
-		Types = ('c', 's', 'r')
-		if action == 0 or action == -1:
-			data = self.getData(Type)
-			scale = data.Scale()
-			ui_obj = self.findUi(( Types[Type] + i for i in Names))
-			for t in ui_obj[:-1]:
-				t.toggled[bool].disconnect(self.setNewScale)			
-			if scale[1] == 2:
-				ui_obj[0].setChecked(True)
-			else:
-				ui_obj[0].setChecked(False)
-				ui_obj[1].setChecked(scale[0])
-				ui_obj[2].setChecked(scale[1])
-			ui_obj[0].setEnabled( not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
-			ui_obj[3].setEnabled( not ui_obj[0].isChecked() )
+		##Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
+		#__________________________
+		actions = ('actionY_X', 'actionX_Log10', 'actionY_Log10' )
+		##Types = ('c', 's', 'r')
+		Type = self.currentType()
+		if Type>=0:	
+			if action == 0 or action == -1:
+				data = self.getData(Type)
+				scale = data.Scale()
+				##ui_obj = self.findUi(( Types[Type] + i for i in Names))
+				#__________________________
+				ui_actions = self.getUi(actions)
 				
-			for t in ui_obj[:-1]:
-				t.toggled[bool].connect(self.setNewScale)
-		else: pass
+				##for t in ui_obj[:-1]:
+				##	t.toggled[bool].disconnect(self.setNewScale)
+				#__________________________
+
+				for t in ui_actions:
+					t.toggled[bool].disconnect(self.setNewScale)
+					t.setEnabled(False)
+					t.setChecked(False)
+				if scale[1] == 2:
+					##ui_obj[0].setChecked(True)
+					#__________________________
+					ui_actions[0].setChecked(True)
+				else:
+					##ui_obj[0].setChecked(False)
+					##ui_obj[1].setChecked(scale[0])
+					##ui_obj[2].setChecked(scale[1])
+					#__________________________
+					for i, j in enumerate((False, scale[0], scale[1])):
+						ui_actions[i].setChecked(j)
+				##ui_obj[0].setEnabled( not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
+				##ui_obj[3].setEnabled( not ui_obj[0].isChecked() )
+				#__________________________
+				ui_actions[0].setEnabled( not (ui_actions[1].isChecked() or ui_actions[2].isChecked()))
+				ui_actions[1].setEnabled( not ui_actions[0].isChecked() )
+				ui_actions[2].setEnabled( not ui_actions[0].isChecked() )
+				
+				self.dataConfigs[Type]['Scale'] = scale
+				##for t in ui_obj[:-1]:
+				##	t.toggled[bool].connect(self.setNewScale)
+				#__________________________
+				
+				for t in ui_actions:
+					t.toggled[bool].connect(self.setNewScale)
+				
+			else: pass
 		
 	# Змінити масштаб на новий
 	def setNewScale(self, state):
-		Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
-		Types = {'c' : 0, 's' : 1, 'r' : 2} 
+		
+		##Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale')
+		actions = ('actionY_X', 'actionX_Log10', 'actionY_Log10' )
 		senderName = self.sender().objectName()
-		t, Type = senderName[0], Types[senderName[0]]
-		data = self.getData(Type)
-		Scale = data.Scale()
-		ui_obj = self.findUi([t + i for i in Names])
-		if senderName[1:] == Names[0]:
-			#ui_obj = getattr(self.ui, t + "LogScale")
-			if state:
-				Scale[1] = 2
-				data[:,1] = data[:,1] / data[:,0]
-			else:
-				Scale[1] = 0
-				data[:,1] = data[:,1] * data[:,0]
-			ui_obj[3].setEnabled(not ui_obj[0].isChecked())
-		else:
-			index = bool(senderName[1] != "X")
-			#ui_obj = getattr(self.ui, t + Names[0])
-			if Scale[index] != state:
-				if state == 1:
-					data[:,index] = sp.log10(data[:,index])
+		Type = self.currentType()
+		if Type>=0:	
+			##t, Type = senderName[0], self.Types[senderName[0]]
+			data = self.getData(Type)
+			Scale = data.Scale()
+			#ui_obj = self.getUi([t + i for i in Names])
+			ui_actions = self.getUi(actions)
+			if senderName == actions[0]:
+				#ui_obj = getattr(self.ui, t + "LogScale")
+				if state:
+					Scale[1] = 2
+					data[:,1] = data[:,1] / data[:,0]
 				else:
-					data[:,index] = sp.power(10.,data[:,index])
-				Scale[index] = int(state)
-				ui_obj[0].setEnabled(not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
-		self.updateData(array = Array(data, Type = Type, scale = Scale))
+					Scale[1] = 0
+					data[:,1] = data[:,1] * data[:,0]
+				##ui_obj[3].setEnabled(not ui_obj[0].isChecked())
+				for i in ui_actions[1:]:
+					i.setEnabled(not ui_actions[0].isChecked())
+					
+			else:
+				index = bool(senderName[6] != "X")
+				#ui_obj = getattr(self.ui, t + Names[0])
+				if Scale[index] != state:
+					if state == 1:
+						data[:,index] = sp.log10(data[:,index])
+					else:
+						data[:,index] = sp.power(10.,data[:,index])
+					Scale[index] = int(state)
+					##ui_obj[0].setEnabled(
+					##	not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
+					ui_actions[0].setEnabled(
+						not (ui_actions[1].isChecked() or ui_actions[2].isChecked()) )
+			self.dataConfigs[Type]['Scale'] = Scale
+			self.updateData(array = Array(data, Type = Type, scale = Scale))
 
 	def Save(self):
 		'''Збереження активного масиву до текстового файлу'''
-		Dict = {'cSave' : 0, 'sSave' : 1, 'rSave' : 2}
+		#Dict = {'cSave' : 0, 'sSave' : 1, 'rSave' : 2}
 		senderName = self.sender().objectName()
-		active = Dict[senderName]
+		active = self.Types[senderName[0]]  #Dict[senderName]
 		data = self.getData(active)
-		filename = QtGui.QFileDialog.getSaveFileName(self,'Save File', self.Root)
+		prefix, suffix = '', ''
+		if self.ui.rSaveSuffix.text():
+			suffix = "_" + self.ui.rSaveSuffix.text()
+		if self.ui.rSavePrefix.text():
+			prefix = self.ui.rSavePrefix.text() + "_"
+			
+		newName = prefix + os.path.split(self.Path[1])[1].split('.')[0] + '_' +\
+							os.path.split(self.Path[0])[1].split('.')[0] + suffix + '.dat'
+							
+		filename = self.fileDialog.getSaveFileName(self,
+			'Save File', os.path.join(self.Root,  newName))
 		if filename:
 			sp.savetxt(str(filename), data)
 	
@@ -412,10 +567,7 @@ class QTR(QtGui.QMainWindow):
 	
 	def ResEval(self):
 		""" Обчислюємо результат."""
-		'''
-		Param = (	(self.ui.cStart.value(),  self.ui.cEnd.value(), self.ui.cAverageStep.value()),
-					(self.ui.sStart.value(),  self.ui.sEnd.value(), self.ui.sAverageStep.value()))
-		'''
+
 		cData = self.getData(0)
 		sData = self.getData(1)
 		
@@ -434,21 +586,21 @@ class QTR(QtGui.QMainWindow):
 			self.updateData(array = Array(sp.array([x,y]).T, Type = 2, scale = [0,0]),action = 0)
 		else: print('ResEval: scaleError')
 			
+	
 	def polyCut(self):
 		'''Обрізка [за різними методами]'''
-		'''Dict = {'cPolyOk' : (0,'cPolyN', 'cPolyP', 'cPolyM', 'cStart',  'cEnd'),
-				'sPolyOk' : (1,'sPolyN', 'sPolyP', 'sPolyM', 'sStart',  'sEnd')}
-		'''
-		Types = {'c': 0, 's' : 1, 'r' : 2}
-		Param = ('PolyN', 'PolyP', 'PolyM', 'Start',  'End')
+		Param = ('PolyN', 'PolyP', 'PolyM')
 		senderName = self.sender().objectName()
-		Type = Types[senderName[0]]
+		Type = self.Types[senderName[0]]
 		active = [Type] + self.findUi((senderName[0] + i for i in Param),p="value")
 		XY = self.getData(active[0])
-		ASC = getattr(self.ui, senderName[0] + "AllSliceConcat").currentIndex()
-		discrete = getattr(self.ui, senderName[0] + 'Discrete' ).checkState()
+		discrete = self.getUi('Discrete' ).isChecked()
+		AC = self.getUi("processView").isChecked()
+		# Межі будемо брати з обраної (графічним методом) ділянки 
+		
+		print('active', active[4:6])
 		data = self.poly_cut(XY, N = active[1], p = active[2],
-			m = active[3], Start = active[4], End = active[5], ASC = ASC,  discrete=discrete)
+			m = active[3], AC = AC,  discrete=discrete)
 		
 		if self.showTmp:
 			data,  tmp,  poly = data
@@ -461,15 +613,14 @@ class QTR(QtGui.QMainWindow):
 			
 	def Average(self):
 		'''Усереднення за різними методами'''
-		Dict = {'cAverageOk' : (0,'cStart',  'cEnd', 'cAverageStep'),
-				'sAverageOk' : (1,'sStart',  'sEnd', 'sAverageStep')}
 		senderName = self.sender().objectName()
-		tmp = Dict[senderName]
-		active = (tmp[0],) + self.findChilds(QtGui.QDoubleSpinBox,tmp[1:],p="value")
-		XY = self.getData(active[0])
-		M = getattr(self.ui,  senderName[0]+'PolyM').value()
-		discrete = getattr(self.ui, senderName[0] + 'Discrete' ).checkState()
-		data = self.averaging(XY, Start=active[1], End=active[2], N=active[3],  m=M, discrete=discrete )
+		
+		step = self.getUi(senderName[0] + 'AverageStep').value()
+		XY = self.getData(senderName[0])
+		M = self.getUi(senderName[0]+'PolyM').value()
+		discrete = self.getUi('Discrete' ).isChecked()
+		AC = self.getUi("processView").isChecked()
+		data = self.averaging(XY, step=step,	m=M, discrete=discrete, AC=AC )
 		if self.showTmp:
 			data, x, y, poly = data
 		self.updateData(array = data)
@@ -503,15 +654,16 @@ class QTR(QtGui.QMainWindow):
 		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		Dict = {
-			'cB_splineOk' : (0,'cStart', 'cEnd', 'cB_splineStep', 'cB_splineS', 'cB_splineK'),
-			'sB_splineOk' : (1,'sStart', 'sEnd', 'sB_splineStep', 'sB_splineS', 'sB_splineK'),
-			'rB_splineOk' : (2,'rStart', 'rEnd', 'rB_splineStep', 'rB_splineS', 'rB_splineK')}
+		
 		senderName = self.sender().objectName()
-		active =  (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox, Dict[senderName][1:],p = 'value')
-		XY = self.getData(active[0])
-		data = self.b_s(XY, Start = active[1], End = active[2], Step = active[3],
-					sm = active[4], km = int(active[5]))
+		#active =  (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox,
+		#		Dict[senderName][1:],p = 'value')
+		key = senderName[0]
+		step, sm, km = (i.value() for i in self.getUi([key+'B_splineStep', 
+			key+'B_splineS', key+'B_splineK']))
+		XY = self.getData(key)
+		AC = self.getUi("processView").isChecked()
+		data = self.b_s(XY, Step=step, sm=sm, km=int(km), AC=AC)
 		if self.showTmp:
 			data,  x, y = data
 		self.updateData(array  = data)
@@ -523,41 +675,81 @@ class QTR(QtGui.QMainWindow):
 		
 	def Undo(self):
 		'''Відкат до попередніх даних'''
-		Dict = {'cUndo' : 0, 'sUndo' : 1, 'rUndo' : 2}
-		senderName = self.sender().objectName()
-		Type = Dict[senderName]
+		#Dict = {'cUndo' : 0, 'sUndo' : 1, 'rUndo' : 2}
+		#senderName = self.sender().objectName()
+		index = self.ui.tabWidget.currentIndex()
+		Type = index - 1
 		if len(self.dataStack[Type])>=2:
-			self.updateData(Type = Type, action = -1)
+			self.updateData(Type=Type, action=-1)
 		else:
+			self.dataConfigs[Type]['Undo'] = False
 			self.sender().setEnabled(False)
 
 	def Reset(self):
 		'''Скидання історії'''
-		Dict = {'cReset' : 0, 'sReset' : 1, 'rReset' : 2}
-		senderName = self.sender().objectName()
-		Type = Dict[senderName]
+		#Dict = {'cReset' : 0, 'sReset' : 1, 'rReset' : 2}
+		#senderName = self.sender().objectName()
+		#Type = Dict[senderName]
+		index = self.ui.tabWidget.currentIndex()
+		Type = index - 1
 		if len(self.dataStack[Type])>=2:
-			self.updateData(Type = Type, action = 0)
+			self.updateData(Type=Type, action=0)
 		else:
+			self.dataConfigs[Type]['Reset']=False
 			self.sender().setEnabled(False)
 
-	def plotCurrent(self, index):
-		'''Побудова поточної вкладки'''
+	def confCurrent(self, index):
+		'''Побудова й налаштування поточної вкладки'''
 		if index > 0:
 			Type = index-1
+			print('configs', self.dataConfigs)
+			# setEnabled
+			for i in ('Reset', 'Undo'):
+				self.getUi(i).setEnabled(self.dataConfigs[Type][i])
+			# setEnabled - Scale
+			scale = self.dataConfigs[Type]['Scale']
+			ui_scale = self.getUi(
+				('actionY_X', 'actionX_Log10', 'actionY_Log10' ))
+			for t in ui_scale:
+				t.toggled[bool].disconnect(self.setNewScale)
+				# Вимикаємо все
+				t.setChecked(False)
+				t.setEnabled(False)
+			if scale[1] == 2:
+				ui_scale[0].setEnabled(True)
+				ui_scale[0].setChecked(True)
+			else:
+				ui_scale[0].setEnabled(not any(scale))
+				for j, i in enumerate(ui_scale[1:]):
+					i.setEnabled(True)
+					i.setChecked(bool(scale[j]))
+					
+			for t in ui_scale:
+				t.toggled[bool].connect(self.setNewScale)
+			
+			
 			if sp.any(self.getData(Type)):
 				active = self.getData(Type);
-				#if not self.qcut.isVisible():
-				#	self.qcut.setVisible(True)
-				#else: pass
 				self.Plot(active)
+				
 			else: pass
-		else: pass
+			for i in ('menu_Hist', 'menu_Scale'):
+				self.getUi(i).setEnabled(True)
+		else:
+			# setEnabled
+			for i in ('menu_Hist', 'menu_Scale'):
+				self.getUi(i).setEnabled(False)
+			for i in ('actionY_X', 'actionX_Log10', 'actionY_Log10'):
+				ui = self.getUi(i)
+				ui.toggled[bool].disconnect(self.setNewScale)
+				ui.setChecked(False)
+				ui.toggled[bool].connect(self.setNewScale)
 		
 	def getBackFromQcut(self):
 		''' Отримання даних, що змінені вручну в QCut'''
 		try:
-			print( "QCut -> "+str(sp.shape(self.qcut.tdata)), self.qcut.tdata.Type, self.qcut.tdata.scale)
+			print( "QCut -> "+str(sp.shape(self.qcut.tdata)),
+				self.qcut.tdata.Type, self.qcut.tdata.scale)
 			data, Type, Scale = self.qcut.getData()
 			self.updateData( array = Array(data, Type = Type, scale=Scale)  )
 		except:
@@ -653,9 +845,6 @@ class QTR(QtGui.QMainWindow):
 			
 	def dataListener(self,Type, action):
 		"""Обробка зміни даних"""
-		Buttons = ( ('cUndo', 'cReset'), ('sUndo', 'sReset'),
-			('rUndo', 'rReset'))
-		Types = ['c','s','r']
 		active = self.getData(Type)
 		self.mprint("dataChanged: scaleX : %d, scaleY : %d, type : %d, len : %d, action : %d" %\
 			  (active.scaleX, active.scaleY ,active.Type, sp.shape(active)[0],action))
@@ -669,18 +858,17 @@ class QTR(QtGui.QMainWindow):
 			b_splineSObj = self.findChild(QtGui.QCheckBox,b_splineSCheck[Type])
 			#self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
 			
-			if getattr(self.ui,Types[Type] + 'AllSliceConcat').currentIndex() == 0:
-				getattr(self.ui,Types[Type] + 'Start').setValue(active[:,0].min())
-				getattr(self.ui,Types[Type] + 'End').setValue(active[:,0].max())
+			
 			self.AutoB_splineS(b_splineSObj.checkState(), isSignal = False, senderType = Type )
 			##### Undo/Reset
 			hist = self.dataStack[Type]
 			state = False
 			if len(hist)>=2:
 				state = True
-			buttons = self.findChilds(QtGui.QPushButton,Buttons[Type])
-			buttons[0].setEnabled(state)
-			buttons[1].setEnabled(state)
+			self.dataConfigs[Type]['Reset'] = state
+			self.dataConfigs[Type]['Undo'] = state
+			self.ui.Reset.setEnabled(state)
+			self.ui.Undo.setEnabled(state)
 			
 	def closeEvent(self, event):
 		#self.qcut.close()
@@ -688,68 +876,40 @@ class QTR(QtGui.QMainWindow):
 			self.intensDialog.close()
 	
 	#======================= intens  =============================
-	def calibrChanged(self):
-		text = self.sender().text()
-		K = 0.
-		try:
-			K = float(text)
-		except:
-			K = self.K
-			self.sender().setText(str(K))
-		self.K = K
 		
-	def typeExp(self, index):
-		if index == 0:
-			self.ui.recalcCalibr.setEnabled(True)
-		if index == 1:
-			self.K = self.kPICODict[self.LENGTH]
-			self.ui.calibr.setText(str(self.K))
-			'''
-			k = 0
-			try:
-				k = float(self.ui.calibr.text())
-			except:
-				pass
-			if k:
-				self.K = k
-			'''
-			self.ui.recalcCalibr.setEnabled(False)
-	
-	def recalcCalibr(self):
-		self.calibrDialog.show()
-		
-	def recalcForIntens(self):
-		
+	def recalcIntens(self):
+		self.intensDialog.typeExp(self.settings.ui.typeexp.currentIndex())
 		self.intensDialog.show()
 		print(self.intensDialog.Ai2)
 		
-		#self.ui_intensDialog = Ui_Dialog()
-		#self.ui_intensDialog.setupUi(self)
-		#self.ui_intensDialog.
-	def getIntens(self):
-		Ai2 = self.intensDialog.Ai2
-		K = self.K
-		data = self.getData(2)
-		data[:,0] *= K/sp.pi/Ai2
-		self.updateData(Array(data, scale = data.scale, Type = 2))
-		self.intensDialog.hide()
-	def getCalibr(self):
-		self.K = self.calibrDialog.K
-		self.ui.calibr.setText(str(self.K))
-		self.calibrDialog.hide()
-		self.calibrDialog.qcut.hide()
 	####################################################################
 	########################  Допоміжні методи  ########################
 	####################################################################
+	def currentType(self):
+		Type = self.ui.tabWidget.currentIndex() - 1
+		if Type <0:
+			Type = self.OPT['defaultTabType']
+		return Type
+	def getUi(self, attrNames):
+		if type(attrNames) in (type([]), type(())):
+			return tuple(getattr(self.ui, i) for i in attrNames)
+		else:
+			return getattr(self.ui, attrNames)
+		
+	def formatedUpdate(self, data, scale, Type):
+		self.updateData(Array(data, scale=scale, Type=Type))
+
 	def mprint(self, m):
 		'''Вивід повідомлень в поле статусу'''
 		self.ui.statusbar.showMessage(m)
 		print(m)
 	
 	def Plot(self, array):
+		self.OPT['defaulTabType'] = array.Type
 		self.qcut.Plot(array)
-
-	def updateData(self, array = Array(sp.zeros((0,2)),scale=[0,0], Type = 0), action = 1, Type = None):
+		
+	def updateData(self, array = Array(sp.zeros((0,2)),scale=[0,0], Type = 0),
+				action = 1, Type = None):
 		""" Запис в тимчасовий файл даних з масиву
 		action = {-1, 0, 1, 2}
 			-1	:	undo
@@ -766,11 +926,13 @@ class QTR(QtGui.QMainWindow):
 		#print(len(self.dataStack[Type]),action)
 		# Запис в історію
 		if action == 1:
-			if sp.any(array) and sp.shape(array)[1] == 2 and sp.shape(array)[0] > 1:
+			if sp.any(array) and sp.shape(array)[1] == 2\
+					and sp.shape(array)[0] > 1:
 				self.dataStack[Type].append(array)
 				emit = True
 
-			else: print('updateData: arrayError',sp.any(array) , sp.shape(array)[1] == 2 , sp.shape(array)[0] > 1)
+			else: print('updateData: arrayError',sp.any(array) ,
+			            sp.shape(array)[1] == 2 , sp.shape(array)[0] > 1)
 		
 		# Видалення останнього запису
 		elif action == -1 and len(self.dataStack[Type])>=2:
@@ -780,7 +942,8 @@ class QTR(QtGui.QMainWindow):
 		# Скидання історії, або запис першого елемента історії
 		elif action == 0:
 			print(0)
-			if sp.any(array) and sp.shape(array)[1] == 2 and sp.shape(array)[0] > 1 and len(self.dataStack[Type])>=1:
+			if sp.any(array) and sp.shape(array)[1] == 2\
+					and sp.shape(array)[0] > 1 and len(self.dataStack[Type])>=1:
 				self.dataStack[Type][0:] = []
 				self.dataStack[Type].append(array)
 				emit = True
@@ -801,7 +964,10 @@ class QTR(QtGui.QMainWindow):
 			self.data_signal.emit(Type, action)
 			self.Plot(self.getData(Type) )
 	
-	def getData(self,Type): return self.dataStack[Type][-1].copy()
+	def getData(self,Type):
+		if type(Type) == type(''):
+			Type = self.Types[Type]
+		return self.dataStack[Type][-1].copy()
 	
 	def getFilters(self, length="532"):
 		"""Читання таблиці фільтрів та вибір значень для даної довжини хвилі"""
@@ -811,7 +977,23 @@ class QTR(QtGui.QMainWindow):
 	
 	def resFilters(self,filters):
 		"""Перерахунок для різних комбінацій фільтрів"""
-		return  sp.multiply.reduce( [ self.filtersDict[i.encode('utf-8')] for i in filters] )
+		return  sp.multiply.reduce( 
+				[ self.filtersDict[i.encode('utf-8')] for i in filters] )
+	
+	
+	# Пошук однотипних об’єктів графічної форми за кортежем імен
+	def findChilds(self,obj,names, p = ''):
+		'''Додатковий механізм пошуку об’єктів графічної форми
+		p	-	атрибут який повертається для кожного елемента
+		'''
+		if p == 'value':
+			return tuple(self.findChild(obj,name).value() for name in names)
+		elif p == 'checkState':
+			return tuple(self.findChild(obj,name).checkState() for name in names)
+		else: return tuple(self.findChild(obj,name) for name in names)
+	def findUi(self, names, p = ''):
+		if p == 'value': return [ getattr(self.ui, i).value() for i in names ]
+		else: return [ getattr(self.ui, i) for i in names ]
 	
 	def uiConnect(self):
 		'''Пов’язвння сигналів з слотами'''
@@ -821,15 +1003,13 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sLoad.clicked.connect(self.loadData)
 		self.ui.cPath.textChanged.connect(self.pathTextChanged)
 		self.ui.sPath.textChanged.connect(self.pathTextChanged)
-		self.ui.tabWidget.currentChanged[int].connect(self.plotCurrent)
+		self.ui.tabWidget.currentChanged[int].connect(self.confCurrent)
 		self.ui.cMCheck.toggled[bool].connect(self.ui.cMColumn.setEnabled)
 		self.ui.sMCheck.toggled[bool].connect(self.ui.sMColumn.setEnabled)
-		self.ui.cUndo.clicked.connect(self.Undo)
-		self.ui.sUndo.clicked.connect(self.Undo)
-		self.ui.rUndo.clicked.connect(self.Undo)
-		self.ui.cReset.clicked.connect(self.Reset)
-		self.ui.sReset.clicked.connect(self.Reset)
-		self.ui.rReset.clicked.connect(self.Reset)
+
+		self.ui.Undo.triggered.connect(self.Undo)
+		self.ui.Reset.triggered.connect(self.Reset)
+		
 		self.ui.cPolyOk.clicked.connect(self.polyCut)
 		self.ui.sPolyOk.clicked.connect(self.polyCut)
 		self.ui.cAverageOk.clicked.connect(self.Average)
@@ -851,6 +1031,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
 		self.ui.tmpShow.toggled[bool].connect(self.plotTmp)
+		self.ui.createProj.triggered.connect(self.createProj)
+		
 		'''
 		self.ui.cFilt.toggled[bool].connect(self.ui.cXFilt.setEnabled)
 		self.ui.cFilt.toggled[bool].connect(self.ui.cYFilt.setEnabled)
@@ -860,36 +1042,40 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cFiltOk.clicked.connect(self.applyFilt)
 		self.ui.sFiltOk.clicked.connect(self.applyFilt)
 		#self.ui.rEvalType.activated[str].connect(self.interpTypeChanged)
-		
+		self.ui.norm_Max.triggered.connect(self.norm_Max)
+		self.ui.norm_Point.triggered.connect(self.norm_Point)
+		self.ui.norm_FirstPoint.triggered.connect(self.norm_FirstPoint)
+		self.ui.settings.triggered.connect(self.settings.show)
 		# Масштабування
-		self.ui.cXLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.cYLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.sXLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.sYLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.rXLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.rYLogScale.toggled[bool].connect(self.setNewScale)
-		self.ui.cY_XScale.toggled[bool].connect(self.setNewScale)
-		self.ui.sY_XScale.toggled[bool].connect(self.setNewScale)
-		self.ui.rY_XScale.toggled[bool].connect(self.setNewScale)
-		self.ui.cAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
-		self.ui.sAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
-		self.ui.rAllSliceConcat.currentIndexChanged[int].connect(self.AllSliceConcat)
+		self.ui.actionY_X.toggled[bool].connect(self.setNewScale)
+		##self.ui.checkY_X.toggled[bool].connect(self.ui.actionY_X.toggle)
+		self.ui.actionY_Log10.toggled[bool].connect(self.setNewScale)
+		self.ui.actionX_Log10.toggled[bool].connect(self.setNewScale)
+		self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
+		
+		self.ui.Close.triggered.connect(self.close)
 		#self.close.connect(self.closeEvent)
-		self.ui.LENGTH.currentIndexChanged[str].connect(self.setLength)
-		#________________________________________________
+		#self.ui.LENGTH.currentIndexChanged[str].connect(self.setLength)
+		#___________________________		_____________________
 		self.data_signal[int,int].connect(self.dataListener)
 		self.data_signal[int,int].connect(self.setPrevScale)
 		
-		#+++++++++++++++++++  Intensity     ++++++++++++++++++++++++++++++++++++++++++++++++
-		self.ui.typeExp.currentIndexChanged[int].connect(self.typeExp)
-		self.ui.calibr.editingFinished.connect(self.calibrChanged)
-		####################  intensDialog  ################################################
-		self.ui.recalcForIntens.clicked.connect(self.recalcForIntens)
-		self.intensDialog.ui.buttonBox.accepted.connect(self.getIntens)
-		####################  calibrDialog  ################################################
-		self.calibrDialog.ui.ok.clicked.connect(self.getCalibr)
-		self.ui.recalcCalibr.clicked.connect(self.recalcCalibr)
-	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		#+++++++++++++++++++  Intensity     ++++++++++++++++++++++++++++++++++++++
+		self.ui.recalcIntens.triggered[bool].connect(self.recalcIntens)
+		#self.ui.typeExp.currentIndexChanged[int].connect(self.typeExp)
+		#self.ui.calibr.editingFinished.connect(self.calibrChanged)
+		####################  intensDialog  ######################################
+		#self.ui.recalcForIntens.clicked.connect(self.recalcForIntens)
+		#self.intensDialog.ui.buttonBox.accepted.connect(self.getIntens)
+		
+		
+		#self.ui.tabWidget.doubleClicked.connect(self.toggleTabs)
+		self.ui.toggleTabs.toggled.connect(self.toggleTabs)
+		
+		####################  calibrDialog  ######################################
+		#self.calibrDialog.ui.ok.clicked.connect(self.getCalibr)
+		#self.ui.recalcCalibr.clicked.connect(self.recalcCalibr)
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!tab widget with hiding!!!!!!!!!!!!!!!!
 	def setTool(self,objType, objName): return self.findChild(objType,objName)
 	
 if __name__ == "__main__":
@@ -898,8 +1084,8 @@ if __name__ == "__main__":
 	win = QTR()
 	win.show()
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	win.setTool(QtGui.QLineEdit,'cPath').setText("/home/kronosua/work/QTR/data/CR4FORWA.TXT")
-	win.setTool(QtGui.QLineEdit,'sPath').setText("/home/kronosua/work/QTR/data/SIFORWAR.TXT")
+	win.setTool(QtGui.QLineEdit,'cPath').setText("/home/kronosua/work/QTR/data/Cr2.dat")
+	win.setTool(QtGui.QLineEdit,'sPath').setText("/home/kronosua/work/QTR/data/LCg1pl30.dat")
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	
 	sys.exit(app.exec_())
