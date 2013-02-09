@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1006</width>
+    <width>1005</width>
     <height>695</height>
    </rect>
   </property>
@@ -58,14 +58,14 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_20">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QTabWidget" name="tabWidget">
         <property name="enabled">
          <bool>true</bool>
         </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -112,281 +112,189 @@
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
-           <widget class="QGroupBox" name="groupBox">
-            <property name="title">
-             <string>Крос</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_7">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout">
+           <layout class="QFormLayout" name="formLayout">
+            <item row="3" column="0" colspan="2">
+             <widget class="QListWidget" name="projList"/>
+            </item>
+            <item row="2" column="0" colspan="2">
+             <layout class="QGridLayout" name="gridLayout_2">
+              <item row="2" column="1">
+               <widget class="QSpinBox" name="YColumn">
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>3</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QSpinBox" name="MColumn">
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QSpinBox" name="XColumn">
+                <property name="minimum">
+                 <number>0</number>
+                </property>
+                <property name="maximum">
+                 <number>100</number>
+                </property>
+                <property name="value">
+                 <number>1</number>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_2">
+                <property name="layoutDirection">
+                 <enum>Qt::LeftToRight</enum>
+                </property>
+                <property name="text">
+                 <string>X</string>
+                </property>
+                <property name="scaledContents">
+                 <bool>false</bool>
+                </property>
+                <property name="wordWrap">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_3">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QCheckBox" name="MCheck">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="text">
+                 <string>Коеф. підс.</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+                <property name="tristate">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="4">
+               <widget class="QCheckBox" name="CutForward">
+                <property name="text">
+                 <string>Вперед</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="1" column="0" colspan="2">
+             <widget class="QGroupBox" name="groupBox_2">
+              <property name="title">
+               <string>Зразок</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_8">
                <item>
-                <widget class="QLineEdit" name="cPath">
-                 <property name="text">
-                  <string/>
-                 </property>
-                 <property name="placeholderText">
-                  <string>./</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="cFile">
-                 <property name="text">
-                  <string>Файл</string>
-                 </property>
-                </widget>
+                <layout class="QGridLayout" name="gridLayout_4">
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="sPath">
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="placeholderText">
+                    <string>./</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QPushButton" name="sFile">
+                   <property name="text">
+                    <string>Файл</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QPushButton" name="sLoad">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Вибрати</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
               </layout>
-             </item>
-             <item>
-              <layout class="QGridLayout" name="gridLayout_2">
-               <item row="2" column="1">
-                <widget class="QSpinBox" name="cYColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>100</number>
-                 </property>
-                 <property name="value">
-                  <number>3</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="3">
-                <widget class="QSpinBox" name="cMColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>100</number>
-                 </property>
-                 <property name="value">
-                  <number>1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0">
-                <widget class="QSpinBox" name="cXColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>100</number>
-                 </property>
-                 <property name="value">
-                  <number>1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_2">
-                 <property name="layoutDirection">
-                  <enum>Qt::LeftToRight</enum>
-                 </property>
-                 <property name="text">
-                  <string>X</string>
-                 </property>
-                 <property name="scaledContents">
-                  <bool>false</bool>
-                 </property>
-                 <property name="wordWrap">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QLabel" name="label_3">
-                 <property name="text">
-                  <string>Y</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QCheckBox" name="cMCheck">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="text">
-                  <string>Коеф. підс.</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="tristate">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="4">
-                <widget class="QCheckBox" name="cCutForward">
-                 <property name="text">
-                  <string>Вперед</string>
-                 </property>
-                </widget>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="2">
+             <widget class="QGroupBox" name="groupBox_3">
+              <property name="title">
+               <string>Крос</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <item>
+                <layout class="QGridLayout" name="gridLayout_9">
+                 <item row="0" column="0">
+                  <widget class="QLineEdit" name="cPath">
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="placeholderText">
+                    <string>./</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QPushButton" name="cFile">
+                   <property name="text">
+                    <string>Файл</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QPushButton" name="cLoad">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="text">
+                    <string>Вибрати</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
               </layout>
-             </item>
-             <item>
-              <widget class="QPushButton" name="cLoad">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Вибрати</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <widget class="Line" name="line">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="groupBox_2">
-            <property name="title">
-             <string>Зразок</string>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_8">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_2">
-               <item>
-                <widget class="QLabel" name="label_33">
-                 <property name="text">
-                  <string>Зразок</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLineEdit" name="sPath">
-                 <property name="text">
-                  <string/>
-                 </property>
-                 <property name="placeholderText">
-                  <string>./</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="sFile">
-                 <property name="text">
-                  <string>Файл</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QGridLayout" name="gridLayout_4">
-               <item row="1" column="1">
-                <widget class="QSpinBox" name="sYColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>50</number>
-                 </property>
-                 <property name="value">
-                  <number>3</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="3">
-                <widget class="QSpinBox" name="sMColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>50</number>
-                 </property>
-                 <property name="value">
-                  <number>1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QSpinBox" name="sXColumn">
-                 <property name="minimum">
-                  <number>0</number>
-                 </property>
-                 <property name="maximum">
-                  <number>50</number>
-                 </property>
-                 <property name="value">
-                  <number>1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_6">
-                 <property name="layoutDirection">
-                  <enum>Qt::LeftToRight</enum>
-                 </property>
-                 <property name="text">
-                  <string>X</string>
-                 </property>
-                 <property name="scaledContents">
-                  <bool>false</bool>
-                 </property>
-                 <property name="wordWrap">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QLabel" name="label_7">
-                 <property name="text">
-                  <string>Y</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QCheckBox" name="sMCheck">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="text">
-                  <string>Коеф. підс.</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="tristate">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="4">
-                <widget class="QCheckBox" name="sCutForward">
-                 <property name="text">
-                  <string>Вперед</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QPushButton" name="sLoad">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Вибрати</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
            </widget>
           </item>
           <item>
@@ -542,6 +450,13 @@
                </property>
               </widget>
              </item>
+             <item row="0" column="1">
+              <widget class="QCheckBox" name="cAverageApprox">
+               <property name="text">
+                <string>Апроксимація</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>
@@ -615,6 +530,9 @@
                <property name="decimals">
                 <number>0</number>
                </property>
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
                <property name="maximum">
                 <double>5.000000000000000</double>
                </property>
@@ -623,17 +541,27 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="3">
-              <widget class="QPushButton" name="cB_splineOk">
-               <property name="text">
-                <string>Інтерп.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
+             <item row="2" column="0">
               <widget class="QCheckBox" name="cAutoB_splineS">
                <property name="text">
                 <string>авто</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QCheckBox" name="cB_splineSmooth">
+               <property name="text">
+                <string>Згладж.</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="cB_splineOk">
+               <property name="text">
+                <string>Інтерп.</string>
                </property>
               </widget>
              </item>
@@ -643,36 +571,66 @@
           <item>
            <widget class="QGroupBox" name="groupBox_9">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="title">
-             <string>Медіанний фільтр</string>
+             <string>Апроксимувати поліномом</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0">
               <widget class="QLabel" name="label_18">
                <property name="text">
-                <string>Розмір ядра:</string>
+                <string>Крок</string>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QSpinBox" name="cMedFiltS">
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="cApproxM">
                <property name="minimum">
                 <number>1</number>
                </property>
                <property name="singleStep">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="value">
-                <number>3</number>
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="cMedFilt">
+             <item row="1" column="2">
+              <widget class="QPushButton" name="cPolyApprox">
                <property name="text">
-                <string>Фільтрувати</string>
+                <string>Апрокс.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QDoubleSpinBox" name="cApproxStep">
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>10000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>10000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Степ. полін</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QCheckBox" name="checkBox">
+               <property name="text">
+                <string>Кускова</string>
                </property>
               </widget>
              </item>
@@ -839,8 +797,8 @@
             <property name="title">
              <string> Усереднення</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_19">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_11">
+             <item row="1" column="0">
               <widget class="QDoubleSpinBox" name="sAverageStep">
                <property name="decimals">
                 <number>6</number>
@@ -859,17 +817,24 @@
                </property>
               </widget>
              </item>
-             <item>
+             <item row="1" column="2">
+              <widget class="QPushButton" name="sAverageOk">
+               <property name="text">
+                <string>Усереднити</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
               <widget class="QLabel" name="label_26">
                <property name="text">
                 <string>крок</string>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="sAverageOk">
+             <item row="0" column="2">
+              <widget class="QCheckBox" name="sAverageApprox">
                <property name="text">
-                <string>Усереднити</string>
+                <string>Апроксимація</string>
                </property>
               </widget>
              </item>
@@ -882,17 +847,26 @@
              <string>В-spline</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_21">
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="sAutoB_splineS">
                <property name="text">
-                <string>крок</string>
+                <string>авто</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="label_20">
-               <property name="text">
-                <string>Згладжув.</string>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="sB_splineK">
+               <property name="decimals">
+                <number>0</number>
+               </property>
+               <property name="minimum">
+                <double>1.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>5.000000000000000</double>
+               </property>
+               <property name="value">
+                <double>4.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -941,30 +915,34 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="2">
-              <widget class="QDoubleSpinBox" name="sB_splineK">
-               <property name="decimals">
-                <number>0</number>
-               </property>
-               <property name="maximum">
-                <double>5.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>4.000000000000000</double>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_21">
+               <property name="text">
+                <string>крок</string>
                </property>
               </widget>
              </item>
-             <item row="1" column="3">
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_20">
+               <property name="text">
+                <string>Згладжув.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QCheckBox" name="sB_splineSmooth">
+               <property name="text">
+                <string>Згладж.</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
               <widget class="QPushButton" name="sB_splineOk">
                <property name="text">
                 <string>Інтерпол.</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QCheckBox" name="sAutoB_splineS">
-               <property name="text">
-                <string>авто</string>
                </property>
               </widget>
              </item>
@@ -974,36 +952,59 @@
           <item>
            <widget class="QGroupBox" name="groupBox_12">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="title">
-             <string>Медіанний фільтр</string>
+             <string>Апроксимувати поліномом</string>
             </property>
-            <layout class="QGridLayout" name="gridLayout_9">
+            <layout class="QGridLayout" name="gridLayout_13">
              <item row="0" column="0">
               <widget class="QLabel" name="label_25">
                <property name="text">
-                <string>Розмір ядра:</string>
+                <string>Крок</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="1">
-              <widget class="QSpinBox" name="sMedFiltS">
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="sApproxM">
                <property name="minimum">
                 <number>1</number>
                </property>
                <property name="singleStep">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="value">
-                <number>3</number>
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item row="0" column="2">
-              <widget class="QPushButton" name="sMedFilt">
+             <item row="1" column="2">
+              <widget class="QPushButton" name="sPolyApprox">
                <property name="text">
-                <string>Фільтрувати</string>
+                <string>Апрокс.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QDoubleSpinBox" name="sApproxStep">
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>10000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>10000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_9">
+               <property name="text">
+                <string>Степ. полін</string>
                </property>
               </widget>
              </item>
@@ -1176,7 +1177,7 @@
              <item row="1" column="2">
               <widget class="QDoubleSpinBox" name="rB_splineK">
                <property name="decimals">
-                <number>0</number>
+                <number>1</number>
                </property>
                <property name="maximum">
                 <double>5.000000000000000</double>
@@ -1200,42 +1201,75 @@
                </property>
               </widget>
              </item>
+             <item row="2" column="0">
+              <widget class="QCheckBox" name="rB_splineSmooth">
+               <property name="text">
+                <string>Згладж.</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
             </layout>
            </widget>
           </item>
           <item>
-           <widget class="QGroupBox" name="groupBox_20">
+           <widget class="QGroupBox" name="groupBox_13">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="title">
-             <string>Медіанний фільтр</string>
+             <string>Апроксимувати поліномом</string>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_14">
-             <item>
+            <layout class="QGridLayout" name="gridLayout_14">
+             <item row="0" column="0">
               <widget class="QLabel" name="label_30">
                <property name="text">
-                <string>Розмір ядра</string>
+                <string>Крок</string>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QSpinBox" name="rMedFiltS">
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="rApproxM">
                <property name="minimum">
                 <number>1</number>
                </property>
                <property name="singleStep">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="value">
-                <number>3</number>
+                <number>4</number>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QPushButton" name="rMedFilt">
+             <item row="1" column="2">
+              <widget class="QPushButton" name="rPolyApprox">
                <property name="text">
-                <string>Фільтрувати</string>
+                <string>Апрокс.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QDoubleSpinBox" name="rApproxStep">
+               <property name="decimals">
+                <number>4</number>
+               </property>
+               <property name="minimum">
+                <double>0.001000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>10000.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>10000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_31">
+               <property name="text">
+                <string>Степ. полін</string>
                </property>
               </widget>
              </item>
@@ -1284,29 +1318,35 @@
         </widget>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="toggleTabs">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>&lt;&lt;</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
      </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="toggleTabs">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>20</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>&lt;</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+      <property name="flat">
+       <bool>true</bool>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QFrame" name="frame">
@@ -1325,26 +1365,6 @@
          <property name="sizeConstraint">
           <enum>QLayout::SetMinimumSize</enum>
          </property>
-         <item>
-          <widget class="QCheckBox" name="mplactionCut_by_line">
-           <property name="text">
-            <string>Лінія</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="mplactionCut_by_rect">
-           <property name="text">
-            <string>Прямокутник</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item>
           <spacer name="horizontalSpacer_4">
            <property name="orientation">
@@ -1419,24 +1439,10 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="contextMenuPolicy">
+          <enum>Qt::NoContextMenu</enum>
+         </property>
         </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
        </item>
       </layout>
      </widget>
@@ -1456,7 +1462,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1006</width>
+     <width>1005</width>
      <height>28</height>
     </rect>
    </property>
@@ -1486,12 +1492,22 @@
      <addaction name="actionX_Log10"/>
      <addaction name="actionY_X"/>
     </widget>
+    <widget class="QMenu" name="menu_5">
+     <property name="title">
+      <string>Обрізка</string>
+     </property>
+     <addaction name="mplactionCut_by_line"/>
+     <addaction name="mplactionCut_by_rect"/>
+    </widget>
     <addaction name="recalcIntens"/>
     <addaction name="separator"/>
     <addaction name="menu_Scale"/>
     <addaction name="autoScale"/>
     <addaction name="tmpShow"/>
     <addaction name="menu_6"/>
+    <addaction name="separator"/>
+    <addaction name="menu_5"/>
+    <addaction name="movePoint"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -1537,7 +1553,10 @@
    <addaction name="menu_3"/>
    <addaction name="projects"/>
   </widget>
-  <widget class="QToolBar" name="toolBar_1">
+  <widget class="QToolBar" name="toolBarGraph">
+   <property name="acceptDrops">
+    <bool>false</bool>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -1552,6 +1571,46 @@
    </attribute>
    <addaction name="autoScale"/>
    <addaction name="tmpShow"/>
+  </widget>
+  <widget class="QToolBar" name="ToolBarMpl_cut">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="mplactionCut_by_line"/>
+   <addaction name="mplactionCut_by_rect"/>
+  </widget>
+  <widget class="QToolBar" name="toolBarScale">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionY_X"/>
+   <addaction name="actionX_Log10"/>
+   <addaction name="actionY_Log10"/>
+  </widget>
+  <widget class="QToolBar" name="toolBarHistory">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="Undo"/>
+   <addaction name="Reset"/>
   </widget>
   <action name="saveSettings">
    <property name="text">
@@ -1594,6 +1653,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/Y_X.png</normaloff>:/buttons/ui/buttons/Y_X.png</iconset>
+   </property>
    <property name="text">
     <string>y -&gt; Y/X</string>
    </property>
@@ -1602,6 +1665,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/LgX.png</normaloff>:/buttons/ui/buttons/LgX.png</iconset>
+   </property>
    <property name="text">
     <string>x -&gt; Log10</string>
    </property>
@@ -1609,6 +1676,10 @@
   <action name="actionY_Log10">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/LgY.png</normaloff>:/buttons/ui/buttons/LgY.png</iconset>
    </property>
    <property name="text">
     <string>y -&gt; Log10</string>
@@ -1642,6 +1713,10 @@
    </property>
   </action>
   <action name="Undo">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/Undo.png</normaloff>:/buttons/ui/buttons/Undo.png</iconset>
+   </property>
    <property name="text">
     <string>Назад</string>
    </property>
@@ -1653,6 +1728,10 @@
    </property>
   </action>
   <action name="Reset">
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/Reset.png</normaloff>:/buttons/ui/buttons/Reset.png</iconset>
+   </property>
    <property name="text">
     <string>Скинути</string>
    </property>
@@ -1692,6 +1771,10 @@
    <property name="checked">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/Rescale.png</normaloff>:/buttons/ui/buttons/Rescale.png</iconset>
+   </property>
    <property name="text">
     <string>Автомасштабування</string>
    </property>
@@ -1703,8 +1786,41 @@
    <property name="checked">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/ShowTmp.png</normaloff>:/buttons/ui/buttons/ShowTmp.png</iconset>
+   </property>
    <property name="text">
     <string>Проміжні побудови</string>
+   </property>
+  </action>
+  <action name="mplactionCut_by_line">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/line.png</normaloff>:/buttons/ui/buttons/line.png</iconset>
+   </property>
+   <property name="text">
+    <string>Лінією</string>
+   </property>
+  </action>
+  <action name="mplactionCut_by_rect">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../res.qrc">
+     <normaloff>:/buttons/ui/buttons/rect.png</normaloff>:/buttons/ui/buttons/rect.png</iconset>
+   </property>
+   <property name="text">
+    <string>Прямокутником</string>
+   </property>
+  </action>
+  <action name="movePoint">
+   <property name="text">
+    <string>Перемістити точки</string>
    </property>
   </action>
  </widget>
@@ -1719,20 +1835,13 @@
  <tabstops>
   <tabstop>cPath</tabstop>
   <tabstop>cFile</tabstop>
-  <tabstop>cXColumn</tabstop>
-  <tabstop>cYColumn</tabstop>
-  <tabstop>cMColumn</tabstop>
-  <tabstop>cMCheck</tabstop>
-  <tabstop>cCutForward</tabstop>
-  <tabstop>cLoad</tabstop>
+  <tabstop>XColumn</tabstop>
+  <tabstop>YColumn</tabstop>
+  <tabstop>MColumn</tabstop>
+  <tabstop>MCheck</tabstop>
+  <tabstop>CutForward</tabstop>
   <tabstop>sPath</tabstop>
   <tabstop>sFile</tabstop>
-  <tabstop>sXColumn</tabstop>
-  <tabstop>sYColumn</tabstop>
-  <tabstop>sMColumn</tabstop>
-  <tabstop>sMCheck</tabstop>
-  <tabstop>sCutForward</tabstop>
-  <tabstop>sLoad</tabstop>
   <tabstop>cPolyN</tabstop>
   <tabstop>cPolyP</tabstop>
   <tabstop>cPolyM</tabstop>
@@ -1742,10 +1851,8 @@
   <tabstop>cB_splineStep</tabstop>
   <tabstop>cB_splineS</tabstop>
   <tabstop>cB_splineK</tabstop>
-  <tabstop>cAutoB_splineS</tabstop>
-  <tabstop>cB_splineOk</tabstop>
-  <tabstop>cMedFiltS</tabstop>
-  <tabstop>cMedFilt</tabstop>
+  <tabstop>cApproxM</tabstop>
+  <tabstop>cPolyApprox</tabstop>
   <tabstop>cXFilt</tabstop>
   <tabstop>cYFilt</tabstop>
   <tabstop>cFiltOk</tabstop>
@@ -1759,10 +1866,6 @@
   <tabstop>sB_splineStep</tabstop>
   <tabstop>sB_splineS</tabstop>
   <tabstop>sB_splineK</tabstop>
-  <tabstop>sAutoB_splineS</tabstop>
-  <tabstop>sB_splineOk</tabstop>
-  <tabstop>sMedFiltS</tabstop>
-  <tabstop>sMedFilt</tabstop>
   <tabstop>sXFilt</tabstop>
   <tabstop>sYFilt</tabstop>
   <tabstop>sFiltOk</tabstop>
@@ -1774,16 +1877,14 @@
   <tabstop>rB_splineK</tabstop>
   <tabstop>rAutoB_splineS</tabstop>
   <tabstop>rB_splineOk</tabstop>
-  <tabstop>rMedFiltS</tabstop>
-  <tabstop>rMedFilt</tabstop>
   <tabstop>rPlot</tabstop>
   <tabstop>rSave</tabstop>
-  <tabstop>mplactionCut_by_line</tabstop>
-  <tabstop>mplactionCut_by_rect</tabstop>
   <tabstop>mplhorizontalSlider</tabstop>
   <tabstop>xLogScale</tabstop>
   <tabstop>yLogScale</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../res.qrc"/>
+ </resources>
  <connections/>
 </ui>

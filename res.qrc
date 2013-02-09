@@ -1,0 +1,13 @@
+<RCC>
+  <qresource prefix="buttons">
+    <file>ui/buttons/Undo.png</file>
+    <file>ui/buttons/Reset.png</file>
+    <file>ui/buttons/LgX.png</file>
+    <file>ui/buttons/LgY.png</file>
+    <file>ui/buttons/line.png</file>
+    <file>ui/buttons/rect.png</file>
+    <file>ui/buttons/Rescale.png</file>
+    <file>ui/buttons/ShowTmp.png</file>
+    <file>ui/buttons/Y_X.png</file>
+  </qresource>
+</RCC>

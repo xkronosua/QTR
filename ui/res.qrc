@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="buttons">
+    <file>buttons/ShowTmp.png</file>
+    <file>buttons/Rescale.png</file>
+    <file>buttons/line.png</file>
+    <file>buttons/LgX.png</file>
+    <file>buttons/LgY.png</file>
+    <file>buttons/rect.png</file>
+    <file>buttons/Y_X.png</file>
+  </qresource>
+</RCC>

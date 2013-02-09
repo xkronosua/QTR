@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/kronosua/work/QTR/ui/createProject.ui'
 #
-# Created: Sun Feb  3 18:25:06 2013
+# Created: Sat Feb  9 23:02:40 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,13 +17,16 @@ except AttributeError:
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(356, 553)
+        Dialog.setWindowModality(QtCore.Qt.WindowModal)
+        Dialog.resize(478, 553)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
         Dialog.setSizePolicy(sizePolicy)
-        Dialog.setSizeGripEnabled(True)
+        Dialog.setWindowOpacity(0.5)
+        Dialog.setSizeGripEnabled(False)
+        Dialog.setModal(False)
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.List = QtGui.QTableWidget(Dialog)
@@ -72,7 +75,7 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Proj", None, QtGui.QApplication.UnicodeUTF8))
         item = self.List.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("Dialog", "Назва", None, QtGui.QApplication.UnicodeUTF8))
         item = self.List.horizontalHeaderItem(1)

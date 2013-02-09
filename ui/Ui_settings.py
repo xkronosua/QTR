@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/kronosua/work/QTR/ui/settings.ui'
 #
-# Created: Mon Jan 28 23:52:19 2013
+# Created: Sat Feb  9 23:02:41 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -38,6 +38,21 @@ class Ui_Dialog(object):
         self.length.addItem(_fromUtf8(""))
         self.horizontalLayout_2.addWidget(self.length)
         self.verticalLayout_2.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_3 = QtGui.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
+        self.label = QtGui.QLabel(self.main)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.horizontalLayout_3.addWidget(self.label)
+        self.delimiter = QtGui.QComboBox(self.main)
+        self.delimiter.setObjectName(_fromUtf8("delimiter"))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.delimiter.addItem(_fromUtf8(""))
+        self.horizontalLayout_3.addWidget(self.delimiter)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
         self.label_6 = QtGui.QLabel(self.main)
@@ -75,6 +90,13 @@ class Ui_Dialog(object):
         self.length.setItemText(0, QtGui.QApplication.translate("Dialog", "1064", None, QtGui.QApplication.UnicodeUTF8))
         self.length.setItemText(1, QtGui.QApplication.translate("Dialog", "532", None, QtGui.QApplication.UnicodeUTF8))
         self.length.setItemText(2, QtGui.QApplication.translate("Dialog", "633", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("Dialog", "Розділювач", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(0, QtGui.QApplication.translate("Dialog", "space space", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(1, QtGui.QApplication.translate("Dialog", "space", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(2, QtGui.QApplication.translate("Dialog", "tab", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(3, QtGui.QApplication.translate("Dialog", ",", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(4, QtGui.QApplication.translate("Dialog", ".", None, QtGui.QApplication.UnicodeUTF8))
+        self.delimiter.setItemText(5, QtGui.QApplication.translate("Dialog", ";", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("Dialog", "Тип експерименту:", None, QtGui.QApplication.UnicodeUTF8))
         self.typeexp.setItemText(0, QtGui.QApplication.translate("Dialog", "CW", None, QtGui.QApplication.UnicodeUTF8))
         self.typeexp.setItemText(1, QtGui.QApplication.translate("Dialog", "PICO", None, QtGui.QApplication.UnicodeUTF8))

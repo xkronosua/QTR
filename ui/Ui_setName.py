@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/kronosua/work/QTR/ui/setName.ui'
 #
-# Created: Mon Jan 28 23:52:20 2013
+# Created: Sat Feb  9 23:02:42 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!

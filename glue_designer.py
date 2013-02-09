@@ -50,6 +50,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 		self.ui.mplactionCut_by_rect.toggled[bool].connect(self.cut_rect)
 
 		# horisintal sliders
+		self.ui.mplhorizontalSlider.setRange(1, 5)
 		self.ui.mplhorizontalSlider.valueChanged[int].connect(self.update_graph)
 
 		# checkboxes
@@ -120,7 +121,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 		#self.background = \
 		#	self.ui.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.ui.mpl.canvas.ax.bbox)
 		# save current plot variables
-		if self.autoscale:
+		if self.autoscale and np.any(self.tdata):
 			self.Rescale()
 		
 		if self.background != None:
@@ -138,7 +139,10 @@ class DesignerMainWindow(QtGui.QWidget ):
 			# creating line
 			self.line, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',
 											 animated=True)
-		
+		if not hasattr(self, 'points'):
+			# creating points
+			self.points, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'mo',
+											 animated=True, markersize=self.ui.mplhorizontalSlider.value()*2)
 		if not hasattr(self.ui, 'rectab') :								
 			# creating rectangle
 			self.rectab, = self.ui.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--',

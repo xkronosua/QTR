@@ -3,12 +3,15 @@
 import sys, os, signal
 from PyQt4 import QtGui, QtCore  #, uic
 import scipy as sp
-from scipy.signal import medfilt
+import scipy.interpolate as interp
+#from scipy.signal import medfilt
 from glue_designer import  DesignerMainWindow
 from ui.Ui_form import Ui_MainWindow
 from intens import IntensDialog
 from settings import SettingsDialog
 from createProject import ProjectDialog
+import bspline
+
 #from setName import NameDialog
 
 #from calibr import CalibrDialog
@@ -59,7 +62,7 @@ class QTR(QtGui.QMainWindow):
 	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	# База фільтрів
 	Types = {'c': 0, 's': 1, 'r': 2}
 	
-	#Ai2 = 0.	# Квадрат радіуса пучка по інтенсивності
+	
 	filtersDict = {}				# Словник фільтрів
 	filtList = ([1.,1.], [1.,1.])	# Поточні фільтри
 	LENGTH = b"1064"				# Довжина хвилі за замовчуванням
@@ -68,7 +71,9 @@ class QTR(QtGui.QMainWindow):
 		[Array(sp.zeros((0,2)), Type = 0, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 1, scale=[0,0])],
 		[Array(sp.zeros((0,2)), Type = 2, scale=[0,0])] )
+	
 	showTmp = False		# Показувати проміжні  побудови
+	
 	confDict = dict(
 		Scale=[0, 0], 
 		Reset=False,
@@ -89,6 +94,7 @@ class QTR(QtGui.QMainWindow):
 		super(QTR, self).__init__(parent)
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
+		self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
 		
 		self.fileDialog = QtGui.QFileDialog(self)
 		
@@ -109,11 +115,13 @@ class QTR(QtGui.QMainWindow):
 		#QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Q"), self, self.close)
 		##### Signals -> Slots #########################################
 		self.uiConnect()
+		self.activateWindow()
 	
 	####################################################################
 	########################  Обробка  #################################
 	####################################################################
 	def cutConcatView(self, X, Y, x=None, y=None, state=True):
+		''' Обробка видимого/всього діапазону даних '''
 		if state:
 			Start, End = self.ui.mpl.canvas.ax.get_xlim()
 			x, y = X.copy(), Y.copy()
@@ -135,7 +143,7 @@ class QTR(QtGui.QMainWindow):
 			X, Y = sp.concatenate([x1, X, x2]), sp.concatenate([y1, Y, y2])
 			return X, Y
 			
-	# Механічна обрізка
+	
 	def poly_cut(self, data, N=10, m=4,
 			p=0.80, AC=False,  discrete=False):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
@@ -197,9 +205,9 @@ class QTR(QtGui.QMainWindow):
 			return Array(sp.array([X, Y]).T, Type = data.Type,
 				scale = data.scale)
 	
-	# Усереднення
+	
 	def averaging(self, data, N=1, m=3,
-				discrete=False, step=0.1, AC=False):
+				discrete=False, step=0.1, AC=False, Approx=False):
 		'''	Усереднення між заданими вузлами.
 		m	-	порядок полінома
 		N	-	кількість вузлів
@@ -223,18 +231,21 @@ class QTR(QtGui.QMainWindow):
 				if len(x_t)>=1 and (j+step<=X.max()):
 					#print(len(x_t), "--------------------------------")
 					y_t = Y[w]
-					print(y_t)
-					if discrete and len(y_t)>=3:
-						eq = sp.poly1d( sp.polyfit(x_t, y_t, m) )
-						polyY_tmp = eq(x_t)
-						poly[0] += x_t.tolist()
-						poly[1] += polyY_tmp.tolist()
-					else:
-						eq = EQ
-						polyY_tmp = poly_Y[w]
 					x_temp = x_t.mean()
 					xnew.append(x_temp)
-					ynew.append( (y_t - polyY_tmp).mean() + eq(x_temp))
+					if Approx:
+					#print(y_t)
+						if discrete and len(y_t)>=3:
+							eq = sp.poly1d( sp.polyfit(x_t, y_t, m) )
+							polyY_tmp = eq(x_t)
+							poly[0] += x_t.tolist()
+							poly[1] += polyY_tmp.tolist()
+						else:
+							eq = EQ
+							polyY_tmp = poly_Y[w]
+						ynew.append( (y_t - polyY_tmp).mean() + eq(x_temp))
+					else:
+						ynew.append(y_t.mean())
 				else: pass  #print("==========")
 			if self.showTmp:
 				if not discrete:
@@ -249,14 +260,13 @@ class QTR(QtGui.QMainWindow):
 					xnew, ynew = self.cutConcatView(xnew, ynew, x=x, y=y, state=False)
 				return Array(sp.array([xnew, ynew]).T, Type = data.Type, scale = data.scale)
 		
-	# Інтерполяція b-сплайном
-	def b_s(self, data, xi = [], Step = 1,
-			sm = 1100000., km = 5, AC=False):
+
+	def b_s(self, data, xi=[], Step=1,
+			sm=1100000., km = 5, AC=False, Smooth=True):
 		'''	Інтерполяція B-сплайном
 		sm	-	коефіцієнт згладжування
 		km	-	степінь полінома
 		'''
-		
 		print("B-spline interpolation [s = %.3f, k = %.3f]" % (sm,km))
 		X, Y = data[:,0], data[:,1]
 		
@@ -267,7 +277,12 @@ class QTR(QtGui.QMainWindow):
 			
 			xi = sp.arange(X.min(), X.max(),Step)
 		try:
-			y_interp = sp.interpolate.UnivariateSpline(X, Y, s = sm, k = km)(xi)
+			if Smooth:
+				tckp,u = interp.splprep([X,Y],s=sm,k=km,nest=-1)
+				xi, y_interp = interp.splev(sp.linspace(0,1,int((X.max()-X.min())/Step)*10),tckp)
+				#y_interp = sp.interpolate.UnivariateSpline(X, Y, s = sm, k = km)(xi)
+			else:
+				xi, y_interp = bspline.pbs(X, Y, xi, clamp=False)
 			if AC:
 				xi, y_interp = self.cutConcatView(xi, y_interp, x=x, y=y, state=False)
 			if self.showTmp:
@@ -275,22 +290,69 @@ class QTR(QtGui.QMainWindow):
 			else:	return Array(sp.array([xi, y_interp]).T,Type = data.Type, scale = data.scale)
 		except:
 			pass
-			self.mprint(error="ResEvalError", message="UnivariateSpline")
+			self.mprint("ResEvalError: UnivariateSpline")
 			
 	####################################################################
 	########################  Слоти  ###################################
 	####################################################################
+	def movePoint(self):
+		'''Переміщення точок'''
+		Type = self.currentType()
+		data = self.getData(Type)
+		def on_motion(event):
+			if not event.xdata is None and not event.ydata is None:
+				xl = self.ui.mpl.canvas.ax.get_xlim() 
+				yl = self.ui.mpl.canvas.ax.get_ylim()
+				self.ui.mpl.canvas.ax.figure.canvas.restore_region(self.qcut.background)
+				self.ui.mpl.canvas.ax.set_xlim(xl)
+				self.ui.mpl.canvas.ax.set_ylim(yl)
+				nearest_x = sp.absolute(data[:, 0] - event.xdata).argmin()
+				#print(nearest_x, data[nearest_x, 1], event.xdata)
+				yl = self.ui.mpl.canvas.ax.get_ylim()
+				self.qcut.line.set_xdata([event.xdata]*2)
+				self.qcut.line.set_ydata(yl)
+				self.qcut.points.set_xdata(data[nearest_x, 0])
+				self.qcut.points.set_ydata(data[nearest_x, 1])
+				# redraw artist
+				self.ui.mpl.canvas.ax.draw_artist(self.qcut.line)
+				self.ui.mpl.canvas.ax.draw_artist(self.qcut.points)
+				self.ui.mpl.canvas.ax.figure.canvas.blit(self.ui.mpl.canvas.ax.bbox)
+		
+		def on_press(event):
+			if not event.xdata is None and not event.ydata is None:
+				
+				nearest_x = abs(data[:, 0] - event.xdata).argmin()
+				#nearest_y = abs(data[:, 1] - event.ydata).argmin()
+				
+				data[nearest_x, 1] = event.ydata
+				self.updateData(array=data)
+				
+				xl = self.ui.mpl.canvas.ax.get_xlim()
+				self.ui.mpl.canvas.ax.plot(xl, [1]*2, '-.r')
+				self.ui.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
+				self.ui.mpl.canvas.draw()
+				self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+			else:
+				self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
+		self.cidmotion = self.ui.mpl.canvas.mpl_connect(
+				  'motion_notify_event', on_motion)
+		self.cidpress = self.ui.mpl.canvas.mpl_connect(
+					'button_press_event', on_press)
+	
 	def toggleTabs(self, state):
-		'''
-		self.ui.tab_1.setVisible(state)
-		self.ui.tab_2.setVisible(state)
-		self.ui.tab_3.setVisible(state)
-		self.ui.tab_4.setVisible(state)
-		'''
-		self.sender().setText([">>", "<<"][state])
+		'''Приховування вкладок'''
+		self.sender().setText([">", "<"][state])
 		self.ui.tabWidget.setVisible(state)
 	
+	
+	def showProj(self, clicked):
+		self.projects[clicked.text()].activateWindow()
+		self.projects[clicked.text()].raise_()
+		self.projects[clicked.text()].show()
 	def addToProj(self):
+		'''Додати дані до проекту'''
 		name = self.sender().objectName()
 		print(self.projects.keys(),"name:",  name)
 		proj = self.projects[name[4:]]
@@ -298,6 +360,7 @@ class QTR(QtGui.QMainWindow):
 		proj.addToList(self.getData(Type))
 		
 	def createProj(self):
+		'''Створити проект'''
 		#setName = NameDialog(self)
 		#setName.exec_()
 		name = "newProj"#setName.name
@@ -315,7 +378,9 @@ class QTR(QtGui.QMainWindow):
 		if Type >= 0:
 			project.addToList(self.getData(Type), name=name)
 			project.show()
-
+		item = QtGui.QListWidgetItem()
+		item.setText(project.projName)
+		self.ui.projList.addItem(item)
 		self.projects.update({project.projName : project})
 		print(self.projects)
 		
@@ -356,21 +421,22 @@ class QTR(QtGui.QMainWindow):
 				
 	def norm_Point(self):
 		''' Нормувати на вказану точку '''
-		Type = self.currentType()
-		if Type != -1:
-			self.tdata = self.getData(Type)
-			self.cidpress = self.ui.mpl.canvas.mpl_connect(
-					'button_press_event', self.on_press)
-	def on_press(self, event):
-		''' Отримання координат точки для нормування на точку '''
-		if not event.xdata is None and not event.ydata is None:
-			self.tdata[:, 1] /= event.ydata
-			self.updateData(array=self.tdata)
-			xl = self.ui.mpl.canvas.ax.get_xlim()
-			self.ui.mpl.canvas.ax.plot(xl, [1]*2, 'r')
-			self.ui.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
-			self.ui.mpl.canvas.draw()
-			self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+		def on_press(event):
+			''' Отримання координат точки для нормування на точку '''
+			if not event.xdata is None and not event.ydata is None:
+				Type = self.currentType()
+				data = self.getData(Type)
+				data[:, 1] /= event.ydata
+				self.updateData(array=data)
+				xl = self.ui.mpl.canvas.ax.get_xlim()
+				self.ui.mpl.canvas.ax.plot(xl, [1]*2, 'r')
+				self.ui.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
+				self.ui.mpl.canvas.draw()
+				self.ui.mpl.canvas.mpl_disconnect(self.cidpress)
+		
+		self.cidpress = self.ui.mpl.canvas.mpl_connect(
+					'button_press_event', on_press)
+		
 	def plotTmp(self, state):
 		'''Проміжні побудови'''
 		self.showTmp = state
@@ -489,6 +555,7 @@ class QTR(QtGui.QMainWindow):
 				#ui_obj = getattr(self.ui, t + "LogScale")
 				if state:
 					Scale[1] = 2
+					data = data[data[:, 0] != 0]
 					data[:,1] = data[:,1] / data[:,0]
 				else:
 					Scale[1] = 0
@@ -502,6 +569,7 @@ class QTR(QtGui.QMainWindow):
 				#ui_obj = getattr(self.ui, t + Names[0])
 				if Scale[index] != state:
 					if state == 1:
+						data = data[data[:, index] > 0]
 						data[:,index] = sp.log10(data[:,index])
 					else:
 						data[:,index] = sp.power(10.,data[:,index])
@@ -531,39 +599,53 @@ class QTR(QtGui.QMainWindow):
 		filename = self.fileDialog.getSaveFileName(self,
 			'Save File', os.path.join(self.Root,  newName))
 		if filename:
-			sp.savetxt(str(filename), data)
-	
-	def AutoB_splineS(self, state, isSignal = True, senderType = 0, param = 0.95):
+			sp.savetxt(str(filename), data, delimiter=self.settings.getDelimiter())
+			
+	def connectAutoB_sS(self, state):
+		key = self.sender().objectName()[0]
+		spins = ['S', 'Step', 'K']
+		for j in spins:
+			if state:
+				self.getUi(key + 'B_spline' + j).valueChanged.connect(
+								self.AutoB_splineS)
+			else:
+				self.getUi(key + 'B_spline' + j).valueChanged.disconnect(
+								self.AutoB_splineS)
+								
+	def AutoB_splineS(self, state=None, Type=None, param=0.98):
 		'''Штучний підбір коефіцієнтів для b-сплайн інтерполяції'''
-		Dict = {
-			'cAutoB_splineS' : (0, 'cB_splineS',  'cB_splineStep', 'cB_splineK'),
-			'sAutoB_splineS' : (1, 'sB_splineS',  'sB_splineStep', 'sB_splineK'),
-			'rAutoB_splineS' : (2, 'rB_splineS',  'rB_splineStep', 'rB_splineK')}
-		senderName = ''
-		if isSignal:
-			senderName = self.sender().objectName()
-		else:
-			Names = ['c', 's', 'r']
-			senderName = Names[senderType]+'AutoB_splineS'
-		active = (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox,Dict[senderName][1:])
-		data = self.getData(active[0])
+		spins = ('S',  'Step', 'K')
+		keys = ['c', 's', 'r']
+		print(state, Type, self.sender().objectName())
+		if not state is None:
+			Type = self.Types[self.sender().objectName()[0]]
+		key = keys[Type]
+		
+		if not Type is None:
+			state = self.getUi(key + 'AutoB_splineS').isChecked()
+		print(state, Type, self.sender().objectName())
+		active = self.getUi([key + 'B_spline' + i for i in spins])
+		data = self.getData(Type)
+		
+		active[0].setEnabled(not state)
+		
 		if state:
-			active[1].setEnabled(False)
+			
 			y = data[:,1]
 			x = data[:,0]
 			EQ = sp.poly1d( sp.polyfit(x, y, 3) )
 			poly_Y = EQ( x )
 			Y = y - poly_Y
-			Step = float(active[2].value())
-			K = float(active[3].value())
+			Step = float(active[1].value())
+			K = float(active[2].value())
 
 			try:
 				print(str((1+Step/K**3)*param))
-				active[1].setValue(sp.std(Y)**2*len(y)*(1+Step/K**2)*param)
+				active[0].setValue(sp.std(Y)**2*len(y)*(1+Step/K**2)*param)
 			except:
 				print("AutoB_splineS: SmoothParamError")
 		else:
-			active[1].setEnabled(True)
+			pass
 	
 	def ResEval(self):
 		""" Обчислюємо результат."""
@@ -579,8 +661,10 @@ class QTR(QtGui.QMainWindow):
 				x = x[window]
 				y = sData[:,1]
 				y = y[window]
-				cY_temp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.rEvalType.currentText().lower())(x)
-				y = y/ cY_temp
+				cY_tmp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.rEvalType.currentText().lower())(x)
+				y = y[cY_tmp != 0]
+				cY_tmp = cY_tmp[cY_tmp != 0]
+				y = y/ cY_tmp
 			else: print('ResEval: interpTypeError')
 			
 			self.updateData(array = Array(sp.array([x,y]).T, Type = 2, scale = [0,0]),action = 0)
@@ -614,22 +698,66 @@ class QTR(QtGui.QMainWindow):
 	def Average(self):
 		'''Усереднення за різними методами'''
 		senderName = self.sender().objectName()
-		
-		step = self.getUi(senderName[0] + 'AverageStep').value()
-		XY = self.getData(senderName[0])
-		M = self.getUi(senderName[0]+'PolyM').value()
+		key = senderName[0]
+		step = self.getUi(key + 'AverageStep').value()
+		XY = self.getData(key)
+		M = self.getUi(key+'PolyM').value()
 		discrete = self.getUi('Discrete' ).isChecked()
 		AC = self.getUi("processView").isChecked()
-		data = self.averaging(XY, step=step,	m=M, discrete=discrete, AC=AC )
+		Approx = self.getUi(key+'AverageApprox').isChecked()
+		data = self.averaging(XY, step=step,	m=M, discrete=discrete,
+					AC=AC, Approx=Approx )
 		if self.showTmp:
 			data, x, y, poly = data
 		self.updateData(array = data)
 		
 		if self.showTmp:
 			self.ui.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
-			self.ui.mpl.canvas.ax.plot(  poly[0],  poly[1],  'r')
+			if Approx:
+				self.ui.mpl.canvas.ax.plot(  poly[0],  poly[1],  'r')
 			self.ui.mpl.canvas.draw()
+	
+	def PolyApprox(self):
+		''' Апроксимація поліномом n-го степ. '''
+		Type = self.currentType()
+		key = self.sender().objectName()[0]
+		data = self.getData(Type)
+		X, Y = data[:, 0], data[:, 1]
+		step = self.getUi(key + 'ApproxStep').value()
+		M = self.getUi(key + 'ApproxM').value()
+		AC = self.getUi("processView").isChecked()
+		piece_wise = self.getUi(key + 'ApproxPiece_wise').isChecked()
+		x, y = X.copy(), Y.copy()
+		if AC:
+			X, Y, x, y = self.cutConcatView(X, Y)
+		if piece_wise:
+			pass
+		else:
+			EQ = sp.poly1d( sp.polyfit(X, Y, M) )
+			xnew = sp.arange(X.min(), X.max(), step)
+			ynew = EQ( xnew )
+		
+		if AC:
+			xnew, ynew = self.cutConcatView(xnew, ynew, x=x, y=y, state=False)
+		self.updateData(array = Array(sp.array([xnew, ynew]).T,
+			Type=data.Type, scale=data.scale))
+		
+		if self.showTmp:
+			self.ui.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
+			xl = self.ui.mpl.canvas.ax.get_xlim()
+			yl = self.ui.mpl.canvas.ax.get_ylim()
 			
+			text = ''
+			for j, i in enumerate(EQ):
+				text+="+"*(i>0) + str(i.round(3))+" x^{" + str(M-j) +"}"
+			text = "$" + text[(EQ[0]>0):] + "$"
+			print(text)
+			
+			self.ui.mpl.canvas.ax.text(xl[0], yl[1], text, fontsize=15)
+			
+			self.ui.mpl.canvas.draw()
+		
+	"""
 	def medFilt(self):
 		'''Фільтрація медіаною'''
 		Dict = {'cMedFilt' : (0,'cMedFiltS'),
@@ -650,11 +778,10 @@ class QTR(QtGui.QMainWindow):
 			self.ui.mpl.canvas.ax.plot(X,  Y, '.m',  alpha=0.2,  zorder=1)
 			self.ui.mpl.canvas.ax.plot(  X,  poly_Y,  'r')
 			self.ui.mpl.canvas.draw()
-			
+	"""	
 		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		
 		senderName = self.sender().objectName()
 		#active =  (Dict[senderName][0],) + self.findChilds(QtGui.QDoubleSpinBox,
 		#		Dict[senderName][1:],p = 'value')
@@ -663,7 +790,8 @@ class QTR(QtGui.QMainWindow):
 			key+'B_splineS', key+'B_splineK']))
 		XY = self.getData(key)
 		AC = self.getUi("processView").isChecked()
-		data = self.b_s(XY, Step=step, sm=sm, km=int(km), AC=AC)
+		Smooth = self.getUi(key + 'B_splineSmooth').isChecked()
+		data = self.b_s(XY, Step=step, sm=sm, km=int(km), AC=AC, Smooth=Smooth)
 		if self.showTmp:
 			data,  x, y = data
 		self.updateData(array  = data)
@@ -790,13 +918,14 @@ class QTR(QtGui.QMainWindow):
 		
 		senderName = self.sender().objectName()
 		key = senderName[0]
-		active = [self.Types[key]] + self.findUi( [key + i for i in uiObj])
+		active = [self.Types[key]] + self.findUi( [ i for i in uiObj])
 		data = []
 		XY = sp.zeros((0,2))
 		path = self.Path[active[0]]
 		if os.path.exists(path):
 			try:
-				data = sp.loadtxt(path)
+				
+				data = sp.loadtxt(path, delimiter=self.settings.getDelimiter())
 				'''
 				activeFilt = self.findChilds(QtGui.QLineEdit, FiltersKeys[active[0]])
 				filtNames = ''
@@ -822,9 +951,9 @@ class QTR(QtGui.QMainWindow):
 					XY = sp.array( [data[:,xc], data[:,yc] ]).T / sp.array([data[:,mc], data[:,mc]]).T
 				else:
 					XY = sp.array( [data[:,xc], data[:,yc] ]).T
-				XY = XY[XY[:,0] > 0]
-				XY = XY[XY[:,1] > 0]
-				if getattr(self.ui,senderName[0]+'CutForward').isChecked():
+				#XY = XY[XY[:,0] != 0]
+				#XY = XY[XY[:,1] != 0]
+				if getattr(self.ui,'CutForward').isChecked():
 					p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
 					print(p)
 					XY = XY[:p,:]
@@ -852,14 +981,8 @@ class QTR(QtGui.QMainWindow):
 		#	print(i.scale)
 		
 		if sp.any(active):
-			#intervalCheck = ['cAutoInterval', 'sAutoInterval', 'rAutoInterval']
-			b_splineSCheck = ['cAutoB_splineS', 'sAutoB_splineS', 'rAutoB_splineS']
-			#intervalObj = self.findChild(QtGui.QCheckBox,intervalCheck[Type])
-			b_splineSObj = self.findChild(QtGui.QCheckBox,b_splineSCheck[Type])
-			#self.AutoInterval(intervalObj.checkState(), isSignal = False, senderType = Type)
 			
-			
-			self.AutoB_splineS(b_splineSObj.checkState(), isSignal = False, senderType = Type )
+			self.AutoB_splineS(Type=Type)
 			##### Undo/Reset
 			hist = self.dataStack[Type]
 			state = False
@@ -1004,8 +1127,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.cPath.textChanged.connect(self.pathTextChanged)
 		self.ui.sPath.textChanged.connect(self.pathTextChanged)
 		self.ui.tabWidget.currentChanged[int].connect(self.confCurrent)
-		self.ui.cMCheck.toggled[bool].connect(self.ui.cMColumn.setEnabled)
-		self.ui.sMCheck.toggled[bool].connect(self.ui.sMColumn.setEnabled)
+		self.ui.MCheck.toggled[bool].connect(self.ui.MColumn.setEnabled)
+		self.ui.MCheck.toggled[bool].connect(self.ui.MColumn.setEnabled)
 
 		self.ui.Undo.triggered.connect(self.Undo)
 		self.ui.Reset.triggered.connect(self.Reset)
@@ -1014,9 +1137,14 @@ class QTR(QtGui.QMainWindow):
 		self.ui.sPolyOk.clicked.connect(self.polyCut)
 		self.ui.cAverageOk.clicked.connect(self.Average)
 		self.ui.sAverageOk.clicked.connect(self.Average)
-		self.ui.cMedFilt.clicked.connect(self.medFilt)
-		self.ui.sMedFilt.clicked.connect(self.medFilt)
-		self.ui.rMedFilt.clicked.connect(self.medFilt)
+		self.ui.cPolyApprox.clicked.connect(self.PolyApprox)
+		self.ui.sPolyApprox.clicked.connect(self.PolyApprox)
+		self.ui.rPolyApprox.clicked.connect(self.PolyApprox)
+		
+		#self.ui.cMedFilt.clicked.connect(self.medFilt)
+		#self.ui.sMedFilt.clicked.connect(self.medFilt)
+		#self.ui.rMedFilt.clicked.connect(self.medFilt)
+		
 		self.ui.cB_splineOk.clicked.connect(self.B_spline)
 		self.ui.sB_splineOk.clicked.connect(self.B_spline)
 		self.ui.rB_splineOk.clicked.connect(self.B_spline)
@@ -1025,8 +1153,12 @@ class QTR(QtGui.QMainWindow):
 		#self.ui.sAutoInterval.toggled[bool].connect(self.AutoInterval)
 		#self.ui.rAutoInterval.toggled[bool].connect(self.AutoInterval)
 		self.ui.cAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
+		self.ui.cAutoB_splineS.toggled[bool].connect(self.connectAutoB_sS)
 		self.ui.sAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
+		self.ui.sAutoB_splineS.toggled[bool].connect(self.connectAutoB_sS)
 		self.ui.rAutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
+		self.ui.rAutoB_splineS.toggled[bool].connect(self.connectAutoB_sS)
+		
 		self.ui.cSave.clicked.connect(self.Save)
 		self.ui.sSave.clicked.connect(self.Save)
 		self.ui.rSave.clicked.connect(self.Save)
@@ -1052,7 +1184,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.actionY_Log10.toggled[bool].connect(self.setNewScale)
 		self.ui.actionX_Log10.toggled[bool].connect(self.setNewScale)
 		self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
-		
+		self.ui.movePoint.triggered.connect(self.movePoint)
 		self.ui.Close.triggered.connect(self.close)
 		#self.close.connect(self.closeEvent)
 		#self.ui.LENGTH.currentIndexChanged[str].connect(self.setLength)
@@ -1071,7 +1203,7 @@ class QTR(QtGui.QMainWindow):
 		
 		#self.ui.tabWidget.doubleClicked.connect(self.toggleTabs)
 		self.ui.toggleTabs.toggled.connect(self.toggleTabs)
-		
+		self.ui.projList.itemDoubleClicked.connect(self.showProj)
 		####################  calibrDialog  ######################################
 		#self.calibrDialog.ui.ok.clicked.connect(self.getCalibr)
 		#self.ui.recalcCalibr.clicked.connect(self.recalcCalibr)
@@ -1083,6 +1215,7 @@ if __name__ == "__main__":
 	app = QtGui.QApplication(sys.argv)
 	win = QTR()
 	win.show()
+	
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	win.setTool(QtGui.QLineEdit,'cPath').setText("/home/kronosua/work/QTR/data/Cr2.dat")
 	win.setTool(QtGui.QLineEdit,'sPath').setText("/home/kronosua/work/QTR/data/LCg1pl30.dat")

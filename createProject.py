@@ -5,7 +5,7 @@ import sys
 import scipy as sp
 #from setName import NameDialog
 #import os
-import csv
+
 import random
 from glue_designer import DesignerMainWindow
 
@@ -16,8 +16,10 @@ class ProjectDialog(QtGui.QDialog):
 	editedText = ''
 	projPath = './data/newProj.dat'
 	projName = ''
+	editLock = True
 	def __init__(self, parent=None, path='./newProj.dat', name='newProj'):
-		super(ProjectDialog, self).__init__(parent)
+		super(ProjectDialog, self).__init__(parent, )
+		self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
 		self.ui = Ui_Dialog()
 		self.ui.setupUi(self)
 		self.uiConnect()
@@ -39,7 +41,7 @@ class ProjectDialog(QtGui.QDialog):
 			self.addAction = QtGui.QAction(parent)
 			self.addAction.setObjectName('add_' + name)
 			self.showAction = QtGui.QAction(parent)
-			self.showAction.setObjectName('show_'+name)
+			self.showAction.setObjectName('show_' + name)
 			
 			print(self.addAction.objectName())
 			self.addAction.setText(path)
@@ -47,10 +49,23 @@ class ProjectDialog(QtGui.QDialog):
 			
 			parent.ui.projects.addAction(self.showAction)
 			parent.ui.addToProjMenu.addAction(self.addAction)
-			
+			self.showAction.setCheckable(True)
+			self.showAction.setChecked(True)
 			self.addAction.triggered.connect(parent.addToProj)
-			self.showAction.triggered.connect(self.show)
+			self.showAction.toggled[bool].connect(self.show_hide)
+			'''
+			item = QtGui.QListWidgetItem()
+			item.setObjectName('show_' + name)
+			item.setText(path)
+			item.doubleclicked.connect(self.show)
 			
+			parent.ui.projList.addItem(item)
+			'''
+			
+	def show_hide(self, state):
+		if state: self.show()
+		else: self.hide()
+	
 	def randomColor(self):
 		red = random.randint(0, 250)
 		green = random.randint(0, 250)
@@ -61,17 +76,19 @@ class ProjectDialog(QtGui.QDialog):
 	
 	def addToList(self, array, name=''):
 		if not name:
-			name = 'new'
+			name = 'new0'
 		while name in self.dataList.keys():
 			if name[-1].isdigit():
 				name = name[:-1] + str(int(name[-1])+1)
 			else: name += '0'
 		
-		self.dataList.update({name:array})
+		
+		self.dataList[name]=array
 		self.tabLen += 1
 		self.ui.List.setRowCount(self.tabLen)
 		
-		newItem = QtGui.QTableWidgetItem(name)
+		newItem = QtGui.QTableWidgetItem()
+		newItem.setText(name)
 		self.ui.List.setItem(self.tabLen - 1, 0, newItem)
 		
 		color = QtGui.QTableWidgetItem()
@@ -80,9 +97,8 @@ class ProjectDialog(QtGui.QDialog):
 		color.setBackground(brush)
 		color.setFlags(QtCore.Qt.ItemIsEnabled)
 		self.ui.List.setItem(self.tabLen - 1, 1, color)
-		#self.ui.List.setCellWidget(self.tabLen-1, 1, color)
-		#self.ui.List.addItem(name)
-			
+		self.editedText = name
+		self.editLock = True
 	def Delete(self):
 		#try:
 		
@@ -102,10 +118,15 @@ class ProjectDialog(QtGui.QDialog):
 		#	pass
 		
 	def nameEdited(self, item):
-		if item.column() == 0 and self.editedText:
-			print(self.editedText, item.text())
+		
+		if item.column() == 0 and self.editedText and not self.editLock:
+			print(self.editedText, item.text(), self.dataList.keys())
 			self.dataList[item.text()] = self.dataList[self.editedText]
 			del self.dataList[self.editedText]
+			print(self.editedText, item.text(), self.dataList.keys())
+			self.editLock = True
+		else:
+			pass
 			
 	def editItem(self, clicked):
 		if clicked.column() == 0:
@@ -113,6 +134,7 @@ class ProjectDialog(QtGui.QDialog):
 			print(item.text())
 			self.ui.List.editItem(item)
 			self.editedText = item.text()
+			self.editLock = False
 			'''
 			item = self.ui.List.item(clicked.row(), 0)
 			old_name = item.text()
@@ -164,11 +186,18 @@ class ProjectDialog(QtGui.QDialog):
 			print(keys)
 			for i in keys:
 				max_len = max(max_len, len(self.dataList[i]))
-				headers += ['#X-' + i, '#Y-' + i]
-			f = open(filename, 'w')
-			writer = csv.writer(f, delimiter=' ')
+				headers += ['X-' + i, 'Y-' + i]
+			#f = open(filename, 'w')
+			delimiter = ' '
+			try:
+				delimiter = self.parent().settings.getDelimiter()
+			except:
+				print("delimiter: default")
 			
-			writer.writerow(headers)
+			#writer = csv.writer(f, delimiter=delimiter)
+			#writer.writerow(headers)
+			out = []
+			out.append(headers)
 			for i in range(max_len):
 				row = []
 				for j in keys:
@@ -176,8 +205,11 @@ class ProjectDialog(QtGui.QDialog):
 					if len(self.dataList[j]) == max_len or i< len(self.dataList[j]):
 						val = self.dataList[j][i, :].tolist()
 					row += val
-				writer.writerow(row)
-			f.close()
+				#writer.writerow(row)
+				out.append(row)
+			out = sp.array(out, dtype="U")
+			sp.savetxt(filename, out, fmt='%s', newline="\r\n", delimiter=delimiter)
+			#f.close()
 			
 	
 	def Move(self):
@@ -211,7 +243,7 @@ class ProjectDialog(QtGui.QDialog):
 		self.ui.Plot.clicked.connect(self.Plot)
 		self.ui.moveUp.clicked.connect(self.Move)
 		self.ui.moveDown.clicked.connect(self.Move)
-		
+
 if __name__ == "__main__":
 	app = QtGui.QApplication(sys.argv)
 	win = ProjectDialog()

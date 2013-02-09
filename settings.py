@@ -15,7 +15,10 @@ class SettingsDialog(QtGui.QDialog):
 		self.uiConnect()
 		
 		# Sections
-		self.config['main'] = {'length': 0, 'typeExp': 0}
+		self.config['main'] = {
+			'length': 0,
+			'typeExp': 0,
+			'delimiter': 0}
 		
 		if os.path.exists(self.path):
 			self.config.read(self.path)
@@ -39,6 +42,16 @@ class SettingsDialog(QtGui.QDialog):
 		self.close()
 		
 		self.uiConfig()
+	def getDelimiter(self):
+		delimiters = {
+			'space': ' ',
+			'space space': '  ', 
+			'tab': '\t', 
+			',': ',', 
+			'.': '.', 
+			';': ';'
+			}
+		return delimiters[self.ui.delimiter.currentText()]
 		
 	def uiConfig(self):
 		self.parent().intensDialog.typeExp(self.ui.typeexp.currentIndex())
