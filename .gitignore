@@ -40,7 +40,7 @@ nosetests.xml
 
 data/
 __pycache__/
-
+filters/
 *.e4p
 
 .eric5project/
