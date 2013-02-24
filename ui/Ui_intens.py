@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/kronosua/work/QTR/ui/intens.ui'
 #
-# Created: Sat Feb  9 23:02:38 2013
+# Created: Sun Feb 24 03:10:38 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,7 +17,7 @@ except AttributeError:
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(696, 680)
+        Dialog.resize(731, 680)
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
@@ -126,9 +126,6 @@ class Ui_Dialog(object):
         self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
         self.activeDataType = QtGui.QComboBox(self.groupBox)
         self.activeDataType.setObjectName(_fromUtf8("activeDataType"))
-        self.activeDataType.addItem(_fromUtf8(""))
-        self.activeDataType.addItem(_fromUtf8(""))
-        self.activeDataType.addItem(_fromUtf8(""))
         self.horizontalLayout_4.addWidget(self.activeDataType)
         self.applyForActiveData = QtGui.QPushButton(self.groupBox)
         self.applyForActiveData.setObjectName(_fromUtf8("applyForActiveData"))
@@ -191,9 +188,6 @@ class Ui_Dialog(object):
         self.recalcResult.setText(QtGui.QApplication.translate("Dialog", "Обчислити", None, QtGui.QApplication.UnicodeUTF8))
         self.label_7.setText(QtGui.QApplication.translate("Dialog", "Результуючий множник:", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("Dialog", "Застосувати до:", None, QtGui.QApplication.UnicodeUTF8))
-        self.activeDataType.setItemText(0, QtGui.QApplication.translate("Dialog", "Результат", None, QtGui.QApplication.UnicodeUTF8))
-        self.activeDataType.setItemText(1, QtGui.QApplication.translate("Dialog", "Зразок", None, QtGui.QApplication.UnicodeUTF8))
-        self.activeDataType.setItemText(2, QtGui.QApplication.translate("Dialog", "Крос", None, QtGui.QApplication.UnicodeUTF8))
         self.applyForActiveData.setText(QtGui.QApplication.translate("Dialog", "Застосувати", None, QtGui.QApplication.UnicodeUTF8))
         self.label_8.setText(QtGui.QApplication.translate("Dialog", "Або:", None, QtGui.QApplication.UnicodeUTF8))
         self.getFilesForRecalc.setText(QtGui.QApplication.translate("Dialog", "Файли", None, QtGui.QApplication.UnicodeUTF8))

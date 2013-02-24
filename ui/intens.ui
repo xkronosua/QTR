@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>696</width>
+    <width>731</width>
     <height>680</height>
    </rect>
   </property>
@@ -233,23 +233,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
-         <widget class="QComboBox" name="activeDataType">
-          <item>
-           <property name="text">
-            <string>Результат</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Зразок</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Крос</string>
-           </property>
-          </item>
-         </widget>
+         <widget class="QComboBox" name="activeDataType"/>
         </item>
         <item>
          <widget class="QPushButton" name="applyForActiveData">

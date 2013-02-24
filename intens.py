@@ -37,18 +37,15 @@ class IntensDialog(QtGui.QDialog):
 		
 	def applyForActiveData(self):
 		xc = 0	#self.ui.xColumn.value()
-		Type = abs(self.ui.activeDataType.currentIndex() - 2)
-		try:
-			data = self.parent().getData(Type)
-			                             
-		except (ValueError, IOError, IndexError):
-			print('error')
-		data[:, xc] *= float(self.ui.result.text())
-		self.parent().formatedUpdate(data, data.scale, Type)
+		Name = self.ui.activeDataType.currentText()
+		data = self.parent().getData(Name)
+		if not data is None:
+			data[:, xc] *= float(self.ui.result.text())
+			self.parent().formatedUpdate(data, data.scale, data.Type, Name=data.Name)
 		
 	def applyFilt(self):
 		'''Застосування фільтрів із бази'''
-		self.parent().filtersDict = self.parent().getFilters(length = self.parent().LENGTH)
+		#self.parent().filtersDict = self.parent().getFilters(length = self.parent().LENGTH)
 		filtBaseNames = list(self.parent().filtersDict.keys())
 		print(filtBaseNames)
 		M = 1.
@@ -171,9 +168,16 @@ class IntensDialog(QtGui.QDialog):
 			if len(data)>=1:
 				self.data = data
 				self.ui.recalcAi2.setEnabled(True)
-				
+	
+	def updateActiveDataList(self):
+		l = self.parent().nameBox.count()
+		self.ui.activeDataType.clear()
+		for i in range(l):
+			self.ui.activeDataType.addItem(self.parent().nameBox.itemText(i))
+			
 	def uiConnect(self):
 		#self.ui.buttonBox.rejected.connect(self.close)
+		
 		self.ui.recalcAi2.clicked.connect(self.recalcAi2)
 		self.ui.hideWindow.clicked.connect(self.close)
 		self.ui.file.clicked.connect(self.getCalibrFile)

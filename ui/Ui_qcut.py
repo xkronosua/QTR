@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/home/kronosua/work/QTR/ui/qcut.ui'
 #
-# Created: Sat Feb  9 23:02:39 2013
+# Created: Sun Feb 24 03:10:38 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!

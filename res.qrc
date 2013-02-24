@@ -1,5 +1,20 @@
 <RCC>
   <qresource prefix="buttons">
+    <file>ui/buttons/movePoint.png</file>
+    <file>ui/buttons/norm_On.png</file>
+    <file>ui/buttons/norm_Max.png</file>
+    <file>ui/buttons/norm_Point.png</file>
+    <file>ui/buttons/filters.png</file>
+    <file>ui/buttons/norm_FirstPoint.png</file>
+    <file>ui/buttons/normData.png</file>
+    <file>ui/buttons/reHi3.png</file>
+    <file>ui/buttons/selectData.png</file>
+    <file>ui/buttons/average.png</file>
+    <file>ui/buttons/polyCut.png</file>
+    <file>ui/buttons/polyFit.png</file>
+    <file>ui/buttons/open.png</file>
+    <file>ui/buttons/filtfilt.png</file>
+    <file>ui/buttons/b_spline.png</file>
     <file>ui/buttons/Undo.png</file>
     <file>ui/buttons/Reset.png</file>
     <file>ui/buttons/LgX.png</file>

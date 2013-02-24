@@ -271,7 +271,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
 			self.update_graph()
 		self.ui.mplactionCut_by_rect.setEnabled(not state)
-		self.ui.tabWidget.setEnabled(not state)
+		self.ui.stackedWidget.setEnabled(not state)
 			
 	def on_press(self, event):
 		"""on button press event for line
@@ -382,7 +382,7 @@ class DesignerMainWindow(QtGui.QWidget ):
 				self.ui.mpl.canvas.mpl_disconnect(self.cidmotion)
 			self.update_graph()
 		self.ui.mplactionCut_by_line.setEnabled(not state)
-		self.ui.tabWidget.setEnabled(not state)
+		self.ui.stackedWidget.setEnabled(not state)
 		
 	def on_press2(self, event):
 		"""on button press event for rectangle
