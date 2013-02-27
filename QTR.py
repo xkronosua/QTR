@@ -361,9 +361,14 @@ class QTR(QtGui.QMainWindow):
 	
 	#  page_ReHi3
 	def recalcReHi3(self):
+		'''Обрахунок Re(hi^(3))'''
 		Name = self.currentName()
 		data = self.getData(Name)
+		
+		
 		if not data is None:
+			from math import pi
+			from cmath import exp, sin, cos, sqrt
 			AC = self.getUi("processView").isChecked()
 			
 			a0 = self.ui.reHi3_a0.value()
@@ -382,6 +387,10 @@ class QTR(QtGui.QMainWindow):
 						'mkm':	10**-6, 
 						'nm':	10**-9}
 			d *= dmDict[dM]
+			
+			# Переклад змінних для старого сценарію
+			
+			
 			#=========================================================================
 			'''
 			Lambda = 532.
@@ -408,86 +417,115 @@ class QTR(QtGui.QMainWindow):
 			X = data[:, 0]
 			Y = data[:, 1]
 			if AC:
-				X, Y, x, y = self.cutConcatView(X, Y)
+				X, Y, *t = self.cutConcatView(X, Y)
 			
-			A, B, C, D = 0, 0, 0, 0
+			A = [0] * 5
+			
 			EQ = sp.poly1d( sp.polyfit(X, Y, polyM) )
-			A = EQ[0]
-			B = EQ[1]
-			C = EQ[2]
-			
-			if polyM == 3:
-				D = EQ[3]
+			for i in range(polyM+1):
+				A[i] = EQ[i]
+				
 			xnew = sp.linspace(X.min(), X.max(), 500)
 			ynew = EQ(xnew)
-			self.ui.mpl.canvas.ax.plot(xnew,  ynew, '.m',  alpha=0.8,  zorder=1)
+			self.ui.mpl.canvas.ax.plot(xnew,  ynew, '-m',  alpha=0.8,  zorder=1)
 			self.ui.mpl.canvas.draw()
-			print('EQ: ', A, B, C, D)
+			print('EQ: ', A)
 			'''
 			The first basic calculation (better to join them to calculation formulas)
 			'''
-			pi, exp, cos, sin, Abs, sqrt = sp.pi, sp.exp, sp.cos, sp.sin, sp.absolute, sp.sqrt
-			k = 2.*pi/Lambda
-			# difractive distance a0:
-			zda0 = (k*(a0)**2.)/2.
-			R = ((1.-n0)/(1.+n0))**2.
-			# size of the beam on the sample: 
-			a = a0*sqrt((1.-l/f)**2+(l/zda0)**2.)
-			a1 = (f*(1.-l/f)**2 + (l/zda0)**2)/((1-l/f*(1+(f/zda0)**2)))
-			# difractive distance a:
-			zda = (k*(a)**2.)/2.
-			# coefficients in formula T:
-			b = -(k*a**2.)*(1.-z/a1)/(2.*z)
-			#also there are needed b**2
-			c = a**2*(1.+b**2.)*(z/(zda))**2.
-			#the normalizing factor:
-			N = 1-exp(-2*(r0)**2/c)                  
-			'''
-			This is the main part of calculation ( formula for transmittance T includes several summands).
-			T decomposition
-			'''
-			T0 = 1.
-			T1 = (-1/(N))*exp(-4*r0**2*(3+b**2)/(c*(9+b**2)))*sin(8*b*(r0)**2/(c*(9+b**2)))
-			T2 = (1/(3*N))*(exp(-6*(r0)**2*(5+b**2)/(c*(25.+b**2)))*cos(24*b*(r0)**2/(c*(25+b**2)))-exp(-6*(r0)**2*(1+b**2)/(c*(9+b**2))))
-			T3 = (1/(8*N))*(1/3*exp(-8*(r0)**2*(7+b**2)/(c*(49.+b**2)))*sin(48*(r0)**2*b/(c*(49+b**2)))-exp(-8*(r0)**2*(15+b**2)*(1+b**2)/(c*(25+b**2)*(9+b**2)))*sin(16*(r0)**2*b*(1+b**2)/(c*(25+b**2)*(9+b**2))))
-			# An additional parameters 
-			##D = 0 
-			q = 0.1
-			s = k*(1-R)*d*(1-exp(-2*q*d)/(2*q))
-			# The components of n2                  
-			n21 = (T0/T1)*(B/A)*10**(-3)/s
-			n22 = sqrt((C/A)*(T0/T2))/s*10**-3
-			#n23 = (T0/T3*(D/A))**(1./3.)/s*10**-3
-			n23 = (T0/T3*(D/A))**(1./3.+0j)/s*10**-3
-			print(type(n23), n23.dtype, n23)
+
+			
+			k = 2*pi/Lambda 
+			ld = k*a0**2/2
+			r02 = r0**2
+			Alpha = 0.1
+			Rfl = ((1 - n0)/(1 + n0))**2
+			def ww(x, a, f, ld):
+				'''correct distance Sample - Lens in cm'''
+				return a*sqrt( (1 - x/f) **2 +  (x/ld) **2)
+
+			def Rc(x, rad, ld): 
+				return rad*( (1 - x/rad) **2 +  (x/ld) **2) / (1 - x/rad* (1 +  (rad/ld) **2) )
+			
+			# correct distance Sample - Lens in cm
+			w = ww(l, a0, f, ld)
+			
+			R = Rc(l, f, ld)#(25, 11, ld) 
+			lds = k*w**2/2 
+			b =  -k *w**2* (1 - z/R) / (2*z)  
+			b2 = b**2 
+			ar2 = w**2* (1 + b2) * (z/lds) **2  	
+			Norm1 = 1 - exp( -2 *r02/ar2) 
+			#wInt = w/sqrt(2)
+			
+			
+			
+			T = 1/ (Norm1) * (Norm1 +pi/ (2** (1.5) ) *\
+				exp( -4 *r02* (3 + b2) / (ar2* (9 + b2) ) )*\
+				sin(8*b*r02/ (ar2* (9 + b2) ) ) + pi**2/ (6*3** (0.5) ) *\
+				(exp( -6 * r02* (5 + b2) / (ar2* (25 + b2) ) )*\
+				cos(24*b*r02/ (ar2* (25 + b2) ) ) - exp( -6 * r02* (1 + b2) /\
+				(ar2* (9 + b2) ) ))  +pi**3/16* (1/3 * exp( -8 *r02* (7 + b2) /\
+				(ar2* (49 + b2) ) )*sin(48*r02*b/ (ar2* (49 + b2) ) ) -\
+				exp( -8 * r02* (15 + b2) * (1 + b2) / (ar2* (25 + b2) * (9 + b2) ) )*\
+				sin(16*r02*b* (1 + b2) / (ar2* (25 + b2) * (9 +  b2) ) )) ) ##
+
+			Th0 = 1  
+			
+			Th1 =  -1 / (Norm1*2** ( .5) ) * exp( -4 *r02* (3 + b2) / (ar2* (9 + b2) ) )*\
+				sin(8*b*r02/ (ar2* (9 + b2) ) )    
+
+			Th2 = 1/ (Norm1*3*3** (0.5) ) * (exp( -6 * r02* (5 + b2) / (ar2* (25 + b2) ) )*\
+				cos(24*b*r02/ (ar2* (25 + b2) ) ) -\
+				exp( -6 * r02* (1 + b2) / (ar2* (9 + b2) ) ))    
+			
+			Th3 = 1/ (Norm1*8) * (1/3* exp( -8 *r02* (7 + b2) / (ar2* (49 + b2) ) )*\
+				sin(48*r02*b/ (ar2* (49 + b2) ) ) - exp( -8 * r02* (15 + b2) *\
+				(1 + b2) / (ar2* (25 + b2) * (9 + b2) ) )* sin(16*r02* b* (1 + b2) /\
+				(ar2* (25 + b2) * (9 + b2) ) ))   
+
+			Th4 =  ( (1/4. ) * (1 - exp( -10 *r02* (1 + b2) / (25 + b2) ))  -\
+				(1/ 3. ) * (1 -exp( -10 *r02* (1 + b2) * (21 + b2) /\
+				( (9 + b2) * (49 + b2) ) )) * cos(40*r02* b* (1 + b2) / ( (9 + b2) *\
+				(49 + b2) ) ) + (1/ 12. ) * (1 - exp( -10 *r02* (9 + b2) / (81 + b2) )) *\
+				cos(80*r02* b/ (81 +b2) )) / (Norm1*5)
+				
+			
+			c1 =   k  *  (1 - Rfl)  *  d    * (1 -  exp( -2 *Alpha*
+				d)) / (2*Alpha)*10**5
+				
+			n21 =  (Th0/Th1) * (A[1]/A[0]) *10** ( -3 ) / c1
+			n22 =  sqrt( (A[2]/A[0]) * (Th0/Th2) )/ c1*10** ( -3 )
+			n23 =  (Th0/Th3* (A[3]/A[0]) ) ** (1/3+0J) /c1*10** ( -3)
+			
+			hi31 = 3*abs(n21)* (n0/ (4*pi) ) **2 
+			hi32 = 3*abs(n22)* (n0/ (4*pi) ) **2 
+			hi33 = 3*abs(n23)* (n0/ (4*pi) ) **2
+			
+			n201v = A[1]/A[0]*Th0/ (Th1*c1) *10** ( -3 )
+			n212v = A[2]/A[1]*Th1/ (Th2*c1) *10** ( -3 )
+			n223v = A[3]/A[2]*Th2/ (Th3*c1) *10** ( -3 )
 			
 			'''
-			nonlinear refractive index n2 (n = n0 + n2*I, where I is intensity):
-				(there n2 is devided on 2 because we have
-					polynomial approximation of the second order)
+			hi301 = 3*n201v* (n0/ (4*pi) ) **2 
+			hi312 = 3*n212v* (n0/ (4*pi) ) **2
+			hi323 = 3*n223v* (n0/ (4*pi) ) **2
 			'''
 			if polyM == 1:
 				polyM = 2
-			n2 = (Abs(n21)+Abs(n22)+Abs(n23))/(polyM-1)
-			# The components of hi3
-			hi31 = 3*Abs(n21)*(n0/(4*pi))**2
-			hi32 = 3*Abs(n22)*(n0/(4*pi))**2
-			hi33 = 3*Abs(n23)*(n0/(4*pi))**2
-			
-			hi3 = 3*n2*(n0/(4*pi))**2*10**(-3)
-			print(1+2j)
-			print('S', s, 'N', N, 'k',  k, 'a', 'b', b, 'a', a,
-				'zda', zda, 'zda0', 'a1', a1, 'a0', a0, 'c', c, 'R', R,
-				'polyM', polyM)
-			print('T:', T0, T1, T2, T3)
-			print('n', n21, n22, n23, n2)
-			print('hi', hi31, hi32, hi33, hi3)
-			
-			
+			na1 =  (abs(n21) + abs(n22) + abs(n23)) *10** (3) /(polyM) 
+			na2 =  (abs(n212v) + abs(n223v)) *10** (3) /2 
+			hi3a1 = 3*na1* (n0/ (4*pi) ) **2*10** ( -3 )
+			#    Print("\<hi3 2-st method\>"); 
+			hi3t = 3*na2* (n0/ (4*pi) ) **2*10** ( -3 )
+			#    Print("\<hi3 fitting\>"); 
+			#hi3t = 3*nt* (n0/ (4*pi) ) **2*10** ( -3 )
+			print('n: ', n21, n22, n23, na1, na2)
+			print('hi3:', hi31, hi32, hi33, hi3a1, hi3t)
 			#------------------------------------------------------------
 			
-			if AC:
-				X, Y = self.cutConcatView(X, Y, x=x, y=y, state=False)
+			#if AC:
+			#	X, Y = self.cutConcatView(X, Y, x=x, y=y, state=False)
 			
 	#  page_NormData
 	def normDataAdd(self):
