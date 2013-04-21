@@ -13,13 +13,15 @@ from createProject import ProjectDialog
 import bspline
 from console import scriptDialog
 from scipy.signal import filtfilt, butter  #lfilter, lfilter_zi
+import json
+import traceback
 #from setName import NameDialog
 
 #from calibr import CalibrDialog
 # Масив даних, що буде містити дані, їх масштаб та тип
 class Array(sp.ndarray):
 	
-	def __new__(cls, input_array, scale=[0,0], Type=0, Name='new'):
+	def __new__(cls, input_array, scale=[0,0], Type=0, Name='new', color='b'):
 		# Input array is an already formed ndarray instan ce
 		# We first cast to be our class type
 		obj = sp.asarray(input_array).view(cls)
@@ -29,6 +31,7 @@ class Array(sp.ndarray):
 		obj.scaleY = scale[1]
 		obj.scale = scale
 		obj.Name = Name
+		obj.color = color
 		#setattr(obj, 'scale', scale)
 		#obj.scale = sp.array([obj.scaleX, obj.scaleY])
 		# Finally, we must return the newly created object:
@@ -42,6 +45,7 @@ class Array(sp.ndarray):
 		self.scaleX= getattr(obj, 'scaleX', None)
 		self.scaleY = getattr(obj, 'scaleY', None)
 		self.scale = getattr(obj, 'scale', None)
+		self.color = getattr(obj, 'color', None)
 	def Scale(self): return [self.scaleX, self.scaleY]
 
 
@@ -61,13 +65,13 @@ class QTR(QtGui.QMainWindow):
 	projects = {}
 	Path = ['','','']				# Шляхи до файлів
 	Root = os.getcwd()				# Поточний каталог
-	FiltersPath = os.path.join(os.getcwd(),"filters.csv")	 # База фільтрів
+	FiltersPath = os.path.join(os.getcwd(),"filters.dict")	 # База фільтрів
 	Types = {'c': 0, 's': 1, 'r': 2}
 	
 	
-	filtersDict = {}				# Словник фільтрів
+	filtersDict = json.load(open(FiltersPath))				# Словник фільтрів
 	#activeFilters = {}	# Поточні фільтри
-	LENGTH = b"1064"				# Довжина хвилі за замовчуванням
+	LENGTH = "1064"				# Довжина хвилі за замовчуванням
 	# Стек історії для кроса. зразка і результата
 	dataStack = (
 		[Array(sp.zeros((0,2)), Type = 0, scale=[0,0])],
@@ -105,7 +109,7 @@ class QTR(QtGui.QMainWindow):
 		## StatusBar
 		self.barWaveLen = QtGui.QLabel()
 		self.barWaveLen.setObjectName('barWaveLen')
-		self.barWaveLen.setText(str(self.LENGTH, 'utf-8'))
+		self.barWaveLen.setText(self.LENGTH)
 		self.ui.statusbar.addPermanentWidget(self.barWaveLen)
 		
 		self.nameBox = QtGui.QComboBox()
@@ -139,7 +143,7 @@ class QTR(QtGui.QMainWindow):
 		
 		
 		# Підвантаження таблиці фільтрів
-		self.filtersDict = self.getFilters(length = self.LENGTH)
+		#self.filtersDict = self.getFilters(length = self.LENGTH)
 		##### Signals -> Slots #########################################
 		self.uiConnect()
 		self.activateWindow()
@@ -187,17 +191,40 @@ class QTR(QtGui.QMainWindow):
 		
 		n = int(N)
 		if self.showTmp: tmpData = (X,  Y)
+		Range = range(0,len(X),n)
+		'''
+		means = []
+		i = 0
+		for j in list(Range[1:])+[len(X)-1]:
+			if j-i<=1: break
+			x_tmp = X[i:j]
+			y_tmp = Y[i:j]
+			means.append([x_tmp.mean(),y_tmp.mean()])
+		means = sp.array(means)
+		EQ = sp.poly1d( sp.polyfit(means[:,0], means[:,1], m) )
+		'''
 		EQ = sp.poly1d( sp.polyfit(X, Y, m) )
+
 		poly_Y = EQ( X )
 		xnew, ynew = [], []
-		Range = range(0,len(X),n)
+		
 		i = 0
 		for j in list(Range[1:])+[len(X)-1]:
 			if j-i<=1: break
 			x_tmp = X[i:j]
 			y_tmp = Y[i:j]
 			if discrete:
+				
 				polyY_tmp = sp.poly1d( sp.polyfit(x_tmp, y_tmp, m) )(x_tmp)
+				polyY_tmp1 = sp.poly1d( sp.polyfit(x_tmp, y_tmp, m+1) )(x_tmp)
+				polyY_tmp2 = sp.poly1d( sp.polyfit(x_tmp, y_tmp, m+2) )(x_tmp)
+				#polyY_tmp1 = sp.poly1d( sp.polyfit(x_tmp, y_tmp, m) )(x_tmp)
+				if sp.sum((polyY_tmp1-y_tmp)**2) > sp.sum((polyY_tmp2-y_tmp)**2):
+					polyY_tmp1 = polyY_tmp2
+				if sp.sum((polyY_tmp-y_tmp)**2) > sp.sum((polyY_tmp1-y_tmp)**2):
+					polyY_tmp = polyY_tmp1
+
+
 				tmpPoly[0] += x_tmp.tolist()
 				tmpPoly[1] += polyY_tmp.tolist()
 			else:	
@@ -328,8 +355,9 @@ class QTR(QtGui.QMainWindow):
 		Name = self.currentName()
 		active = self.getUi([i+'Filt' for i in ['X', 'Y']])
 		
-		filtBaseNames = list(self.filtersDict.keys())
+		filtBaseNames = list(self.filtersDict[self.LENGTH].keys())
 		print(filtBaseNames)
+		'''
 		M = [1.,1.]
 		for i in (0,1):
 			Filt = active[i].text().upper().strip().replace(" ","").replace('+',',').split(',')
@@ -347,14 +375,21 @@ class QTR(QtGui.QMainWindow):
 
 			if check:
 				M[i] = self.resFilters(Filt)
-				
+		'''
+		M = [1., 1.]
+		for i, j in enumerate(active):
+			M[i] = self.filtCalc(j.text())
+			print(M[i])
+
 		if M[0]!=1. or M[1]!=1.:
 			#for i in [0,1]:	self.filtList[Name][i] = M[i]
 			data = self.getData(Name)
 			if not data is None:
 				print(M)
-				data[:,0] = data[:,0]/M[0]  #self.filtList[index][0]
-				data[:,1] = data[:,1]/M[1]  #self.filtList[index][1]
+				for i in [0,1]:
+					if not M[i] is None:
+						data[:,i] = data[:,i] / M[i]  #self.filtList[index][0]
+				#data[:,1] = data[:,1]/M[1]  #self.filtList[index][1]
 				self.updateData(array=data)
 			#self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
 	
@@ -1048,10 +1083,10 @@ class QTR(QtGui.QMainWindow):
 		
 	def setLength(self, length):
 		'''Вибір довжини хвилі зі списку'''
-		self.LENGTH = length.encode('utf_8')
+		self.LENGTH = length#.encode('utf_8')
 		self.intensDialog.ui.length.setValue(float(self.LENGTH))
 		# Оновлення таблиці фільтрів
-		self.filtersDict = self.getFilters(length = self.LENGTH)
+		#self.filtersDict = self.getFilters(length = self.LENGTH)
 		self.barWaveLen.setText(length)
 		'''
 		if self.ui.typeExp.currentIndex() == 1:
@@ -1059,6 +1094,7 @@ class QTR(QtGui.QMainWindow):
 			self.ui.calibr.setText(str(self.K))
 		else: pass
 		'''
+	"""
 	def applyFilt(self):
 		'''Застосування фільтрів із бази для відповідних XY'''
 		key = self.sender().objectName()[0]
@@ -1093,7 +1129,7 @@ class QTR(QtGui.QMainWindow):
 			self.updateData(array = data)
 			#self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
 	
-	
+	"""
 	# Повернути масштаб при поверненні в історії
 	def setPrevScale(self, Name=None, action=0):
 		##Names = ( 'Y_XScale', 'XLogScale', 'YLogScale', 'LogScale' )
@@ -1558,6 +1594,11 @@ class QTR(QtGui.QMainWindow):
 			if emit:
 				self.data_signal.emit(Name, action)
 				self.Plot(self.getData(Name) )
+				if self.showTmp and len(self.dataDict[Name])>=2:
+					data = self.dataDict[Name][-2]
+					self.ui.mpl.canvas.ax.plot(data[:,0],  data[:,1], '.m',  alpha=0.5,  zorder=1)
+					self.ui.mpl.canvas.draw()
+					print('plotTmp')
 			return emit
 	def getData(self,Name):
 		#if type(Name) == type(''):
@@ -1568,20 +1609,23 @@ class QTR(QtGui.QMainWindow):
 		else:
 			return self.dataDict[Name][-1].copy()
 	
-	def getFilters(self, length="532"):
-		"""Читання таблиці фільтрів та вибір значень для даної довжини хвилі"""
-		filt = sp.loadtxt(self.FiltersPath, dtype="S")
-		col = sp.where(filt[0,:]==length)[0][0]
-		output = dict( zip(filt[1:,0], sp.array(filt[1:,col],dtype="f") ) )
-		self.ui.filtersList.clear()
-		for i in output.keys():
-			self.ui.filtersList.addItem(str(i, 'utf-8'))
-		return output
-	def resFilters(self,filters):
-		"""Перерахунок для різних комбінацій фільтрів"""
-		return  sp.multiply.reduce( 
-				[ self.filtersDict[i.encode('utf-8')] for i in filters] )
-	
+	def filtCalc(self, filters):
+		"""Обрахунок пропускання для послідовності фільтрів"""
+		filtTable = self.filtersDict
+		if filters:
+			if not filtTable is None:
+				filters = filters.replace(' ', '').replace('+', ',').replace(';', ',')
+				res = 1.
+				try:
+					res = sp.multiply.reduce( [ filtTable[self.LENGTH][i.upper()] for i in filters.split(",")] )
+				except KeyError:
+					traceback.print_exc()
+					return
+				return res
+			else:
+				return	
+		else:
+			return 1.
 	
 	# Пошук однотипних об’єктів графічної форми за кортежем імен
 	def findChilds(self,obj,names, p = ''):
@@ -1674,7 +1718,7 @@ class QTR(QtGui.QMainWindow):
 		#self.ui.cSave.clicked.connect(self.Save)
 		#self.ui.sSave.clicked.connect(self.Save)
 		#self.ui.rSave.clicked.connect(self.Save)
-		#self.ui.tmpShow.toggled[bool].connect(self.plotTmp)
+		self.ui.tmpShow.toggled[bool].connect(self.plotTmp)
 		#self.ui.createProj.triggered.connect(self.createProj)
 		
 	

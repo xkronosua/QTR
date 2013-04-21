@@ -13,7 +13,7 @@ class IntensDialog(QtGui.QDialog):
 	outFilesNames = []
 	# Змінні для калібровки
 	K = 0.	# Коефіцієнт калібровки
-	kPICODict = {b'1064':5.03*10**-3, b'532':0.002,b"633" : 0.003}
+	kPICODict = {'1064':5.03*10**-3, '532':0.002,"633" : 0.003}
 	Root = "./"
 	calibrFilesList = []
 	data = []
@@ -46,26 +46,13 @@ class IntensDialog(QtGui.QDialog):
 	def applyFilt(self):
 		'''Застосування фільтрів із бази'''
 		#self.parent().filtersDict = self.parent().getFilters(length = self.parent().LENGTH)
-		filtBaseNames = list(self.parent().filtersDict.keys())
-		print(filtBaseNames)
-		M = 1.
-		active = self.ui.intensFilt
-		Filt = active.text().upper().strip().replace(" ","").replace('+',',').split(',')
-		check = []
-		if len(Filt)>=1:
-			for j in Filt:
-				#print(j)
-				check.append(j.encode('utf-8') in filtBaseNames)
+		#filtBaseNames = list(self.parent().filtersDict.keys())
+		#print(filtBaseNames)
+		filt = self.parent().filtCalc(self.ui.intensFilt.text())
+		if filt is None:
+			self.filters = 1.
 		else:
-			Filt = ['1']
-			check = [1.]
-		#print(check)
-		check = sp.multiply.reduce(check)
-		#print(check)
-
-		if check:
-			M = self.parent().resFilters(Filt)
-		self.filters = M
+			self.filters = filt
 		print('filters:',  self.filters)
 	
 	def recalcResult(self):
