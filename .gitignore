@@ -18,6 +18,7 @@ develop-eggs
 lib
 lib64
 data
+tmp
 __pycache__
 old
 stable
