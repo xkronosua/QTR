@@ -48,17 +48,24 @@ def moving_average(x,y,step_size=.1,bin_size=1):
 	bin_centers  = sp.arange(x.min(), x.max()-0.5*step_size,step_size)+0.5*step_size
 	bin_avg = sp.zeros(len(bin_centers))
 
+	eq = sp.poly1d(sp.polyfit(x,y,6))
 	for index in range(0,len(bin_centers)):
 		bin_center = bin_centers[index]
+		
 		items_in_bin = y[(x>(bin_center-bin_size*0.5) ) & (x<(bin_center+bin_size*0.5))]
-		bin_avg[index] = sp.mean(items_in_bin)
-
-	return bin_centers,bin_avg
+		if len(items_in_bin)==0:
+			bin_avg[index] = None
+		else:
+			bin_avg[index] = sp.mean(items_in_bin)
+	bin_centers = bin_centers[-sp.isnan(bin_avg)]
+	bin_avg = bin_avg[-sp.isnan(bin_avg)]
+	
+	return (bin_centers,bin_avg)
 
 def weighted_moving_average(x,y,step_size=0.05,width=1):
 	bin_centers  = sp.arange(x.min(),x.max()-0.5*step_size,step_size)+0.5*step_size
 	bin_avg = sp.zeros(len(bin_centers))
-
+	
 	for index in range(0,len(bin_centers)):
 		bin_center = bin_centers[index]
 		weights = gaussian(x,mean=bin_center,sigma=width)
@@ -125,6 +132,7 @@ class QTR(QtGui.QMainWindow):
 		nameEditLock=True,
 		currentName=None,
 		autoscale=True,
+		kPICODict={'1064':5.03*10**-3, '532':0.002,"633" : 0.003}
 		)
 	#  mpl
 	x1,x2,x3,x4,y1,y2,y3,y4 = (0.,0.,0.,0.,0.,0.,0.,0.)
@@ -310,7 +318,7 @@ class QTR(QtGui.QMainWindow):
 		
 		if name in self.data:
 			data = self.data[name][0].copy()
-			if self.ui.processView.isChecked():
+			if self.ui.actionProcessView.isChecked():
 				xl = self.mpl.canvas.ax.get_xlim()
 				x_start = sp.where(data[:,0] >= xl[0])[0][0]
 				x_end = sp.where(data[:,0] <= xl[1])[0][-1]
@@ -1367,8 +1375,8 @@ class QTR(QtGui.QMainWindow):
 		data, name = self.getData()
 		step = self.getUi('AverageStep').value()
 		width = self.getUi('maWidth').value()
-
-		x, y = weighted_moving_average(data[:,0], data[:,1],step,width)
+		
+		x, y = moving_average(data[:,0], data[:,1],step,width)
 		new_data = data.clone(sp.array([x,y]).T)
 		self.updateData(name, data=new_data)
 		if self.confDict['showTmp']:
@@ -1418,21 +1426,24 @@ class QTR(QtGui.QMainWindow):
 		currentEditLine = self.getUi(self.filtLineEdit + "Filt")
 		currentEditLine.setText(currentEditLine.text() + "," + item.text().split('\t')[0])
 	
-	def filtCalc(self, filters):
+	def filtCalc(self, filters, waveLength=None):
 		"""Обрахунок пропускання для послідовності фільтрів"""
 		filtTable = self.filtersDict
+		if waveLength is None:
+			waveLength = self.ui.filtWaveLENGTH.currentText()
+			
 		if filters:
 			if not filtTable is None:
 				filters = filters.replace(' ', '').replace('+', ',').replace(';', ',')
 				res = 1.
 				try:
-					res = sp.multiply.reduce( [ filtTable[self.ui.filtWaveLENGTH.currentText()][i.upper()] for i in filters.split(",")] )
+					res = sp.multiply.reduce( [ filtTable[waveLength][i.upper()] for i in filters.split(",")] )
 				except KeyError:
 					traceback.print_exc()
-					return
+					return 1.
 				return res
 			else:
-				return	
+				return 1.
 		else:
 			return 1.
 
@@ -1507,7 +1518,34 @@ class QTR(QtGui.QMainWindow):
 				self.ui.normTable.item(item.row(), 3).setText(name3)
 				self.ui.normTable.item(item.row(), 4).setText('Ok')
 			else: print('ResEval: interpTypeError')
+	
+	## Інтенсивність
+	def recalcAi2(self):
+		'''Перерахунок радіусу пучка'''
+		z, f, Ae = self.getValue(("Z", "F", "R"))
+		length = float(self.ui.intensWaveLENGTH.currentText())
+		Ae *= 25*10**-4
+		try:
+			Ai2 = 2*Ae**2*((1-z/f)**2 + (z*length*10**-7/sp.pi/Ae**2)**2)/4
+			self.ui.Ai2.setText(str(sp.sqrt(Ai2)))
+		except:
+			traceback.print_exc()
+			self.ui.Ai2.setText(str(sqrt(Ai2)))
+	
+	def recalcIntensResult(self):
+		'''Перерахунок на інтенсивність'''
+		filt = self.filtCalc(self.ui.intensFilt.text(), waveLength=self.ui.intensWaveLENGTH.currentText())
+		try:
 			
+			result = float(eval(self.ui.calibr.text())) / float(self.ui.Ai2.text())**2 /  filt
+			self.ui.intensResult.setText(str(round(result,9)))
+			data, Name = self.getData()
+			data[:, 0] *= float(self.ui.intensResult.text())
+			self.updateData(name=Name, data=data)
+			
+		except:
+			traceback.print_exc()
+
 			
 	#=============================================================================
 	def getUi(self, attrNames):
@@ -1515,6 +1553,9 @@ class QTR(QtGui.QMainWindow):
 			return tuple(getattr(self.ui, i) for i in attrNames)
 		else:
 			return getattr(self.ui, attrNames)
+	
+	def getValue(self, names):
+		return (getattr(self.ui, i).value() for i in names)
 	
 	def setToolsLayer(self):
 		name = self.sender().objectName().split('action')[1]
@@ -1581,7 +1622,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.tmpShow.toggled[bool].connect(self.plotTmp)
 		self.ui.autoScale.toggled[bool].connect(self.set_autoScale)
 
-		self.ui.processView.toggled[bool].connect(self.processView)
+		#self.ui.processView.toggled[bool].connect(self.processView)
+		self.ui.actionProcessView.toggled[bool].connect(self.processView)
 	
 		## norm
 		self.ui.norm_Max.triggered.connect(self.norm_Max)
@@ -1608,6 +1650,11 @@ class QTR(QtGui.QMainWindow):
 		##	mpl
 		self.ui.mplactionCut_by_line.toggled[bool].connect(self.cut_line)
 		self.ui.mplactionCut_by_rect.toggled[bool].connect(self.cut_rect)
+		
+		## Інтенсивність
+		self.ui.recalcAi2.clicked.connect(self.recalcAi2)
+		self.ui.recalcIntensResult.clicked.connect(self.recalcIntensResult)
+		
 
 		'''
 		#self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
@@ -1637,6 +1684,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.actionNormData.triggered.connect(self.setToolsLayer)
 		self.ui.actionReHi3.triggered.connect(self.setToolsLayer)
 		self.ui.actionFilters.triggered.connect(self.setToolsLayer)
+		self.ui.actionIntens.triggered.connect(self.setToolsLayer)
 		
 
 
