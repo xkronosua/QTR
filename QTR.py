@@ -9,6 +9,7 @@ import scipy as sp
 
 import scipy.interpolate as interp
 from scipy.optimize import leastsq
+import scipy.optimize as optimize
 from numpy.lib.stride_tricks import as_strided
 
 #import shelve
@@ -177,7 +178,7 @@ class QTR(QtGui.QMainWindow):
 		self.filtLineEdit = 'X'
 		
 
-
+		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_Data'))
 		self.uiConnect()
 
 		self.plt, = self.mpl.canvas.ax.plot([], [], '.')
@@ -189,12 +190,12 @@ class QTR(QtGui.QMainWindow):
 		#suffix = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
 		#filename = "_".join([basename, suffix]) # e.g. 'mylogfile_120508_171442'
 		self.data = {}	#shelve.open(filename)
-		self.addNewData(name='new', data=data, color='red')
+		#self.addNewData(name='new', data=data, color='red')
 		
 
 		self.fileDialog = QtGui.QFileDialog(self)
 		
-		self.ui.stackedWidget.setCurrentIndex(6)
+		#self.ui.stackedWidget.setCurrentIndex(6)
 		self.ui.show()
 		
 		
@@ -233,10 +234,13 @@ class QTR(QtGui.QMainWindow):
 		data,_ = self.getData(Name)
 		if not data is None:
 			filename = self.fileDialog.getSaveFileName(self,
-				'Save File', os.path.join(self.PATH, Name))
+				'Save File', os.path.join(self.PATH, Name))[0]
+			print(filename)
 			if filename:
 				delimiter = self.getDelimiter()
-				if delimiter == 'None':
+				print(delimiter)
+
+				if filename.split('.')[-1] == 'npy':
 					sp.save(str(filename), data)
 				else:
 					sp.savetxt(str(filename), data, delimiter=delimiter)
@@ -246,13 +250,13 @@ class QTR(QtGui.QMainWindow):
 		color='red', scales=[0,0], comments="", xc='-', yc='-'):
 		'''Додавання нових даних в таблицю та в словник'''
 
-		if name in self.data.keys():
-			if name[-1].isnumeric():
-				name = name[:-1] + str(int(name[-1]) + 1)
+		while name in self.data.keys():
+			name_s = name.split('_')
+			if name_s[-1].isnumeric():
+				name = "_".join(name_s[:-1]) + "_" + str(int(name_s[-1]) + 1)
 			else:
-				name+="0"
-		else: pass
-
+				name+="_0"
+		
 		D = dataArray(data, scales=scales, comments=comments, color=color)
 		self.data[name] = (D,)
 
@@ -309,6 +313,7 @@ class QTR(QtGui.QMainWindow):
 				self.intensDialog.updateActiveDataList()
 		self.ui.namesTable.resizeColumnsToContents()
 		#self.plotData(name)
+		return name
 
 	def getData(self, name=None):
 		'''Доступ до активних даних'''
@@ -474,19 +479,25 @@ class QTR(QtGui.QMainWindow):
 		if os.path.exists(path):
 			#try:
 				MAIN_DIRECTORY = os.path.dirname(path)
-				if path.split('.')[-1] == 'npy':
-					data = sp.load(path)
-				else:
-					data = sp.loadtxt(path, delimiter=self.getDelimiter())
-
+				
 				attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
 				xc = attr[0].value()
 				yc = attr[1].value()
 				mc = attr[2].value()
+				try:
+					x, y, m = [], [], []
+					if path.split('.')[-1] == 'npy':
+						data = sp.load(path)
+						x, y, m = data[:,xc], data[:, yc], data[:,mc]
+					else:
+						x, y, m = sp.loadtxt(path, delimiter=self.getDelimiter(), usecols=(xc,yc,mc), unpack=True, comments="#")
+				except:
+					traceback.print_exc()
+				
 				if self.ui.isNormColumn.isChecked():
-					XY = sp.array( [data[:,xc], data[:,yc] ]).T / sp.array([data[:,mc], data[:,mc]]).T
+					XY = sp.array( [x/m, y/m]).T
 				else:
-					XY = sp.array( [data[:,xc], data[:,yc] ]).T
+					XY = sp.array( [x, y]).T
 				#XY = XY[XY[:,0] != 0]
 				#XY = XY[XY[:,1] != 0]
 				p = -1
@@ -502,15 +513,12 @@ class QTR(QtGui.QMainWindow):
 				XY = XY[sp.argsort(XY[:,0])]
 				if self.getUi('shift0').isChecked():
 					y0 = sp.poly1d(sp.polyfit(XY[:,0], XY[:,1], 1))(0.)
-					XY[:,1] -= y0 
+					XY[:,1] -= y0
 
 
 				
 				Name = os.path.splitext(os.path.basename(path))[0]
-				while Name in self.data.keys():
-					if Name[-1].isdigit() and Name[-2] == '_':
-						Name = Name[:-1] + str(int(Name[-1])+1)
-					else: Name += '_0'
+				
 				color = 'blue'
 				state = 1 #---------------------------------------------
 				
@@ -622,17 +630,25 @@ class QTR(QtGui.QMainWindow):
 		
 		selected = self.ui.namesTable.selectionModel().selectedIndexes()
 		rows = []
+		names = []
 		for i in selected:
 			rows.append(i.row())
 			name = self.ui.namesTable.item(i.row(), 0).text()
-			del self.data[name]
+			#del self.data[name]
 			print(self.data.keys(), name)
-		
+			names.append(name)
+		print(rows)
+		rows.sort()
 		for i in rows[::-1]:
+			print(i)
 			self.ui.namesTable.removeRow(i)
 			self.nameBox.removeItem(i)
-			if hasattr(self, 'intensDialog'):
-				self.intensDialog.updateActiveDataList()
+
+		print("-"*10)
+		for i in names:
+			print(self.data.keys(), i)
+			del self.data[i]
+		print(self.data.keys())
 		self.updateNamesTable()
 
 	def multiPlot(self):
@@ -641,7 +657,7 @@ class QTR(QtGui.QMainWindow):
 		for i in selected:
 			name = self.ui.namesTable.item(i.row(), 0).text()
 			data,_ = self.getData(name)
-			lines.append(self.mpl.canvas.ax.plot(data[:,0], data[:,1], ".", color=data.color)[0])
+			lines.append(self.mpl.canvas.ax.plot(data[:,0], data[:,1], ".", color=data.color, alpha=0.5)[0])
 		self.mpl.canvas.draw()
 		for i in lines:
 			self.mpl.canvas.ax.lines.remove(i)
@@ -864,7 +880,8 @@ class QTR(QtGui.QMainWindow):
 		# clear the axes
 		self.mpl.canvas.ax.clear()
 		# plot graph
-		
+		self.mpl.canvas.ax.axis[:].invert_ticklabel_direction()
+		#self.mpl.canvas.ax.set_xticks(self.mpl.canvas.ax.get_xticks()[1:-1])
 
 		
 		if self.confDict['showTmp'] and len(self.data[name]) == 2 and showTmp:
@@ -1229,6 +1246,9 @@ class QTR(QtGui.QMainWindow):
 		data, Name = self.getData()
 		
 		active[0].setEnabled(not state)
+		m = len(data)
+		active[0].setValue(sp.std(data[:,1])**2*(m - sp.sqrt(m*2)))
+		'''
 		if state:
 			
 			y = data[:,1]
@@ -1244,58 +1264,44 @@ class QTR(QtGui.QMainWindow):
 				active[0].setValue(sp.std(Y)**2*len(y)*(1+Step/K**2)*param)
 			except:
 				traceback.print_exc()
-			
+		'''
 		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		
-		step, sm, km = (i.value() for i in self.getUi(['B_splineStep', 
-			'B_splineS', 'B_splineK']))
+		spins = ['B_spline' + i for i in ('Step', 'S', "K")]
+		step, sm, km = (i.value() for i in self.getUi(spins))
 		XY, Name = self.getData()
 		X, Y = XY[:,0], XY[:,1]
-		
-		
-		if not XY is None:
-			AC = self.getUi("processView").isChecked()
-			Smooth = self.getUi('B_splineSmooth').isChecked()
-			xi = sp.arange(X.min(), X.max(),step)
-			
-			discrete = self.ui.Discrete.isChecked()
-			wm = [1]*len(XY)
-			if discrete:
-				bin_size = step*1.05
-				Y = Y[X!=0]
-				X = X[X!=0]
-				X_, Y_ = moving_average(X, Y, step, bin_size)
-				#sp.poly1d( sp.polyfit(X, Y, m) )
-		
-				x_new = sp.hstack((X[:5], X_, X[-5:]))
-				y_new = sp.hstack((Y[:5], Y_, Y[-5:]))
-				y_new = y_new[x_new.argsort()]
-				x_new = x_new[x_new.argsort()]
-		
-				y_wma = interp.interp1d(x_new, y_new)(X)
-				
+		xi = sp.arange(X.min(), X.max(),step)
 
-				wm = abs(Y-y_wma)
-				wm = (2-wm/wm.max())
-			
-			e=5
+		
+		if self.getUi('B_splineSMin').isChecked():
+			i = 0
+			j = 0
+			for i in sp.exp(sp.arange(sm,0,-sm/2000)/sm*sp.exp(1))*sm/sp.exp(1):
+				if sp.isnan(interp.UnivariateSpline(X,Y, s=i, k=int(km)).get_coeffs()).sum() >0:
+					break
+				else:
+					j = i
+			sm = j
 
-			uspline = interp.UnivariateSpline(X[:-e],Y[:-e], s=sm, k=km, w=wm[:-e])
-			data = sp.array([xi, uspline(xi)]).T
-			data = XY.clone(data)
+			self.getUi('B_splineS').setValue(sm)
+
+		uspline = interp.UnivariateSpline(X,Y, s=sm, k=int(km))
+		
+		data = sp.array([xi, uspline(xi)]).T
+		data = XY.clone(data)
+		'''
+		# Оптимізація
+		if self.getUi('B_splineLeastsq').isChecked():
+			residuals = lambda  coeffs, xy: (xy[:,1] - sp.poly1d(coeffs)(xy[:,0]))
+			uCoeffs = uspline.get_coeffs()
+			plsq = leastsq(residuals, uCoeffs, args=XY)
 			
-			# Оптимізація
-			if self.getUi('B_splineLeastsq').isChecked():
-				residuals = lambda  coeffs, xy: (xy[:,1] - sp.poly1d(coeffs)(xy[:,0]))
-				uCoeffs = uspline.get_coeffs()
-				plsq = leastsq(residuals, uCoeffs, args=XY)
-				
-				data = sp.array([xi, sp.poly1d(plsq[0])(xi)]).T
-			
-			self.updateData(name=Name, data=data)
-			
+			data = sp.array([xi, sp.poly1d(plsq[0])(xi)]).T
+		'''
+		self.updateData(name=Name, data=data)
+		
 	
 	def poly_cut(self, data=None, N=10, m=4,
 		p=0.80, AC=False,  discrete=False):
@@ -1379,9 +1385,9 @@ class QTR(QtGui.QMainWindow):
 		x, y = moving_average(data[:,0], data[:,1],step,width)
 		new_data = data.clone(sp.array([x,y]).T)
 		self.updateData(name, data=new_data)
-		if self.confDict['showTmp']:
-			self.mpl.canvas.ax.plot(x, y, '-r')
-			self.mpl.canvas.draw()
+		#if self.confDict['showTmp']:
+		#	self.mpl.canvas.ax.plot(x, y, '-r')
+		#	self.mpl.canvas.draw()
 	
 	def setFilters(self):
 		'''Посадка  на фільтри'''
@@ -1464,6 +1470,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.normTable.setCellWidget(counter, 0, combo1)
 		self.ui.normTable.setCellWidget(counter, 1, combo2)
 		self.ui.normTable.item(counter, 2).setText('Нормувати >')
+
 		self.ui.normTable.item(counter, 4).setText('-')
 		
 		self.ui.normTable.item(counter, 2).setFlags(QtCore.Qt.ItemIsEnabled)
@@ -1483,12 +1490,12 @@ class QTR(QtGui.QMainWindow):
 		for i in selected:
 			rows.append(i.row())
 			#name = self.ui.normTable.item(i.row(), 0).text()
-			#del self.dataDict[name]
+			del self.dataDict[name]
 			#print(self.dataDict.keys(), name)
-		
+		rows.sort()
 		for i in rows[::-1]:
 			self.ui.normTable.removeRow(i)
-			#self.nameBox.removeItem(i)
+			self.nameBox.removeItem(i)
 		
 
 	def normTableItemClicked(self, item):
@@ -1504,6 +1511,7 @@ class QTR(QtGui.QMainWindow):
 			#if self.ui.rButton.isEnabled():
 				x = sData[:,0]
 				window = (x>=cData[:,0].min())*(x<=cData[:,0].max())
+
 				x = x[window]
 				y = sData[:,1]
 				y = y[window]
@@ -1513,9 +1521,9 @@ class QTR(QtGui.QMainWindow):
 				cY_tmp = cY_tmp[cY_tmp != 0]
 				y = y/ cY_tmp
 				print(sp.shape(x),sp.shape(y))
-				self.addNewData(name = name3, data=sp.array([x,y]).T)
+				outName = self.addNewData(name = name3, data=sp.array([x,y]).T)
 
-				self.ui.normTable.item(item.row(), 3).setText(name3)
+				self.ui.normTable.item(item.row(), 3).setText(outName)
 				self.ui.normTable.item(item.row(), 4).setText('Ok')
 			else: print('ResEval: interpTypeError')
 	
@@ -1537,7 +1545,7 @@ class QTR(QtGui.QMainWindow):
 		filt = self.filtCalc(self.ui.intensFilt.text(), waveLength=self.ui.intensWaveLENGTH.currentText())
 		try:
 			
-			result = float(eval(self.ui.calibr.text())) / float(self.ui.Ai2.text())**2 /  filt
+			result = float(eval(self.ui.calibr.text().replace("^","**"))) / float(self.ui.Ai2.text())**2 /  filt
 			self.ui.intensResult.setText(str(round(result,9)))
 			data, Name = self.getData()
 			data[:, 0] *= float(self.ui.intensResult.text())

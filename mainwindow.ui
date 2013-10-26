@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>896</width>
-    <height>695</height>
+    <width>834</width>
+    <height>764</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>448</width>
-    <height>695</height>
+    <height>520</height>
    </size>
   </property>
   <property name="baseSize">
@@ -93,7 +93,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>9</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="page_Data">
        <layout class="QGridLayout" name="gridLayout_4">
@@ -120,8 +120,8 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="up">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
           </property>
          </widget>
         </item>
@@ -232,8 +232,8 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="document-save">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
           </property>
          </widget>
         </item>
@@ -320,7 +320,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>ui/buttons/Reset.png</normaloff>ui/buttons/Reset.png</iconset>
+            <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
           </property>
          </widget>
         </item>
@@ -340,8 +340,14 @@
            <string>Додати</string>
           </property>
           <property name="icon">
-           <iconset theme="add">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/add.svg</normaloff>buttons/add.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -351,8 +357,8 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="down">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/down.svg</normaloff>buttons/down.svg</iconset>
           </property>
          </widget>
         </item>
@@ -537,7 +543,7 @@
            <string>В-spline</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="2">
+           <item row="0" column="4">
             <widget class="QLabel" name="label_5">
              <property name="text">
               <string>Степ. полін.</string>
@@ -563,26 +569,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QDoubleSpinBox" name="B_splineS">
-             <property name="decimals">
-              <number>4</number>
-             </property>
-             <property name="minimum">
-              <double>0.000000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>999999999.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.050000000000000</double>
-             </property>
-             <property name="value">
-              <double>1500000.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
+           <item row="1" column="4">
             <widget class="QDoubleSpinBox" name="B_splineK">
              <property name="decimals">
               <number>0</number>
@@ -595,13 +582,6 @@
              </property>
              <property name="value">
               <double>4.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="AutoB_splineS">
-             <property name="text">
-              <string>авто</string>
              </property>
             </widget>
            </item>
@@ -619,27 +599,43 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="3">
-            <widget class="QCheckBox" name="B_splineSmooth">
-             <property name="text">
-              <string>Згладж.</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="5">
+           <item row="0" column="6">
             <widget class="QPushButton" name="B_splineOk">
              <property name="text">
               <string>Інтерпол.</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="4">
-            <widget class="QCheckBox" name="B_splineLeastsq">
+           <item row="0" column="2">
+            <widget class="QCheckBox" name="AutoB_splineS">
              <property name="text">
-              <string>leastsq</string>
+              <string>авто</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QCheckBox" name="B_splineSMin">
+             <property name="text">
+              <string>min</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" colspan="3">
+            <widget class="QDoubleSpinBox" name="B_splineS">
+             <property name="decimals">
+              <number>4</number>
+             </property>
+             <property name="minimum">
+              <double>0.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>999999999.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.050000000000000</double>
+             </property>
+             <property name="value">
+              <double>1500000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -722,43 +718,12 @@
            <string>Фільтри</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_7">
-           <item row="2" column="2">
-            <widget class="QLineEdit" name="resXFilt">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="label_28">
-             <property name="text">
-              <string>X</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0" rowspan="3">
-            <widget class="QListWidget" name="filtersList"/>
-           </item>
-           <item row="1" column="2">
-            <widget class="QLineEdit" name="XFilt">
-             <property name="focusPolicy">
-              <enum>Qt::ClickFocus</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="5">
-            <widget class="QLineEdit" name="YFilt">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="focusPolicy">
-              <enum>Qt::ClickFocus</enum>
-             </property>
-            </widget>
-           </item>
+           <property name="horizontalSpacing">
+            <number>3</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>1</number>
+           </property>
            <item row="2" column="6">
             <widget class="QPushButton" name="FiltOk">
              <property name="text">
@@ -766,12 +731,8 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="5">
-            <widget class="QLabel" name="label_29">
-             <property name="text">
-              <string>Y</string>
-             </property>
-            </widget>
+           <item row="0" column="0" rowspan="3">
+            <widget class="QListWidget" name="filtersList"/>
            </item>
            <item row="1" column="6">
             <widget class="QComboBox" name="filtWaveLENGTH">
@@ -796,6 +757,47 @@
             <widget class="QLineEdit" name="resYFilt">
              <property name="readOnly">
               <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLineEdit" name="resXFilt">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2" rowspan="2">
+            <widget class="QLineEdit" name="XFilt">
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5" rowspan="2">
+            <widget class="QLineEdit" name="YFilt">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_28">
+             <property name="text">
+              <string>X</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="label_29">
+             <property name="text">
+              <string>Y</string>
              </property>
             </widget>
            </item>
@@ -861,8 +863,8 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="remove">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
           </property>
          </widget>
         </item>
@@ -872,8 +874,8 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset theme="add">
-            <normaloff>ui</normaloff>ui</iconset>
+           <iconset>
+            <normaloff>buttons/add.svg</normaloff>buttons/add.svg</iconset>
           </property>
          </widget>
         </item>
@@ -894,6 +896,21 @@
             <string>zero</string>
            </property>
           </item>
+          <item>
+           <property name="text">
+            <string>slinear</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>quadratic</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>cubic</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item row="0" column="0" rowspan="3">
@@ -911,6 +928,25 @@
           <column>
            <property name="text">
             <string/>
+           </property>
+           <property name="background">
+            <color>
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </property>
+           <property name="foreground">
+            <brush brushstyle="NoBrush">
+             <color alpha="255">
+              <red>59</red>
+              <green>92</green>
+              <blue>121</blue>
+             </color>
+            </brush>
+           </property>
+           <property name="icon">
+            <iconset theme="right"/>
            </property>
           </column>
           <column>
@@ -1167,7 +1203,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>809</width>
+             <width>747</width>
              <height>46</height>
             </rect>
            </property>
@@ -1370,7 +1406,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>896</width>
+     <width>834</width>
      <height>25</height>
     </rect>
    </property>
@@ -1698,7 +1734,7 @@
   <action name="Undo">
    <property name="icon">
     <iconset>
-     <normaloff>ui/buttons/Undo.png</normaloff>ui/buttons/Undo.png</iconset>
+     <normaloff>buttons/undo.svg</normaloff>buttons/undo.svg</iconset>
    </property>
    <property name="text">
     <string>Назад</string>
@@ -1713,7 +1749,7 @@
   <action name="Reset">
    <property name="icon">
     <iconset>
-     <normaloff>ui/buttons/Reset.png</normaloff>ui/buttons/Reset.png</iconset>
+     <normaloff>buttons/reset.svg</normaloff>buttons/reset.svg</iconset>
    </property>
    <property name="text">
     <string>Скинути</string>
@@ -1978,7 +2014,6 @@
  </widget>
  <tabstops>
   <tabstop>filtersList</tabstop>
-  <tabstop>XFilt</tabstop>
   <tabstop>YFilt</tabstop>
   <tabstop>filtWaveLENGTH</tabstop>
   <tabstop>resXFilt</tabstop>
@@ -1987,10 +2022,7 @@
   <tabstop>B_splineStep</tabstop>
   <tabstop>B_splineS</tabstop>
   <tabstop>B_splineK</tabstop>
-  <tabstop>AutoB_splineS</tabstop>
-  <tabstop>B_splineSmooth</tabstop>
   <tabstop>B_splineOk</tabstop>
-  <tabstop>B_splineLeastsq</tabstop>
   <tabstop>ApproxM</tabstop>
   <tabstop>PolyApprox</tabstop>
   <tabstop>ApproxStep</tabstop>

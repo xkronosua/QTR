@@ -3,13 +3,13 @@ matplotlib.use('Qt4Agg')
 matplotlib.rcParams['backend.qt4'] = 'PySide'
 
 matplotlib.rcParams["font.size"] = 9.0
-matplotlib.rcParams["xtick.direction"] = 'inout'		
-matplotlib.rcParams["ytick.direction"] = 'inout'  
 
-matplotlib.rcParams["figure.subplot.left"] = 0.04  
-matplotlib.rcParams["figure.subplot.right"] = 0.999
-matplotlib.rcParams["figure.subplot.bottom"] = 0.04  
-matplotlib.rcParams["figure.subplot.top"] = 0.999
+
+
+matplotlib.rcParams["figure.subplot.left"] = 0.0
+matplotlib.rcParams["figure.subplot.right"] = 1
+matplotlib.rcParams["figure.subplot.bottom"] = 0.0
+matplotlib.rcParams["figure.subplot.top"] = 1
 matplotlib.rcParams["figure.subplot.wspace"] = 0.0  
 matplotlib.rcParams["figure.subplot.hspace"] = 0.0  
 
@@ -55,13 +55,15 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as Naviga
 # Matplotlib Figure object
 from matplotlib.figure import Figure
 
+import mpl_toolkits.axisartist as axisartist
 
 class MplCanvas(FigureCanvas):
 	"""Class to represent the FigureCanvas widget"""
 	def __init__(self):
 		# setup Matplotlib Figure and Axis
 		self.fig = Figure()
-		self.ax = self.fig.add_subplot(111)
+		self.ax = self.fig.add_subplot(axisartist.Subplot(self.fig, "111"))
+
 		self.ax.grid(True)
 		# self.ax.axis('off')
 		# self.fig.patch.set_visible(False)
