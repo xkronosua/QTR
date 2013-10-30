@@ -2,7 +2,7 @@
 # _*_ coding: utf-8 _*_
 import sys, os, signal, random
 
-from PySide import QtGui, QtCore, QtUiTools
+from PyQt4 import QtGui, QtCore, uic#QtUiTools
 
 import scipy as sp
 
@@ -35,8 +35,8 @@ import datetime
 
 
 def loadUi(uifilename, parent=None):
-	loader = QtUiTools.QUiLoader(parent)
-	ui = loader.load(uifilename)
+	#loader = QtUiTools.QUiLoader(parent)
+	ui = uic.loadUi(uifilename) #loader.load(uifilename)
 	return ui
 
 def swap(x,y):	return y,x 	#переворот точок для обрізки
@@ -234,7 +234,7 @@ class QTR(QtGui.QMainWindow):
 		data,_ = self.getData(Name)
 		if not data is None:
 			filename = self.fileDialog.getSaveFileName(self,
-				'Save File', os.path.join(self.PATH, Name))[0]
+				'Save File', os.path.join(self.PATH, Name))	#[0] 		!!!! Для PySide
 			print(filename)
 			if filename:
 				delimiter = self.getDelimiter()
@@ -403,11 +403,13 @@ class QTR(QtGui.QMainWindow):
 		self.ui.Reset.setEnabled(True)
 		
 		self.syncData()
+		print(sys.getsizeof(self.data))
 		self.update_graph(name, showTmp=showTmp)
 
-	def undoData(self, name=None):
+	def undoData(self, state=None, name=None):
 		if name is None:
 			name = self.currentName()
+		print(name)
 		if len(self.data[name]) == 2:
 			self.data[name] = self.data[name][1]
 			if len(self.data[name]) != 2:
@@ -415,7 +417,7 @@ class QTR(QtGui.QMainWindow):
 				self.ui.Reset.setEnabled(False)
 		self.plotData(name)
 		
-	def resetData(self, name=None):
+	def resetData(self, state=None, name=None):
 		if name is None:
 			name = self.currentName()
 		if len(self.data[name]) == 2:
@@ -430,7 +432,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.Reset.setEnabled(False)
 		self.ui.Undo.setEnabled(False)
 
-	def removeAllData(self, name=None):
+	def removeAllData(self, state=None, name=None):
 		if name is None:
 			for i in self.data.keys():
 				del self.data[i]
@@ -478,7 +480,7 @@ class QTR(QtGui.QMainWindow):
 		print(path)
 		if os.path.exists(path):
 			#try:
-				MAIN_DIRECTORY = os.path.dirname(path)
+				MAIN_DIRECTORY = os.path.dirname(self.ui.filePath.text())
 				
 				attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
 				xc = attr[0].value()
@@ -860,8 +862,8 @@ class QTR(QtGui.QMainWindow):
 		# TODO: rewrite this routine, to get better performance
 		
 	
-		#self.background = \
-		#	self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
+		self.background = \
+			self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
 		# save current plot variables
 		if name is None:
 			data, name = self.getData()
@@ -985,9 +987,7 @@ class QTR(QtGui.QMainWindow):
 		"""
 		if not event.xdata is None and not event.ydata is None:
 			# copy background
-			name = self.currentName()
-
-			data,_ = self.getData(name)
+			
 			self.background = \
 				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
 			if self.issecond == 0:
@@ -997,6 +997,8 @@ class QTR(QtGui.QMainWindow):
 				return
 	
 			if self.issecond == 1 :
+				data, name = self.getData()
+				
 				self.x3 = event.xdata
 				self.y3 = event.ydata
 				# point swap
@@ -1079,8 +1081,7 @@ class QTR(QtGui.QMainWindow):
 		"""
 		if not event.xdata is None and not event.ydata is None:
 			# copy background
-			name = self.currentName()
-			data,_ = self.getData(name)
+			
 			self.background = \
 				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
 			# first press
@@ -1092,6 +1093,7 @@ class QTR(QtGui.QMainWindow):
 				return
 			# second press
 			if self.issecond == 1 :
+				data, name = self.getData()
 				self.x3 = event.xdata
 				self.y3 = event.ydata
 				# point swap
@@ -1278,7 +1280,7 @@ class QTR(QtGui.QMainWindow):
 		if self.getUi('B_splineSMin').isChecked():
 			i = 0
 			j = 0
-			for i in sp.exp(sp.arange(sm,0,-sm/2000)/sm*sp.exp(1))*sm/sp.exp(1):
+			for i in sp.exp(sp.arange(sm,0,-sm/1000)/sm*sp.exp(1))*sm/sp.exp(1):
 				if sp.isnan(interp.UnivariateSpline(X,Y, s=i, k=int(km)).get_coeffs()).sum() >0:
 					break
 				else:
@@ -1288,12 +1290,13 @@ class QTR(QtGui.QMainWindow):
 			self.getUi('B_splineS').setValue(sm)
 
 		uspline = interp.UnivariateSpline(X,Y, s=sm, k=int(km))
-		
+
 		data = sp.array([xi, uspline(xi)]).T
 		data = XY.clone(data)
-		'''
+		
 		# Оптимізація
-		if self.getUi('B_splineLeastsq').isChecked():
+		'''
+		if self.getUi('B_splineSMin').isChecked():
 			residuals = lambda  coeffs, xy: (xy[:,1] - sp.poly1d(coeffs)(xy[:,0]))
 			uCoeffs = uspline.get_coeffs()
 			plsq = leastsq(residuals, uCoeffs, args=XY)
@@ -1314,7 +1317,8 @@ class QTR(QtGui.QMainWindow):
 		data, name = self.getData()
 
 		X, Y = data[:,0], data[:,1]
-
+		w = X.argsort()
+		X, Y = X[w], Y[w]
 		params = self.getUi(['Poly' + i for i in 'NPM'])
 		step_size, p, m = (i.value() for i in params)
 
@@ -1349,10 +1353,10 @@ class QTR(QtGui.QMainWindow):
 
 			for index in range(0,len(bin_centers)):
 				bin_center = bin_centers[index]
-				W = (X>(bin_center-bin_size*0.5) ) & (X<(bin_center+bin_size*0.5))
+				W = (X>=(bin_center-bin_size*0.5) ) & (X<=(bin_center+bin_size*0.5))
 				x_tmp = X[W]
 				y_tmp = y_wma[W]
-				if W.sum()<=1: continue
+				if W.sum()<1: continue
 				else:
 					
 					w = y_tmp < y_tmp.max()*p

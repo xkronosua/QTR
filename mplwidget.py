@@ -1,6 +1,6 @@
 import matplotlib
-matplotlib.use('Qt4Agg')
-matplotlib.rcParams['backend.qt4'] = 'PySide'
+#matplotlib.use('Qt4Agg')
+matplotlib.rcParams['backend.qt4'] = 'PyQt4'
 
 matplotlib.rcParams["font.size"] = 9.0
 
@@ -25,8 +25,8 @@ style = {
 				"text.color": "white",
 
 				"axes.facecolor": "#000002",
-				"axes.edgecolor": "white",
-				"axes.labelcolor": "#fff000",
+				"axes.edgecolor": "#222222",
+				"axes.labelcolor": "green",
 
 				"xtick.color": "white",
 				"ytick.color": "white",
@@ -44,7 +44,7 @@ matplotlib.rcParams.update(style)
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 # Python Qt4 bindings for GUI objects
-from PySide import QtGui,QtCore
+from PyQt4 import QtGui,QtCore
 # import the NavigationToolbar Qt4Agg widget
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 
@@ -64,7 +64,7 @@ class MplCanvas(FigureCanvas):
 		self.fig = Figure()
 		self.ax = self.fig.add_subplot(axisartist.Subplot(self.fig, "111"))
 
-		self.ax.grid(True)
+		#self.ax.grid(True)
 		# self.ax.axis('off')
 		# self.fig.patch.set_visible(False)
 		# self.ax.patch.set_visible(False)
