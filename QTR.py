@@ -442,7 +442,7 @@ class QTR(QtGui.QMainWindow):
 
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
-		path = str(self.fileDialog.getOpenFileName(self,'Open File', self.PATH)[0])
+		path = str(self.fileDialog.getOpenFileName(self,'Open File', self.PATH)) #[0])  # для PiSide
 		print(path)
 		if path:
 			self.PATH = os.path.dirname(path)
@@ -668,6 +668,56 @@ class QTR(QtGui.QMainWindow):
 	###########################################################################
 	######################	Нормування даних	###############################
 	###########################################################################
+	def movePoint(self):
+		'''Переміщення точок'''
+		data, Name = self.getData()
+		if not data is None:
+			def on_motion(event):
+				if not event.xdata is None and not event.ydata is None:
+					xl = self.mpl.canvas.ax.get_xlim() 
+					yl = self.mpl.canvas.ax.get_ylim()
+					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
+					self.mpl.canvas.ax.set_xlim(xl)
+					self.mpl.canvas.ax.set_ylim(yl)
+					nearest_x = sp.absolute(data[:, 0] - event.xdata).argmin()
+					#print(nearest_x, data[nearest_x, 1], event.xdata)
+					yl = self.mpl.canvas.ax.get_ylim()
+					self.line.set_xdata([event.xdata]*2)
+					self.line.set_ydata(yl)
+					self.points.set_xdata(data[nearest_x, 0])
+					self.points.set_ydata(data[nearest_x, 1])
+					# redraw artist
+					self.mpl.canvas.ax.draw_artist(self.line)
+					self.mpl.canvas.ax.draw_artist(self.points)
+					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
+			
+			def on_press(event):
+				if not event.xdata is None and not event.ydata is None:
+					
+					nearest_x = abs(data[:, 0] - event.xdata).argmin()
+					#nearest_y = abs(data[:, 1] - event.ydata).argmin()
+					
+					data[nearest_x, 1] = event.ydata
+					self.updateData(name=Name, data=data)
+					
+					xl = self.mpl.canvas.ax.get_xlim()
+					self.mpl.canvas.ax.plot(xl, [1]*2, '-.r')
+					self.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
+					self.mpl.canvas.draw()
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				else:
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				
+			self.cidmotion = self.mpl.canvas.mpl_connect(
+					  'motion_notify_event', on_motion)
+			self.cidpress = self.mpl.canvas.mpl_connect(
+						'button_press_event', on_press)
+		
+	
+	
+	
 
 	def norm_FirstPoint(self):
 		''' Нормування на першу точку '''
@@ -1668,9 +1718,10 @@ class QTR(QtGui.QMainWindow):
 		self.ui.recalcIntensResult.clicked.connect(self.recalcIntensResult)
 		
 
+		self.ui.movePoint.triggered.connect(self.movePoint)
 		'''
 		#self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
-		self.ui.movePoint.triggered.connect(self.movePoint)
+		
 		self.ui.Close.triggered.connect(self.close)
 		#self.close.connect(self.closeEvent)
 		#self.ui.LENGTH.currentIndexChanged[str].connect(self.setLength)
