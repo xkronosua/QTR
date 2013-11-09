@@ -490,13 +490,15 @@ class QTR(QtGui.QMainWindow):
 					x, y, m = [], [], []
 					if path.split('.')[-1] == 'npy':
 						data = sp.load(path)
-						x, y, m = data[:,xc], data[:, yc], data[:,mc]
 					else:
-						x, y, m = sp.loadtxt(path, delimiter=self.getDelimiter(), usecols=(xc,yc,mc), unpack=True, comments="#")
+						
+						data = sp.loadtxt(path, delimiter=self.getDelimiter())
+					x, y = data[:,xc], data[:, yc]
 				except:
 					traceback.print_exc()
-				
+				print(self.ui.isNormColumn.isChecked())
 				if self.ui.isNormColumn.isChecked():
+					m = data[:,mc]
 					XY = sp.array( [x/m, y/m]).T
 				else:
 					XY = sp.array( [x, y]).T
