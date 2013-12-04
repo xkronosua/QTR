@@ -51,6 +51,7 @@ from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as Naviga
 # import the Qt4Agg FigureCanvas object, that binds Figure to
 # Qt4Agg backend. It also inherits from QWidget
 
+from matplotlib.widgets import SpanSelector
 
 # Matplotlib Figure object
 from matplotlib.figure import Figure

@@ -543,7 +543,7 @@
            <string>В-spline</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="4">
+           <item row="0" column="5">
             <widget class="QLabel" name="label_5">
              <property name="text">
               <string>Степ. полін.</string>
@@ -569,7 +569,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="4">
+           <item row="1" column="5">
             <widget class="QDoubleSpinBox" name="B_splineK">
              <property name="decimals">
               <number>0</number>
@@ -592,35 +592,35 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="1">
+           <item row="0" column="2">
             <widget class="QLabel" name="label_20">
              <property name="text">
               <string>Згладжув.</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="6">
+           <item row="0" column="7">
             <widget class="QPushButton" name="B_splineOk">
              <property name="text">
               <string>Інтерпол.</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item row="0" column="3">
             <widget class="QCheckBox" name="AutoB_splineS">
              <property name="text">
               <string>авто</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
+           <item row="0" column="4">
             <widget class="QCheckBox" name="B_splineSMin">
              <property name="text">
               <string>min</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="1" colspan="3">
+           <item row="1" column="2" colspan="3">
             <widget class="QDoubleSpinBox" name="B_splineS">
              <property name="decimals">
               <number>4</number>
@@ -636,6 +636,16 @@
              </property>
              <property name="value">
               <double>1500000.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QSpinBox" name="B_splineNKnots"/>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_32">
+             <property name="text">
+              <string>вузлів</string>
              </property>
             </widget>
            </item>
@@ -946,7 +956,9 @@
             </brush>
            </property>
            <property name="icon">
-            <iconset theme="right"/>
+            <iconset theme="right">
+             <normaloff/>
+            </iconset>
            </property>
           </column>
           <column>
@@ -1203,8 +1215,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>747</width>
-             <height>46</height>
+             <width>98</width>
+             <height>28</height>
             </rect>
            </property>
           </widget>
@@ -1436,6 +1448,7 @@
      <addaction name="norm_FirstPoint"/>
      <addaction name="norm_Shift0"/>
      <addaction name="norm_Shift0X"/>
+     <addaction name="norm_ShiftRange"/>
     </widget>
     <widget class="QMenu" name="menu_Scale">
      <property name="title">
@@ -2009,6 +2022,14 @@
    </property>
    <property name="toolTip">
     <string>Обробка видимого діапазону</string>
+   </property>
+  </action>
+  <action name="norm_ShiftRange">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Змістити діапазон</string>
    </property>
   </action>
  </widget>

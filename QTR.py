@@ -22,7 +22,7 @@ from numpy.lib.stride_tricks import as_strided
 #from console import scriptDialog
 import warnings
 
-from mplwidget import MplWidget
+from mplwidget import MplWidget, SpanSelector
 from scipy.signal import filtfilt, butter  #lfilter, lfilter_zi
 import json
 import traceback
@@ -133,7 +133,7 @@ class QTR(QtGui.QMainWindow):
 		nameEditLock=True,
 		currentName=None,
 		autoscale=True,
-		kPICODict={'1064':5.03*10**-3, '532':0.002,"633" : 0.003}
+		kPICODict={'1064':5.03*10**-3, '532':8.7*10**-6,"633" : 0.003}
 		)
 	#  mpl
 	x1,x2,x3,x4,y1,y2,y3,y4 = (0.,0.,0.,0.,0.,0.,0.,0.)
@@ -760,7 +760,100 @@ class QTR(QtGui.QMainWindow):
 
 				self.updateData(name=Name, data=data)
 			except:
-				traceback.print_exc() 
+				traceback.print_exc()
+
+	def norm_ShiftRange(self, state):
+		'''Переміщення точок'''
+		data, Name = self.getData()
+		if not data is None:
+
+			def on_release1(event):
+				if not event.xdata is None and not event.ydata is None:
+					xy = self.mplSpan.get_xy()
+					xmin = xy[:,0].min()
+					xmax = xy[:,0].max()
+					w = (data[:,0] > xmin ) * (data[:,0] < xmax)
+					self.points, = self.mpl.canvas.ax.plot(data[w][:,0].mean(), data[w][:,1].mean(), '+r', markersize=16, zorder=20, alpha=1)
+					
+					self.mpl.canvas.draw()
+
+					p = self.points#[0]
+					if p.get_alpha():
+						p.set_alpha(p.get_alpha()*0.5)
+					else:
+						p.set_alpha(0.8)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+
+			def on_motion1(event):
+				if not event.xdata is None and not event.ydata is None and self.issecond:
+					
+					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
+					xy = self.mplSpan.get_xy()
+					self.mplSpan.set_xy([xy[0],xy[1],[event.xdata,xy[1][1]],[event.xdata,xy[0][1]]])
+
+					# redraw artist
+					self.mpl.canvas.ax.draw_artist(self.mplSpan)
+					
+					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
+			
+			def on_first_press1(event):
+				if not self.issecond:
+					if not event.xdata is None and not event.ydata is None:
+						if not hasattr(self,'mplSpan'):
+							self.mplSpan = self.mpl.canvas.ax.axvspan(event.xdata, event.xdata, facecolor='g', alpha=0.5)
+						else:
+							yl = self.mpl.canvas.ax.get_ylim()
+							self.mplSpan.set_xy([[event.xdata, yl[0]],[event.xdata, yl[1]],[event.xdata, yl[1]],[event.xdata, yl[0]]])
+						self.mpl.canvas.draw()
+						#self.mpl.canvas.mpl_disconnect(self.cidpress)
+						#self.mpl.canvas.mpl_disconnect(self.cidmotion)
+					else:
+						self.mpl.canvas.mpl_disconnect(self.cidpress)
+						self.mpl.canvas.mpl_disconnect(self.cidmotion)
+					self.issecond = True
+				else:
+					if not event.xdata is None and not event.ydata is None:
+						self.issecond = False
+						xy = self.mplSpan.get_xy()
+						xmin = xy[:,0].min()
+						xmax = xy[:,0].max()
+						w = (data[:,0] > xmin ) * (data[:,0] < xmax)
+						print(xmin,xmax, w.sum())
+
+						m = data[:,1][w].mean()
+						
+						data[:,1][w] *= (event.ydata) / m
+
+						self.updateData(name=Name, data=data)
+						self.mpl.canvas.mpl_disconnect(self.cidpress)
+						self.mpl.canvas.mpl_disconnect(self.cidmotion)
+						self.ui.norm_ShiftRange.setChecked(False)
+					else:
+						self.mpl.canvas.mpl_disconnect(self.cidpress)
+						self.mpl.canvas.mpl_disconnect(self.cidmotion)
+
+			
+		if state:
+			self.cidmotion = self.mpl.canvas.mpl_connect(
+					  'motion_notify_event', on_motion1)
+			self.cidpress = self.mpl.canvas.mpl_connect(
+						'button_press_event', on_first_press1)
+			self.cidrelease = self.mpl.canvas.mpl_connect(
+					'button_release_event', on_release1)
+
+		else:
+			try:
+				if hasattr(self, 'cidpress'):
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+				if hasattr(self, 'cidmotion'):
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				if hasattr(self, 'cidrelease'):
+					self.mpl.canvas.mpl_disconnect(self.cidrelease)
+				
+				self.update_graph()
+			except:
+				traceback.print_exc()
+
 
 	def norm_Shift0(self):
 		''' Видалення фонової компоненти '''
@@ -778,6 +871,8 @@ class QTR(QtGui.QMainWindow):
 	
 	def norm_Point(self, state):
 		''' Нормувати на вказану точку '''
+
+		
 
 		def on_press(event):
 			''' Отримання координат точки для нормування на точку '''
@@ -816,6 +911,7 @@ class QTR(QtGui.QMainWindow):
 					'button_press_event', on_press)
 			self.cidmotion = self.mpl.canvas.mpl_connect(
 					'motion_notify_event', on_motion)
+
 
 		else:
 			try:
@@ -1229,7 +1325,7 @@ class QTR(QtGui.QMainWindow):
 	######################	Фільтри, сплайни...	###############################################################################
 	'''---------------------------------------------------------------------------------------------------------------------'''
 	###########################################################################################################################
-	
+
 	#  page_FiltFilt
 	def filtFilt(self):
 		data, Name = self.getData()
@@ -1322,10 +1418,25 @@ class QTR(QtGui.QMainWindow):
 		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		spins = ['B_spline' + i for i in ('Step', 'S', "K")]
-		step, sm, km = (i.value() for i in self.getUi(spins))
+		spins = ['B_spline' + i for i in ('Step', 'S', "K", "NKnots")]
+		step, sm, km, nknots = (i.value() for i in self.getUi(spins))
 		XY, Name = self.getData()
-		X, Y = XY[:,0], XY[:,1]
+		XY = XY[XY[:,0].argsort()]
+
+		X, Y = XY.T
+		nknots = int(nknots)
+		km = int(km)
+
+		idx_knots = (sp.arange(1,len(X)-1,(len(X)-2)/sp.double(nknots))).astype('int')
+		knots = X[idx_knots]
+
+		#If task=-1 find the weighted least square spline for a given set of knots, t.
+		#These should be interior knots as knots on the ends will be added automatically.
+		tck = interp.splrep(X, Y, t=knots, s=sm, k=km, task=-1)
+		xi = sp.arange(X.min(), X.max(), step)
+		fit = interp.splev(xi,tck)
+
+		"""
 		xi = sp.arange(X.min(), X.max(),step)
 
 		
@@ -1344,6 +1455,8 @@ class QTR(QtGui.QMainWindow):
 		uspline = interp.UnivariateSpline(X,Y, s=sm, k=int(km))
 
 		data = sp.array([xi, uspline(xi)]).T
+		"""
+		data = sp.array([xi, fit]).T
 		data = XY.clone(data)
 		
 		# Оптимізація
@@ -1695,6 +1808,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.norm_FirstPoint.triggered.connect(self.norm_FirstPoint)
 		self.ui.norm_Shift0.triggered.connect(self.norm_Shift0)
 		self.ui.norm_Shift0X.triggered.connect(self.norm_Shift0X)
+		self.ui.norm_ShiftRange.triggered.connect(self.norm_ShiftRange)
 		
 		
 		#self.ui.settings.triggered.connect(self.settings.show)
