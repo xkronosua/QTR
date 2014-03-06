@@ -28,6 +28,8 @@ import json
 import traceback
 import datetime
 
+from cmath import sqrt as cSqrt
+from calc_n2_newForVG import calcReChi3
 
 
 
@@ -235,8 +237,10 @@ class QTR(QtGui.QMainWindow):
 		if not data is None:
 			filename = self.fileDialog.getSaveFileName(self,
 				'Save File', os.path.join(self.PATH, Name))	#[0] 		!!!! Для PySide
+
 			print(filename)
 			if filename:
+				self.PATH = os.path.dirname(filename)
 				delimiter = self.getDelimiter()
 				print(delimiter)
 
@@ -481,7 +485,7 @@ class QTR(QtGui.QMainWindow):
 		if os.path.exists(path):
 			#try:
 				MAIN_DIRECTORY = os.path.dirname(self.ui.filePath.text())
-				
+				self.PATH = MAIN_DIRECTORY
 				attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
 				xc = attr[0].value()
 				yc = attr[1].value()
@@ -665,11 +669,34 @@ class QTR(QtGui.QMainWindow):
 		self.mpl.canvas.draw()
 		for i in lines:
 			self.mpl.canvas.ax.lines.remove(i)
-	
+
+	def joinDataArrays(self):
+		""" Зшивання даних"""
+		selected = self.ui.namesTable.selectionModel().selectedIndexes()
+		dList = []
+		nList = []
+		for i in selected:
+			name = self.ui.namesTable.item(i.row(), 0).text()
+			data, _ = self.getData(name)
+			dList.append(data)
+			nList.append(name)
+		Data = sp.vstack(dList)
+		Name = "+".join(nList)
+		self.addNewData(name=Name, data=Data)
+
 
 	###########################################################################
 	######################	Нормування даних	###############################
 	###########################################################################
+	def flipData(self):
+		""" Розвернути дані """
+		data, Name = self.getData()
+		data[:,0] = -data[:,0][::-1]
+		
+		data[:,1] = data[:,1][::-1]
+		self.updateData(name=Name, data=data)
+
+
 	def movePoint(self):
 		'''Переміщення точок'''
 		data, Name = self.getData()
@@ -756,7 +783,7 @@ class QTR(QtGui.QMainWindow):
 		data,_ = self.getData(Name)
 		if not data is None:
 			try:
-				data[:,0]=data[:,0]-data[data[:,1]==data[:,1].max(),0]
+				data[:,0]=data[:,0]-(data[:,0]*data[:,1]).sum()/data[:,1].sum()#data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
 
 				self.updateData(name=Name, data=data)
 			except:
@@ -861,11 +888,20 @@ class QTR(QtGui.QMainWindow):
 		data,_ = self.getData(Name)
 		if not data is None:
 			try:
-				p = int(len(data)/4)
-				y0 = sp.poly1d(sp.polyfit(data[:p,0], data[:p,1], 1))(0.)
+				p = int(len(data)/8)
+				eq = sp.poly1d(sp.polyfit(data[:p,0], data[:p,1], 1))
+				y0 = eq(0.)
+				print(y0)
+				l1, = self.mpl.canvas.ax.plot(data[:p,0], eq(data[:p,0]), 'r-', markersize=6)
+				self.mpl.canvas.draw()
+				self.mpl.canvas.ax.lines.remove(l1)
 				data[:,1] -= y0
 				#data[:, 1] /= data[:, 1].max()
 				self.updateData(name=Name, data=data)
+				l1, = self.mpl.canvas.ax.plot(data[:p,0], eq(data[:p,0]), 'r-', markersize=6)
+				self.mpl.canvas.draw()
+				self.mpl.canvas.ax.lines.remove(l1)
+				
 			except:
 				traceback.print_exc() 
 	
@@ -1696,6 +1732,35 @@ class QTR(QtGui.QMainWindow):
 				self.ui.normTable.item(item.row(), 4).setText('Ok')
 			else: print('ResEval: interpTypeError')
 	
+	## Chi^3
+	# page_ReHi3
+	def recalcReHi3(self):
+		'''Обрахунок Re(hi^(3))'''
+		
+		data, Name = self.getData()
+		
+				
+		a = self.ui.reHi3_a0.value()
+		Lambda = self.ui.reHi3_lambda.value()
+		n0 = self.ui.reHi3_n0.value()
+		d = self.ui.reHi3_d.value()
+		z = self.ui.reHi3_z.value()
+		r0 = self.ui.reHi3_r0.value()
+		f = self.ui.reHi3_f.value()
+		L = self.ui.reHi3_l.value()
+		polyM = self.ui.reHi3_polyM.value()
+
+		dM = self.ui.reHi3_dM.currentText()
+		dmDict = {		'cm':		10**-2,
+								'mm':		10**-3,
+								'mkm':		10**-6,
+								'nm':		10**-9}
+		d *= dmDict[dM]
+		
+		calcReChi3(data, m=polyM, a=a,Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
+				
+
+
 	## Інтенсивність
 	def recalcAi2(self):
 		'''Перерахунок радіусу пучка'''
@@ -1710,7 +1775,13 @@ class QTR(QtGui.QMainWindow):
 			self.ui.Ai2.setText(str(sqrt(Ai2)))
 	
 	def recalcIntensResult(self):
-		'''Перерахунок на інтенсивність'''
+		'''Перерахунок на інтенсивність
+		1064: 5.03*10**-5
+		532: 8.7*10**-6
+		=()
+		'''
+
+
 		filt = self.filtCalc(self.ui.intensFilt.text(), waveLength=self.ui.intensWaveLENGTH.currentText())
 		try:
 			
@@ -1747,7 +1818,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.FiltOk.clicked.connect(self.setFilters)
 		
 		##############  ReHi3	  ###############################################
-		#self.ui.reHi3_ok.clicked.connect(self.recalcReHi3)
+		self.ui.reHi3_ok.clicked.connect(self.recalcReHi3)
 		##############  NormData   ###############################################
 		self.ui.normDataAdd.clicked.connect(self.normDataAdd)
 		self.ui.normDataRemove.clicked.connect(self.normDataRemove)
@@ -1785,6 +1856,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.saveData.clicked.connect(self.saveData)
 		self.ui.actionSaveData.triggered.connect(self.saveData)
 		self.ui.multiPlot.clicked.connect(self.multiPlot)
+		self.ui.joinDataArrays.clicked.connect(self.joinDataArrays)
 
 		##########################################################################
 		
@@ -1835,6 +1907,7 @@ class QTR(QtGui.QMainWindow):
 		
 
 		self.ui.movePoint.triggered.connect(self.movePoint)
+		self.ui.flipData.triggered.connect(self.flipData)
 		'''
 		#self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
 		
