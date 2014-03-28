@@ -482,6 +482,7 @@ class QTR(QtGui.QMainWindow):
 		
 		path = self.ui.filePath.text()
 		print(path)
+
 		if os.path.exists(path):
 			#try:
 				MAIN_DIRECTORY = os.path.dirname(self.ui.filePath.text())
@@ -495,9 +496,20 @@ class QTR(QtGui.QMainWindow):
 					if path.split('.')[-1] == 'npy':
 						data = sp.load(path)
 					else:
-						
-						data = sp.loadtxt(path, delimiter=self.getDelimiter())
-					x, y = data[:,xc], data[:, yc]
+						try:
+							data = sp.loadtxt(path, delimiter=self.getDelimiter())
+						except:
+							# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
+							traceback.print_exc()
+							with open(path) as f:
+								line = f.readline()
+							nCols = len(line.split(self.getDelimiter()))
+							conv = lambda valstr: float(valstr.decode("utf-8").replace(',','.'))
+							c = {i:conv for i in range(nCols)}
+							data = sp.genfromtxt(path, delimiter=self.getDelimiter(), dtype = float, converters = c)
+					
+
+					x, y = data[:,[xc, yc]].T
 				except:
 					traceback.print_exc()
 				print(self.ui.isNormColumn.isChecked())
@@ -508,6 +520,13 @@ class QTR(QtGui.QMainWindow):
 					XY = sp.array( [x, y]).T
 				#XY = XY[XY[:,0] != 0]
 				#XY = XY[XY[:,1] != 0]
+
+				#усереднення з кроком по N імпульсів
+				if self.ui.startStepAverage.isChecked():
+
+					XY = sp.vstack([i.mean(axis=0) for i in sp.array_split(XY,len(XY)//self.ui.startStepAverage_N.value())])
+
+				# Виділення напрямку переміщення клину
 				p = -1
 				pathIndex = self.ui.selectPartOfData.currentIndex()
 				if pathIndex == 1:
@@ -518,11 +537,9 @@ class QTR(QtGui.QMainWindow):
 					XY = XY[p:,:]
 				else:
 					pass
-				XY = XY[sp.argsort(XY[:,0])]
-				if self.getUi('shift0').isChecked():
-					y0 = sp.poly1d(sp.polyfit(XY[:,0], XY[:,1], 1))(0.)
-					XY[:,1] -= y0
-
+				
+				if self.ui.autoSortData.isChecked():
+					XY = XY[sp.argsort(XY[:,0])]
 
 				
 				Name = os.path.splitext(os.path.basename(path))[0]
@@ -532,6 +549,12 @@ class QTR(QtGui.QMainWindow):
 				
 				if state:
 					self.addNewData(data=XY, scales=[0, 0], name=Name, color=color, xc=xc, yc=yc)
+
+					# ’’зсув в 0’’
+				
+					if self.getUi('shift0').isChecked():
+						self.norm_Shift0()
+
 			#except (ValueError, IOError, IndexError):
 			#	self.mprint("loadData: readError")
 		else:  self.mprint('loadData: pathError')
@@ -1724,9 +1747,14 @@ class QTR(QtGui.QMainWindow):
 				x = x[cY_tmp != 0]
 				y = y[cY_tmp != 0]
 				cY_tmp = cY_tmp[cY_tmp != 0]
-				y = y/ cY_tmp
+				y = y / cY_tmp
 				print(sp.shape(x),sp.shape(y))
-				outName = self.addNewData(name = name3, data=sp.array([x,y]).T)
+				
+				# Додавання результату в звичайній формі, або в дозовій
+				if not self.ui.cumSumNormData.isChecked():
+					outName = self.addNewData(name = name3, data=sp.array([x,y]).T)
+				else:
+					outName = self.addNewData(name = name3, data=sp.array([sp.cumsum(x),y]).T)
 
 				self.ui.normTable.item(item.row(), 3).setText(outName)
 				self.ui.normTable.item(item.row(), 4).setText('Ok')
@@ -1858,6 +1886,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.multiPlot.clicked.connect(self.multiPlot)
 		self.ui.joinDataArrays.clicked.connect(self.joinDataArrays)
 
+		# Усереднення для N імпульсів при певному положенні клину
+		self.ui.startStepAverage.toggled.connect(self.ui.startStepAverage_N.setEnabled)
 		##########################################################################
 		
 

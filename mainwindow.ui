@@ -375,6 +375,39 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="11">
+         <widget class="QCheckBox" name="startStepAverage">
+          <property name="text">
+           <string>N імп.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="11">
+         <widget class="QSpinBox" name="startStepAverage_N">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>1000</number>
+          </property>
+          <property name="value">
+           <number>10</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="10">
+         <widget class="QCheckBox" name="autoSortData">
+          <property name="text">
+           <string>Сорт. Х</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="page_Average">
@@ -883,7 +916,7 @@
       </widget>
       <widget class="QWidget" name="page_NormData">
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="2" column="2">
+        <item row="3" column="2">
          <widget class="QCheckBox" name="yInPercents">
           <property name="text">
            <string>Y, %</string>
@@ -946,7 +979,7 @@
           </item>
          </widget>
         </item>
-        <item row="0" column="0" rowspan="3">
+        <item row="0" column="0" rowspan="4">
          <widget class="QTableWidget" name="normTable">
           <column>
            <property name="text">
@@ -994,6 +1027,13 @@
             <string>Стан</string>
            </property>
           </column>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QCheckBox" name="cumSumNormData">
+          <property name="text">
+           <string>Ком. сум.</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -1238,8 +1278,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>752</width>
-             <height>48</height>
+             <width>100</width>
+             <height>30</height>
             </rect>
            </property>
           </widget>
