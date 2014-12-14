@@ -93,7 +93,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="page_Data">
        <layout class="QGridLayout" name="gridLayout_4">
@@ -610,21 +610,21 @@
            <string>В-spline</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="6">
+           <item row="0" column="3">
             <widget class="QLabel" name="label_34">
              <property name="text">
               <string>Xe&lt;=1</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="5">
+           <item row="0" column="2">
             <widget class="QLabel" name="label_33">
              <property name="text">
               <string>Xb&gt;=1</string>
              </property>
             </widget>
            </item>
-           <item row="0" column="7">
+           <item row="0" column="4">
             <widget class="QLabel" name="label_5">
              <property name="text">
               <string>Степ. полін.</string>
@@ -643,14 +643,14 @@
               <double>999999999.000000000000000</double>
              </property>
              <property name="singleStep">
-              <double>0.500000000000000</double>
+              <double>0.010000000000000</double>
              </property>
              <property name="value">
               <double>1.000000000000000</double>
              </property>
             </widget>
            </item>
-           <item row="1" column="7">
+           <item row="1" column="4">
             <widget class="QDoubleSpinBox" name="B_splineK">
              <property name="decimals">
               <number>0</number>
@@ -673,50 +673,10 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="label_20">
-             <property name="text">
-              <string>Згладжув.</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="9">
+           <item row="0" column="6">
             <widget class="QPushButton" name="B_splineOk">
              <property name="text">
               <string>Інтерпол.</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="AutoB_splineS">
-             <property name="text">
-              <string>авто</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="4">
-            <widget class="QCheckBox" name="B_splineSMin">
-             <property name="text">
-              <string>min</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2" colspan="3">
-            <widget class="QDoubleSpinBox" name="B_splineS">
-             <property name="decimals">
-              <number>4</number>
-             </property>
-             <property name="minimum">
-              <double>0.000000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>999999999.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.050000000000000</double>
-             </property>
-             <property name="value">
-              <double>1500000.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -740,7 +700,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="6">
+           <item row="1" column="3">
             <widget class="QDoubleSpinBox" name="B_spline_xe">
              <property name="toolTip">
               <string>Відступ  в кінці</string>
@@ -759,7 +719,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="5">
+           <item row="1" column="2">
             <widget class="QDoubleSpinBox" name="B_spline_xb">
              <property name="toolTip">
               <string>Відступ на початку</string>
@@ -2181,7 +2141,6 @@
   <tabstop>resYFilt</tabstop>
   <tabstop>FiltOk</tabstop>
   <tabstop>B_splineStep</tabstop>
-  <tabstop>B_splineS</tabstop>
   <tabstop>B_splineK</tabstop>
   <tabstop>B_splineOk</tabstop>
   <tabstop>ApproxM</tabstop>

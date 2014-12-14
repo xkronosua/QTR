@@ -1089,7 +1089,7 @@ class QTR(QtGui.QMainWindow):
 
 		else:
 			data,_ = self.getData(name)
-
+		print("points: ",len(data))
 		if self.confDict['autoscale'] and len(data)>2:
 			self.Rescale()
 		
@@ -1447,6 +1447,7 @@ class QTR(QtGui.QMainWindow):
 			#self.mpl.canvas.draw()
 
 	#  page_B_spline
+	"""
 	def connectAutoB_sS(self, state):
 		'''Оновлення коеф. згладжування'''
 		spins = ['S', 'Step', 'K']
@@ -1486,11 +1487,11 @@ class QTR(QtGui.QMainWindow):
 			except:
 				traceback.print_exc()
 		'''
-		
+	"""	
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		spins = ['B_spline' + i for i in ('Step', 'S', "K", "NKnots", "_xb", "_xe")]
-		step, sm, km, nknots, xb, xe = (i.value() for i in self.getUi(spins))
+		spins = ['B_spline' + i for i in ('Step',  "K", "NKnots", "_xb", "_xe")]
+		step,  km, nknots, xb, xe = (i.value() for i in self.getUi(spins))
 		XY, Name = self.getData()
 		XY = XY[XY[:,0].argsort()]
 
@@ -1911,8 +1912,8 @@ class QTR(QtGui.QMainWindow):
 		
 		##############  B_spline   ###############################################
 		self.ui.B_splineOk.clicked.connect(self.B_spline)
-		self.ui.AutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
-		self.ui.AutoB_splineS.toggled[bool].connect(self.connectAutoB_sS)
+		#self.ui.AutoB_splineS.toggled[bool].connect(self.AutoB_splineS)
+		#self.ui.AutoB_splineS.toggled[bool].connect(self.connectAutoB_sS)
 		
 		##############  Average	###############################################
 		self.ui.AverageOk.clicked.connect(self.movingAverage)
