@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # _*_ coding: utf-8 _*_
-import sys, os, signal, random
+import sys, os, signal, random, glob
 
 from PyQt4 import QtGui, QtCore, uic#QtUiTools
 
@@ -11,7 +11,7 @@ import scipy.interpolate as interp
 from scipy.optimize import leastsq
 import scipy.optimize as optimize
 from numpy.lib.stride_tricks import as_strided
-
+import matplotlib.pyplot as plt
 #import shelve
 #from glue_designer2 import  DesignerMainWindow
 #from ui.Ui_form import Ui_MainWindow
@@ -28,7 +28,7 @@ import json
 import traceback
 import datetime
 
-from cmath import sqrt as cSqrt
+import cmath
 from calc_n2_newForVG import calcReChi3
 
 
@@ -469,12 +469,14 @@ class QTR(QtGui.QMainWindow):
 
 	def pathTextChanged(self, text):
 		"""Якщо поле з шляхом до файлу для завантаження було змінене"""
-		state = os.path.exists(self.ui.filePath.text())
+		state = os.path.exists(self.ui.filePath.text()) or len(glob.glob(self.ui.filePath.text()))>=1
 
 		if not state:
-			self.sender().setStyleSheet('background-color: magenta;')
+			self.sender().setStyleSheet('background-color: red; color: black;')
+			
 		else:
-			self.sender().setStyleSheet('background-color: inherited;')
+			self.sender().setStyleSheet('background-color: black; color: orange;')
+			
 		self.ui.addToTable.setEnabled(state)
 
 	def addData(self):
@@ -482,82 +484,85 @@ class QTR(QtGui.QMainWindow):
 		
 		path = self.ui.filePath.text()
 		print(path)
+		mselect = glob.glob(path)
+		if len(mselect)>=1:
+			print(mselect)
+		for path in mselect:
+			if os.path.exists(path):
+				#try:
+					MAIN_DIRECTORY = os.path.dirname(path)
+					self.PATH = MAIN_DIRECTORY
+					attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
+					xc = attr[0].value()
+					yc = attr[1].value()
+					mc = attr[2].value()
+					try:
+						x, y, m = [], [], []
+						if path.split('.')[-1] == 'npy':
+							data = sp.load(path)
+						else:
+							try:
+								data = sp.loadtxt(path, delimiter=self.getDelimiter())
+							except:
+								# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
+								traceback.print_exc()
+								with open(path) as f:
+									line = f.readline()
+								nCols = len(line.split(self.getDelimiter()))
+								conv = lambda valstr: float(valstr.decode("utf-8").replace(',','.'))
+								c = {i:conv for i in range(nCols)}
+								data = sp.genfromtxt(path, delimiter=self.getDelimiter(), dtype = float, converters = c)
+						
 
-		if os.path.exists(path):
-			#try:
-				MAIN_DIRECTORY = os.path.dirname(self.ui.filePath.text())
-				self.PATH = MAIN_DIRECTORY
-				attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
-				xc = attr[0].value()
-				yc = attr[1].value()
-				mc = attr[2].value()
-				try:
-					x, y, m = [], [], []
-					if path.split('.')[-1] == 'npy':
-						data = sp.load(path)
+						x, y = data[:,[xc, yc]].T
+					except:
+						traceback.print_exc()
+					print(self.ui.isNormColumn.isChecked())
+					if self.ui.isNormColumn.isChecked():
+						m = data[:,mc]
+						XY = sp.array( [x/m, y/m]).T
 					else:
-						try:
-							data = sp.loadtxt(path, delimiter=self.getDelimiter())
-						except:
-							# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
-							traceback.print_exc()
-							with open(path) as f:
-								line = f.readline()
-							nCols = len(line.split(self.getDelimiter()))
-							conv = lambda valstr: float(valstr.decode("utf-8").replace(',','.'))
-							c = {i:conv for i in range(nCols)}
-							data = sp.genfromtxt(path, delimiter=self.getDelimiter(), dtype = float, converters = c)
+						XY = sp.array( [x, y]).T
+					#XY = XY[XY[:,0] != 0]
+					#XY = XY[XY[:,1] != 0]
+
+					#усереднення з кроком по N імпульсів
+					if self.ui.startStepAverage.isChecked():
+
+						XY = sp.vstack([i.mean(axis=0) for i in sp.array_split(XY,len(XY)//self.ui.startStepAverage_N.value())])
+
+					# Виділення напрямку переміщення клину
+					p = -1
+					pathIndex = self.ui.selectPartOfData.currentIndex()
+					if pathIndex == 1:
+						p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
+						XY = XY[:p,:]
+					elif pathIndex == 2:
+						p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
+						XY = XY[p:,:]
+					else:
+						pass
 					
+					if self.ui.autoSortData.isChecked():
+						XY = XY[sp.argsort(XY[:,0])]
 
-					x, y = data[:,[xc, yc]].T
-				except:
-					traceback.print_exc()
-				print(self.ui.isNormColumn.isChecked())
-				if self.ui.isNormColumn.isChecked():
-					m = data[:,mc]
-					XY = sp.array( [x/m, y/m]).T
-				else:
-					XY = sp.array( [x, y]).T
-				#XY = XY[XY[:,0] != 0]
-				#XY = XY[XY[:,1] != 0]
+					
+					Name = os.path.splitext(os.path.basename(path))[0]
+					
+					color = 'blue'
+					state = 1 #---------------------------------------------
+					
+					if state:
+						self.addNewData(data=XY, scales=[0, 0], name=Name, color=color, xc=xc, yc=yc)
 
-				#усереднення з кроком по N імпульсів
-				if self.ui.startStepAverage.isChecked():
+						# ’’зсув в 0’’
+					
+						if self.getUi('shift0').isChecked():
+							self.norm_Shift0()
 
-					XY = sp.vstack([i.mean(axis=0) for i in sp.array_split(XY,len(XY)//self.ui.startStepAverage_N.value())])
-
-				# Виділення напрямку переміщення клину
-				p = -1
-				pathIndex = self.ui.selectPartOfData.currentIndex()
-				if pathIndex == 1:
-					p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
-					XY = XY[:p,:]
-				elif pathIndex == 2:
-					p = sp.where( XY[:,0] == XY[:,0].max())[0][0]
-					XY = XY[p:,:]
-				else:
-					pass
-				
-				if self.ui.autoSortData.isChecked():
-					XY = XY[sp.argsort(XY[:,0])]
-
-				
-				Name = os.path.splitext(os.path.basename(path))[0]
-				
-				color = 'blue'
-				state = 1 #---------------------------------------------
-				
-				if state:
-					self.addNewData(data=XY, scales=[0, 0], name=Name, color=color, xc=xc, yc=yc)
-
-					# ’’зсув в 0’’
-				
-					if self.getUi('shift0').isChecked():
-						self.norm_Shift0()
-
-			#except (ValueError, IOError, IndexError):
-			#	self.mprint("loadData: readError")
-		else:  self.mprint('loadData: pathError')
+				#except (ValueError, IOError, IndexError):
+				#	self.mprint("loadData: readError")
+			else:  self.mprint('loadData: pathError')
 
 	def updateNamesTable(self):
 		c = self.ui.namesTable.rowCount()
@@ -1056,7 +1061,14 @@ class QTR(QtGui.QMainWindow):
 			XY,_ = self.getData()
 			xMargin = abs( XY[:,0].max() - XY[:,0].min() ) * 0.05
 			yMargin =  abs( XY[:,1].max() - XY[:,1].min() ) * 0.05
-			
+			print(xMargin,":",yMargin)
+			if sp.isnan(xMargin): 
+				print(xMargin)
+				xMargin = 0
+			if sp.isnan(yMargin): 
+				print(yMargin)
+				yMargin = 0
+			 
 			self.mpl.canvas.ax.set_xlim( (XY[:,0].min() - xMargin,\
 				XY[:,0].max() + xMargin) )
 			self.mpl.canvas.ax.set_ylim( (XY[:,1].min() - yMargin,\
@@ -1102,7 +1114,7 @@ class QTR(QtGui.QMainWindow):
 				prev_data[:, 1], color = new_color.name(), marker='+', linestyle='None', markersize=4, alpha=0.35)
 		
 		self.plt, = self.mpl.canvas.ax.plot(data[:, 0],\
-			data[:, 1],color = data.color, marker='o', linestyle='None', markersize=5, alpha=0.9)
+			data[:, 1],color = data.color, marker='o', linestyle='None', markersize=5, markeredgecolor="None", alpha=0.9)
 		
 		
 		if not hasattr(self, 'line'):
@@ -1477,21 +1489,33 @@ class QTR(QtGui.QMainWindow):
 		
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
-		spins = ['B_spline' + i for i in ('Step', 'S', "K", "NKnots")]
-		step, sm, km, nknots = (i.value() for i in self.getUi(spins))
+		spins = ['B_spline' + i for i in ('Step', 'S', "K", "NKnots", "_xb", "_xe")]
+		step, sm, km, nknots, xb, xe = (i.value() for i in self.getUi(spins))
 		XY, Name = self.getData()
 		XY = XY[XY[:,0].argsort()]
 
 		X, Y = XY.T
+		#w_tmp = (X>=X.min()*xb) * (X<=X.max()*xe)
+		#Y = Y[w_tmp]
+		#X = X[w_tmp]
 		nknots = int(nknots)
 		km = int(km)
 
 		idx_knots = (sp.arange(1,len(X)-1,(len(X)-2)/sp.double(nknots))).astype('int')
 		knots = X[idx_knots]
-
+		#print(len(knots), len(X[idx_knots]), knots, X[idx_knots])
 		#If task=-1 find the weighted least square spline for a given set of knots, t.
 		#These should be interior knots as knots on the ends will be added automatically.
-		tck = interp.splrep(X, Y, t=knots, s=sm, k=km, task=-1)
+
+		#tck = interp.splrep(X, Y, t=knots, s=sm, k=km, task=-1, xb=X.min()/xb, xe=X.max()/xe)
+		weights = (X>	(X.min()*xb)) * (X<(X.max()*xe))
+		#print(weights,'====================', xb, xe, X.min()*xb, X.max()*xe)
+		tck = None
+		try:
+			tck = interp.splrep(X, Y, w=weights, t=knots, k=km, task=-1)#, xb=X.min()/xb, xe=X.max()/xe)
+		except ValueError:
+			traceback.print_exc()
+			print("X",X,"Y",Y,"w",weights,"knots",knots,sp.isnan(X).sum(),sp.isnan(Y).sum(),sp.isnan(weights).sum())
 		xi = sp.arange(X.min(), X.max(), step)
 		fit = interp.splev(xi,tck)
 
@@ -1515,9 +1539,14 @@ class QTR(QtGui.QMainWindow):
 
 		data = sp.array([xi, uspline(xi)]).T
 		"""
+		w = ~sp.isnan(fit)
+		fit = fit[w]
+		xi = xi[w]
 		data = sp.array([xi, fit]).T
 		data = XY.clone(data)
 		
+
+
 		# Оптимізація
 		'''
 		if self.getUi('B_splineSMin').isChecked():
@@ -1528,6 +1557,8 @@ class QTR(QtGui.QMainWindow):
 			data = sp.array([xi, sp.poly1d(plsq[0])(xi)]).T
 		'''
 		self.updateData(name=Name, data=data)
+
+		self.mpl.canvas.ax.plot(xi, fit, '-r')
 		
 	
 	def poly_cut(self, data=None, N=10, m=4,
@@ -1778,15 +1809,13 @@ class QTR(QtGui.QMainWindow):
 		L = self.ui.reHi3_l.value()
 		polyM = self.ui.reHi3_polyM.value()
 
-		dM = self.ui.reHi3_dM.currentText()
-		dmDict = {		'cm':		10**-2,
-								'mm':		10**-3,
-								'mkm':		10**-6,
-								'nm':		10**-9}
-		d *= dmDict[dM]
 		
-		calcReChi3(data, m=polyM, a=a,Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
-				
+		
+		eq, na1, hi3a1, hi3t, Phit = calcReChi3(data, m=polyM, a=a,Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
+		self.ui.reHi3_console.setText("n2: " + na1, "1: " + str(hi3a1) + " 2: " + str(hi3t) + " Phit: " + str(Phit))
+		l1, = self.mpl.canvas.ax.plot(data[:,0], sp.poly1d(eq[::-1])(data[:,0]), 'r-', markersize=6)
+		self.mpl.canvas.draw()
+		self.mpl.canvas.ax.lines.remove(l1)	
 
 
 	## Інтенсивність
@@ -1801,7 +1830,29 @@ class QTR(QtGui.QMainWindow):
 		except:
 			traceback.print_exc()
 			self.ui.Ai2.setText(str(sqrt(Ai2)))
-	
+	def calibrCoefFromFiles(self):
+		files = self.fileDialog.getOpenFileNames(self, "Select Files")
+		print(files)
+		X,Y = [], []
+		for i in files:
+			x, y = None, None
+			name = os.path.basename(i)
+			if name.upper() == 'NULL':
+				y = .0
+				
+			else:
+				y = int(name)*0.01
+			data = sp.loadtxt(i)
+			x = sp.mean(data[:,self.ui.calibrCoefColumn.value()])
+			if x != None and y!=None:
+				print(x,y)
+				X.append(x)
+				Y.append(y)
+		res = sp.polyfit(X, Y, 1)[0] / sp.pi
+		self.ui.calibr.setText(str(res))
+		
+		self.mpl.canvas.ax.plot(X,Y,'o')
+		self.mpl.canvas.draw()
 	def recalcIntensResult(self):
 		'''Перерахунок на інтенсивність
 		1064: 5.03*10**-5
@@ -1934,7 +1985,7 @@ class QTR(QtGui.QMainWindow):
 		## Інтенсивність
 		self.ui.recalcAi2.clicked.connect(self.recalcAi2)
 		self.ui.recalcIntensResult.clicked.connect(self.recalcIntensResult)
-		
+		self.ui.calibrCoefFromFiles.clicked.connect(self.calibrCoefFromFiles)
 
 		self.ui.movePoint.triggered.connect(self.movePoint)
 		self.ui.flipData.triggered.connect(self.flipData)

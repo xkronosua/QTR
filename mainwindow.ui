@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>834</width>
-    <height>764</height>
+    <width>787</width>
+    <height>536</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,8 +18,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>448</width>
-    <height>520</height>
+    <width>300</width>
+    <height>300</height>
    </size>
   </property>
   <property name="baseSize">
@@ -195,6 +195,9 @@
           <property name="editTriggers">
            <set>QAbstractItemView::DoubleClicked</set>
           </property>
+          <property name="alternatingRowColors">
+           <bool>true</bool>
+          </property>
           <property name="selectionMode">
            <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
@@ -205,6 +208,24 @@
            <number>1</number>
           </property>
           <attribute name="horizontalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="horizontalHeaderCascadingSectionResizes">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="verticalHeaderCascadingSectionResizes">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="verticalHeaderStretchLastSection">
            <bool>false</bool>
           </attribute>
           <column/>
@@ -589,7 +610,21 @@
            <string>В-spline</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="6">
+            <widget class="QLabel" name="label_34">
+             <property name="text">
+              <string>Xe&lt;=1</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="5">
+            <widget class="QLabel" name="label_33">
+             <property name="text">
+              <string>Xb&gt;=1</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="7">
             <widget class="QLabel" name="label_5">
              <property name="text">
               <string>Степ. полін.</string>
@@ -615,7 +650,7 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="5">
+           <item row="1" column="7">
             <widget class="QDoubleSpinBox" name="B_splineK">
              <property name="decimals">
               <number>0</number>
@@ -645,7 +680,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="7">
+           <item row="0" column="9">
             <widget class="QPushButton" name="B_splineOk">
              <property name="text">
               <string>Інтерпол.</string>
@@ -705,8 +740,68 @@
              </property>
             </widget>
            </item>
+           <item row="1" column="6">
+            <widget class="QDoubleSpinBox" name="B_spline_xe">
+             <property name="toolTip">
+              <string>Відступ  в кінці</string>
+             </property>
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>99.989999999999995</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QDoubleSpinBox" name="B_spline_xb">
+             <property name="toolTip">
+              <string>Відступ на початку</string>
+             </property>
+             <property name="whatsThis">
+              <string/>
+             </property>
+             <property name="minimum">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.010000000000000</double>
+             </property>
+             <property name="value">
+              <double>1.000000000000000</double>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_NormShift">
+       <property name="maximumSize">
+        <size>
+         <width>797</width>
+         <height>120</height>
+        </size>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_12">
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="spinBox"/>
+        </item>
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_9"/>
+        </item>
+        <item row="0" column="2">
+         <widget class="QSpinBox" name="spinBox_2"/>
+        </item>
+        <item row="0" column="3">
+         <widget class="QSpinBox" name="spinBox_3"/>
         </item>
        </layout>
       </widget>
@@ -1040,6 +1135,9 @@
       </widget>
       <widget class="QWidget" name="page_ReHi3">
        <layout class="QFormLayout" name="formLayout">
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+        </property>
         <item row="0" column="0">
          <widget class="Line" name="line_2">
           <property name="orientation">
@@ -1109,16 +1207,6 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="3">
-           <widget class="QDoubleSpinBox" name="reHi3_d">
-            <property name="maximum">
-             <double>999.990000000000009</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="6">
            <widget class="QLabel" name="label_12">
             <property name="text">
@@ -1147,36 +1235,6 @@
             <property name="value">
              <double>25.000000000000000</double>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="4">
-           <widget class="QComboBox" name="reHi3_dM">
-            <property name="maximumSize">
-             <size>
-              <width>70</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <item>
-             <property name="text">
-              <string>cm</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>mm</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>mkm</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>nm</string>
-             </property>
-            </item>
            </widget>
           </item>
           <item row="0" column="0">
@@ -1222,7 +1280,7 @@
           <item row="0" column="3" colspan="2">
            <widget class="QLabel" name="label_10">
             <property name="text">
-             <string>d</string>
+             <string>d, mm</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1266,24 +1324,26 @@
             </property>
            </widget>
           </item>
+          <item row="1" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="reHi3_d">
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>0.000010000000000</double>
+            </property>
+            <property name="maximum">
+             <double>999.990000000000009</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="11">
+           <widget class="QTextEdit" name="reHi3_console"/>
+          </item>
          </layout>
-        </item>
-        <item row="1" column="1">
-         <widget class="QScrollArea" name="reHi3_console">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>100</width>
-             <height>30</height>
-            </rect>
-           </property>
-          </widget>
-         </widget>
         </item>
        </layout>
       </widget>
@@ -1296,7 +1356,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_19">
               <property name="text">
-               <string>Довж. хвилі, нм</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;𝝺, нм&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -1356,7 +1416,7 @@
             <item row="0" column="1">
              <widget class="QLabel" name="label_15">
               <property name="text">
-               <string>Фокусна відстань, см</string>
+               <string>f, см</string>
               </property>
              </widget>
             </item>
@@ -1370,7 +1430,7 @@
             <item row="2" column="1">
              <widget class="QLabel" name="label_30">
               <property name="text">
-               <string>Ai2 =</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;i&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; =&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -1417,21 +1477,14 @@
           </item>
           <item>
            <layout class="QGridLayout" name="gridLayout_11">
-            <item row="3" column="0">
+            <item row="4" column="0">
              <widget class="QPushButton" name="recalcIntensResult">
               <property name="text">
                <string>Обчислити</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QLineEdit" name="calibr">
-              <property name="maxLength">
-               <number>50</number>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
+            <item row="3" column="0">
              <widget class="QLabel" name="label_36">
               <property name="text">
                <string>Фільтри</string>
@@ -1445,18 +1498,35 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="3">
-             <widget class="QToolButton" name="toolButton">
-              <property name="text">
-               <string>...</string>
+            <item row="4" column="2" colspan="4">
+             <widget class="QLineEdit" name="intensResult"/>
+            </item>
+            <item row="3" column="2" colspan="4">
+             <widget class="QLineEdit" name="intensFilt"/>
+            </item>
+            <item row="1" column="2" colspan="4">
+             <widget class="QLineEdit" name="calibr">
+              <property name="maxLength">
+               <number>50</number>
               </property>
              </widget>
             </item>
-            <item row="2" column="2" colspan="2">
-             <widget class="QLineEdit" name="intensFilt"/>
+            <item row="2" column="5">
+             <widget class="QSpinBox" name="calibrCoefColumn">
+              <property name="toolTip">
+               <string>Колонка для даних з калібровкою</string>
+              </property>
+              <property name="minimum">
+               <number>0</number>
+              </property>
+             </widget>
             </item>
-            <item row="3" column="2" colspan="2">
-             <widget class="QLineEdit" name="intensResult"/>
+            <item row="2" column="3" colspan="2">
+             <widget class="QPushButton" name="calibrCoefFromFiles">
+              <property name="text">
+               <string>З файлу</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -1481,8 +1551,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>834</width>
-     <height>23</height>
+     <width>787</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -2151,14 +2221,12 @@
   <tabstop>reHi3_r0</tabstop>
   <tabstop>reHi3_d</tabstop>
   <tabstop>reHi3_a0</tabstop>
-  <tabstop>reHi3_dM</tabstop>
   <tabstop>reHi3_lambda</tabstop>
   <tabstop>reHi3_f</tabstop>
   <tabstop>reHi3_l</tabstop>
   <tabstop>reHi3_z</tabstop>
   <tabstop>reHi3_polyM</tabstop>
   <tabstop>reHi3_ok</tabstop>
-  <tabstop>reHi3_console</tabstop>
   <tabstop>PolyN</tabstop>
   <tabstop>maWidth</tabstop>
   <tabstop>PolyM</tabstop>

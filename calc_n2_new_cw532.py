@@ -1,6 +1,6 @@
 from pylab import *
-from cmath import sqrt#, cos, sin, exp
-
+import cmath
+from cmath import *
 
 '''
 
@@ -15,25 +15,28 @@ from cmath import sqrt#, cos, sin, exp
 #In[3]= (*Input coeficient of On Axis Transmittance dependence \
 aproximation obtained in Origin*)
 '''
-def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12, f=8, r0=0.1):
+def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12., f=8., r0=0.1):
 
 	X, Y = XY.T
-	
-	A = 0.9753
-	B1 = 0.00249
-	B2 = -0.00025
-	B3 = 10**-50
-	B4 = 10**-50
+	c = [float64(0.0)]*5
+	#A, B1, B2, B3, B4 = [0, 0, 0, 0, 0]
+	eq = np.polyfit(X, Y, m)[::-1]
+	for i, j in enumerate(eq):
+		print( i, j, m)
+		if i > m: break
+		c[i] = j
+	A, B1, B2, B3, B4 = c
+	print(A,B1,B2,B3,B4)
 	
 	#In[8]= 
 
 	#In[9]= '''input a in pixel obtained from gaus1.exe'''
-	a *= 0.0025#10.5*0.0025
+	a *= float64(0.0025)#10.5*0.0025
 
 	#In[10]= '''input Lambda in cm'''
 	##Lambda = 532*10**(-7)
 	k = 2*pi/Lambda
-	ld = k*a**2/2
+	ld = k*a**2/2.
 	'''input refractive index n0'''
 	##n0 = 1.7
 	Rfl = ((1 - n0)/(1 + n0))**2
@@ -53,7 +56,7 @@ def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12,
 	#In[17]= 
 	alpha = 0.1
 
-	#In[18]= ww[x_, a_, F_, ld_] = a*sqrt((1 - x/F)**2 + (x/ld)**2) 
+	#In[18]= ww[x_, a_, F_, ld_] = a*cmath.sqrt((1 - x/F)**2 + (x/ld)**2) 
 	Rc = lambda x, rad, ld : rad*((1 - x/rad)**2 + (x/ld)**2)/(1 - x/rad*(1 + (rad/ld)**2))
 
 	#In[20]= '''input distance PhD - Sample in cm'''
@@ -72,40 +75,40 @@ def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12,
 	b = -k*w**2*(1 - z/R)/(2*z)
 	b2 = b**2
 	ar2 = w**2*(1 + b2)*(z/lds)**2
-	Norm1 = 1 - exp(-2*k*r02/ar2)
-	wInt = w/sqrt(2)
-
+	Norm1 = 1 - cmath.exp(-2*k*r02/ar2)
+	wInt = w/cmath.sqrt(2)
+	print("ww", w)
 	#Out[25]= 0.0170141
 
 	#Out[26]= -3.12949
 	'''
 	#In[33]= (* \
 	T=1/(Norm1)*(Norm1+Phi/(2**(1.5))*Exp[-4*r02*(3+b2)/(ar2*(9+b2)\
-	)]*sin(8*b*r02/(ar2*(9+b2))]+\[CurlyPhi)**2/(6*3**(0.5))*(Exp[-6*r02*(5+\
-	b2)/(ar2*(25+b2))]*cos(24*b*r02/(ar2*(25+b2)))-Exp[-6*r02*(1+b2)/(ar2*\
-	(9+b2))])+Phi**3/16*(1/3*exp(-8*r02*(7+b2)/(ar2*(49+b2)))*Sin[\
+	)]*cmath.sin(8*b*r02/(ar2*(9+b2))]+\[CurlyPhi)**2/(6*3**(0.5))*(Exp[-6*r02*(5+\
+	b2)/(ar2*(25+b2))]*cmath.cos(24*b*r02/(ar2*(25+b2)))-Exp[-6*r02*(1+b2)/(ar2*\
+	(9+b2))])+Phi**3/16*(1/3*cmath.exp(-8*r02*(7+b2)/(ar2*(49+b2)))*Sin[\
 	48*r02*b/(ar2*(49+b2))]-Exp[-8*r02*(15+b2)*(1+b2)/(ar2*(25+b2)*(9+b2))\
-	]*sin(16*r02*b*(1+b2)/(ar2*(25+b2)*(9+b2))) )) *)
+	]*cmath.sin(16*r02*b*(1+b2)/(ar2*(25+b2)*(9+b2))) )) *)
 	'''
 	#In[34]= 
 	Th0 = 1
 
 	Th1 = -1/(Norm1)*exp(-4*r02*(3 + b2)/(ar2*(9 + b2)))*  sin(8*b*r02/(ar2*(9 + b2)))
-	Th2 = 1/(Norm1)*(exp(-6*r02*(5 + b2)/(ar2*(25 + b2)))*
-		cos(24*b*r02/(ar2*(25 + b2))) -exp(-6*r02*(1 + b2)/(ar2*(9 + b2))))
+	Th2 = 1/(Norm1)*(cmath.exp(-6*r02*(5 + b2)/(ar2*(25 + b2)))*
+		cmath.cos(24*b*r02/(ar2*(25 + b2))) -cmath.exp(-6*r02*(1 + b2)/(ar2*(9 + b2))))
 
-	Th3 = 1/(Norm1*8)*(1/3*exp(-8*r02*(7 + b2)/(ar2*(49 + b2)))*sin(48*r02*b/(ar2*(49 + b2))) - 
-		exp(-8*r02*(15 + b2)*(1 + b2)/(ar2*(25 + b2)*(9 + b2)))*
-		 sin(16*r02*b*(1 + b2)/(ar2*(25 + b2)*(9 + b2))) )
+	Th3 = 1/(Norm1*8)*(1/3*cmath.exp(-8*r02*(7 + b2)/(ar2*(49 + b2)))*cmath.sin(48*r02*b/(ar2*(49 + b2))) - 
+		cmath.exp(-8*r02*(15 + b2)*(1 + b2)/(ar2*(25 + b2)*(9 + b2)))*
+		 cmath.sin(16*r02*b*(1 + b2)/(ar2*(25 + b2)*(9 + b2))) )
 	#(*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*)
 
-	Th4 = ((1/4.)*(1 - exp(-10*r02*(1 + b2)/(25 + b2))) -
+	Th4 = ((1/4.)*(1 - cmath.exp(-10*r02*(1 + b2)/(25 + b2))) -
 		(1/3.)*(1 - 
-		   exp(-10*r02*(1 + b2)*(21 + b2)/((9 + b2)*(49 + b2))))* 
-		 cos(40*r02*b*(1 + b2)/((9 + b2)*(49 + b2))) +
-		(1/12.)*(1 - exp(-10*r02*(9 + b2)/(81 + b2)))*
-		 cos(80*r02*b/(81 + b2)))/(Norm1*5)
-	print(Th0,Th1,Th2,Th3,Th4)
+		   cmath.exp(-10*r02*(1 + b2)*(21 + b2)/((9 + b2)*(49 + b2))))* 
+		 cmath.cos(40*r02*b*(1 + b2)/((9 + b2)*(49 + b2))) +
+		(1/12.)*(1 - cmath.exp(-10*r02*(9 + b2)/(81 + b2)))*
+		 cmath.cos(80*r02*b/(81 + b2)))/(Norm1*5)
+	print("Th_i: ", Th0,Th1,Th2,Th3,Th4)
 
 	#Out[34]= 1
 
@@ -120,18 +123,18 @@ def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12,
 	#In[39]= 
 
 	#In[40]= 
-	#Phi = k*n2*Inten*(1 - Rfl)*(1 - exp(-2*Alpha]*d])/(2*Alpha]), 10)
+	#Phi = k*n2*Inten*(1 - Rfl)*(1 - cmath.exp(-2*Alpha]*d])/(2*Alpha]), 10)
 
 	c1 = k*(1 - Rfl)*d
 	print(c1)
-	'''(1-exp(-2*Alpha]*d])/(2*Alpha))'''
+	'''(1-cmath.exp(-2*Alpha]*d])/(2*Alpha))'''
 
 
 	#Out[41]= 566.904
 
 	#In[42]= 
 	n21 = (Th0/Th1)*(B1/A)*10**(-3)/c1*10**6
-	n22 = sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
+	n22 = cmath.sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
 	n23 = (Th0/Th3*(B3/A))**(1/3)/c1*10**(3)
 
 	print(n21,n22,n23)
@@ -169,9 +172,9 @@ def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12,
 
 	#Out[52]= 0.
 
-	#During evaluation of In[51]= Power::infy: Infinite expression 1/0 encountered. >>
+	#During evaluation of In[51]= Power::infy: Infinite cmath.expression 1/0 encountered. >>
 
-	#During evaluation of In[51]= Infinity::indet: Indeterminate expression 0 ComplexInfinity encountered. >>
+	#During evaluation of In[51]= Infinity::indet: Indeterminate cmath.expression 0 ComplexInfinity encountered. >>
 
 	#Out[53]= Indeterminate
 
@@ -206,9 +209,9 @@ def calc(XY, a=10.5,Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12,
 
 	#Out[54]= 5.16365*10**-7
 
-	#During evaluation of In[54]= Power::infy: Infinite expression 1/0 encountered. >>
+	#During evaluation of In[54]= Power::infy: Infinite cmath.expression 1/0 encountered. >>
 
-	#During evaluation of In[54]= Infinity::indet: Indeterminate expression 0 ComplexInfinity encountered. >>
+	#During evaluation of In[54]= Infinity::indet: Indeterminate cmath.expression 0 ComplexInfinity encountered. >>
 
 	#Out[55]= Indeterminate
 
@@ -237,11 +240,11 @@ if __name__ == "__main__":
 	A = 0.9753
 	B1 = 0.00249
 	B2 = -0.00025
-	B3 = 10**-50
-	B4 = 10**-50
+	B3 = 0
+	B4 = 0
 	
 	eq = poly1d([B4,B3,B2,B1,A])
 	x = arange(100)
 	y = eq(x)
-	calc(vstack((x,y)).T, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
+	calc(vstack((x,y)).T, m=2, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
 		z=79.1, L=12, f=8,r0=0.1)
