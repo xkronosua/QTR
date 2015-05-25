@@ -192,8 +192,8 @@ def calcReChi3(XY, m=1, a=24,Lambda=532., n0=1.5, d=50*10**(-4), z=68, L=14., f=
 	na2 = (abs(n212v) + abs(n223v))*10**(3)/2
 	nt = 0.03*10**1
 	T1 = lambda Inten : Th0 + Th1*(na1*c1)*Inten + Th2*(na1*c1)**2*Inten**2 +   Th3*(na1*c1)**3*Inten**3
-	T2 = lambda Inten : Th0 + Th1*(na2*c1)*Inten + Th2*(na2*c1)**2*Inten**2 + Th3*(na2*c1)**3*Inten**3
-	T3 = lambda Inten : Th0 + Th1*(nt*c1)*Inten + Th2*(nt*c1)**2*Inten**2 + Th3*(nt*c1)**3*Inten**3 + Th4*(nt*c1)**4* Inten**4
+	T2 = lambda Inten : Th0 + Th1*(na2*c1)*Inten + Th2*(na2*c1)**2*Inten**2 +   Th3*(na2*c1)**3*Inten**3
+	T3 = lambda Inten : Th0 + Th1*(nt*c1)*Inten  + Th2*(nt*c1)**2*Inten**2 + Th3*(nt*c1)**3*Inten**3 + Th4*(nt*c1)**4* Inten**4
 	Ex = lambda Inten : A + B1*Inten + B2*Inten**2 + B3*Inten**3 + B4*Inten**4 + 0.320
 
 	'''

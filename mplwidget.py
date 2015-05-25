@@ -1,46 +1,5 @@
 import matplotlib
-#matplotlib.use('Qt4Agg')
-matplotlib.rcParams['backend.qt4'] = 'PyQt4'
-
-matplotlib.rcParams["font.size"] = 9.0
-
-
-
-matplotlib.rcParams["figure.subplot.left"] = 0.0
-matplotlib.rcParams["figure.subplot.right"] = 1
-matplotlib.rcParams["figure.subplot.bottom"] = 0.0
-matplotlib.rcParams["figure.subplot.top"] = 1
-matplotlib.rcParams["figure.subplot.wspace"] = 0.0  
-matplotlib.rcParams["figure.subplot.hspace"] = 0.0  
-
-#matplotlib.rcParams["figure.facecolor"] = 'white'
-style = {
-				"lines.color": "white",
-				#'lines.linewidth': 5,
-				"patch.edgecolor": "white",
-				"patch.facecolor": "white",
-				"patch.linewidth": 5,
-
-
-				"text.color": "white",
-
-				"axes.facecolor": "#000002",
-				"axes.edgecolor": "#222222",
-				"axes.labelcolor": "green",
-
-				"xtick.color": "white",
-				"ytick.color": "white",
-
-				"grid.color": "orange",
-
-				"figure.facecolor": "#000005",
-				"figure.edgecolor": "white",
-
-				"contour.negative_linestyle" : 'solid',
-
-				"savefig.facecolor": "black",
-				"savefig.edgecolor": "black"}
-matplotlib.rcParams.update(style)
+matplotlib.use('Qt4Agg',force=True)
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 # Python Qt4 bindings for GUI objects
@@ -57,6 +16,50 @@ from matplotlib.widgets import SpanSelector
 from matplotlib.figure import Figure
 
 import mpl_toolkits.axisartist as axisartist
+#				"figure.facecolor": 'white'
+style = {
+				'backend': 'qt4agg',
+
+				"font.size": 9.0,
+
+
+
+				"figure.subplot.left": 0.0,
+				"figure.subplot.right": 1,
+				"figure.subplot.bottom": 0.0,
+				"figure.subplot.top": 1,
+				"figure.subplot.wspace": 0.0, 
+				"figure.subplot.hspace": 0.0, 
+				"lines.color": "white",
+				"lines.antialiased": True,
+				#'lines.linewidth': 5,
+				"patch.edgecolor": "white",
+				"patch.facecolor": "white",
+				"patch.linewidth": 5,
+
+
+
+				"text.color": "white",
+
+				"axes.facecolor": "#000002",
+				"axes.edgecolor": "#222222",
+				"axes.labelcolor": "green",
+				#"axes.spines.color": "white",
+
+				"xtick.color": "white",
+				"ytick.color": "white",
+
+				"grid.color": "orange",
+
+				"figure.facecolor": "#000005",
+				"figure.edgecolor": "white",
+
+				"contour.negative_linestyle" : 'solid',
+
+				"savefig.facecolor": "black",
+				"savefig.edgecolor": "black"}
+matplotlib.rcParams.update(style)
+
 
 class MplCanvas(FigureCanvas):
 	"""Class to represent the FigureCanvas widget"""

@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>787</width>
-    <height>536</height>
+    <height>573</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
+   <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
+    <horstretch>100</horstretch>
+    <verstretch>100</verstretch>
    </sizepolicy>
   </property>
   <property name="minimumSize">
@@ -63,7 +63,7 @@
     <item>
      <widget class="QWidget" name="horizontalWidget" native="true">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -73,7 +73,27 @@
         <enum>QLayout::SetMinAndMaxSize</enum>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="mplWidget"/>
+        <layout class="QVBoxLayout" name="mplWidget">
+         <property name="spacing">
+          <number>1</number>
+         </property>
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMinAndMaxSize</enum>
+         </property>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -81,7 +101,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -93,11 +113,17 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>4</number>
       </property>
       <widget class="QWidget" name="page_Data">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QGridLayout" name="gridLayout_4">
-        <item row="3" column="9">
+        <item row="3" column="10">
          <widget class="QSpinBox" name="mColumn">
           <property name="enabled">
            <bool>false</bool>
@@ -107,39 +133,14 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="6">
+        <item row="3" column="7">
          <widget class="QLabel" name="label_2">
           <property name="text">
            <string>Y</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="3">
-         <widget class="QToolButton" name="rowMoveUp">
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="8" rowspan="3">
-         <widget class="Line" name="line">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="9">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Діапазон</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="9">
+        <item row="2" column="10">
          <widget class="QCheckBox" name="isNormColumn">
           <property name="text">
            <string>Норм.</string>
@@ -149,89 +150,56 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="7">
+        <item row="1" column="9" rowspan="3">
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="10">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Діапазон</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="8">
          <widget class="QSpinBox" name="yColumn">
           <property name="value">
            <number>4</number>
           </property>
          </widget>
         </item>
-        <item row="0" column="6" colspan="5">
+        <item row="0" column="7" colspan="5">
          <widget class="QLineEdit" name="filePath">
           <property name="echoMode">
            <enum>QLineEdit::Normal</enum>
           </property>
          </widget>
         </item>
-        <item row="0" column="11">
+        <item row="0" column="12">
          <widget class="QToolButton" name="selectFile">
           <property name="text">
            <string>...</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="6">
+        <item row="1" column="7">
          <widget class="QLabel" name="label_3">
           <property name="text">
            <string>Розділювач</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="10">
+        <item row="2" column="11">
          <widget class="QCheckBox" name="shift0">
           <property name="text">
            <string>Зсув 0</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="0" rowspan="4" colspan="3">
-         <widget class="QTableWidget" name="namesTable">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>100</height>
-           </size>
-          </property>
-          <property name="editTriggers">
-           <set>QAbstractItemView::DoubleClicked</set>
-          </property>
-          <property name="alternatingRowColors">
-           <bool>true</bool>
-          </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
-          </property>
-          <property name="selectionBehavior">
-           <enum>QAbstractItemView::SelectRows</enum>
-          </property>
-          <property name="columnCount">
-           <number>1</number>
-          </property>
-          <attribute name="horizontalHeaderVisible">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="horizontalHeaderCascadingSectionResizes">
-           <bool>true</bool>
-          </attribute>
-          <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="horizontalHeaderStretchLastSection">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="verticalHeaderCascadingSectionResizes">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="verticalHeaderShowSortIndicator" stdset="0">
-           <bool>true</bool>
-          </attribute>
-          <attribute name="verticalHeaderStretchLastSection">
-           <bool>false</bool>
-          </attribute>
-          <column/>
-         </widget>
-        </item>
-        <item row="0" column="5" rowspan="4">
+        <item row="0" column="6" rowspan="4">
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -247,33 +215,14 @@
           </property>
          </spacer>
         </item>
-        <item row="3" column="3">
-         <widget class="QToolButton" name="saveData">
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4">
-         <widget class="QToolButton" name="multiPlot">
-          <property name="icon">
-           <iconset>
-            <normaloff>buttons/multiPlot.png</normaloff>buttons/multiPlot.png</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="7">
+        <item row="2" column="8">
          <widget class="QSpinBox" name="xColumn">
           <property name="value">
            <number>5</number>
           </property>
          </widget>
         </item>
-        <item row="1" column="10">
+        <item row="1" column="11">
          <widget class="QComboBox" name="selectPartOfData">
           <item>
            <property name="text">
@@ -292,7 +241,7 @@
           </item>
          </widget>
         </item>
-        <item row="1" column="7">
+        <item row="1" column="8">
          <widget class="QComboBox" name="delimiter">
           <property name="currentIndex">
            <number>2</number>
@@ -334,25 +283,7 @@
           </item>
          </widget>
         </item>
-        <item row="0" column="3">
-         <widget class="QToolButton" name="deleteData">
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="6">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>X</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="11">
+        <item row="3" column="12">
          <widget class="QPushButton" name="addToTable">
           <property name="enabled">
            <bool>false</bool>
@@ -372,38 +303,14 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="3">
-         <widget class="QToolButton" name="rowMoveDown">
+        <item row="2" column="7">
+         <widget class="QLabel" name="label">
           <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>buttons/down.svg</normaloff>buttons/down.svg</iconset>
+           <string>X</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="4">
-         <widget class="QToolButton" name="joinDataArrays">
-          <property name="cursor">
-           <cursorShape>CrossCursor</cursorShape>
-          </property>
-          <property name="text">
-           <string>+</string>
-          </property>
-          <property name="shortcut">
-           <string>Ctrl+J</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="11">
-         <widget class="QCheckBox" name="startStepAverage">
-          <property name="text">
-           <string>N імп.</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="11">
+        <item row="2" column="12">
          <widget class="QSpinBox" name="startStepAverage_N">
           <property name="enabled">
            <bool>false</bool>
@@ -419,7 +326,14 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="10">
+        <item row="1" column="12">
+         <widget class="QCheckBox" name="startStepAverage">
+          <property name="text">
+           <string>N імп.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="11">
          <widget class="QCheckBox" name="autoSortData">
           <property name="text">
            <string>Сорт. Х</string>
@@ -432,9 +346,21 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_Average">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
          <widget class="QGroupBox" name="groupBox_15">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string> Усереднення</string>
           </property>
@@ -504,9 +430,21 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_PolyCut">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QGroupBox" name="groupBox_11">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string>Обрізання вздовж поліном. апроксимації</string>
           </property>
@@ -603,9 +541,21 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_B_spline">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QGroupBox" name="groupBox_10">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string>В-spline</string>
           </property>
@@ -695,8 +645,17 @@
            </item>
            <item row="0" column="1">
             <widget class="QLabel" name="label_32">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
               <string>вузлів</string>
+             </property>
+             <property name="scaledContents">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -744,6 +703,12 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_NormShift">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="maximumSize">
         <size>
          <width>797</width>
@@ -751,21 +716,39 @@
         </size>
        </property>
        <layout class="QGridLayout" name="gridLayout_12">
-        <item row="0" column="1">
-         <widget class="QSpinBox" name="spinBox"/>
-        </item>
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_9"/>
-        </item>
-        <item row="0" column="2">
-         <widget class="QSpinBox" name="spinBox_2"/>
-        </item>
-        <item row="0" column="3">
-         <widget class="QSpinBox" name="spinBox_3"/>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="0" column="0">
+           <widget class="QSpinBox" name="norm_Shift0_len">
+            <property name="value">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QSpinBox" name="spinBox_2"/>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="spinBox_3"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QCheckBox" name="Log10Shift">
+            <property name="text">
+             <string>Log10Shift</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
       <widget class="QWidget" name="page_PolyFit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QGroupBox" name="groupBox_12">
@@ -832,9 +815,21 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_Filters">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
          <widget class="QGroupBox" name="groupBox_22">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string>Фільтри</string>
           </property>
@@ -928,6 +923,18 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_FiltFilt">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>13</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>50</height>
+        </size>
+       </property>
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
          <widget class="QSpinBox" name="FiltFiltK">
@@ -970,6 +977,12 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_NormData">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="3" column="2">
          <widget class="QCheckBox" name="yInPercents">
@@ -1094,6 +1107,12 @@
        </layout>
       </widget>
       <widget class="QWidget" name="page_ReHi3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QFormLayout" name="formLayout">
         <property name="fieldGrowthPolicy">
          <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
@@ -1307,7 +1326,103 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="page_ImHi3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_15">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="gridLayout_14">
+          <item row="1" column="2" colspan="2">
+           <widget class="QDoubleSpinBox" name="imHi3_d">
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>0.000010000000000</double>
+            </property>
+            <property name="maximum">
+             <double>999.990000000000009</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_35">
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;n&lt;span style=&quot; vertical-align:sub;&quot;&gt;0&lt;/span&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="imHi3_n0">
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2" colspan="2">
+           <widget class="QLabel" name="label_43">
+            <property name="text">
+             <string>d, cm</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="5">
+           <widget class="QTextEdit" name="imHi3_console"/>
+          </item>
+          <item row="0" column="4" rowspan="2">
+           <widget class="QPushButton" name="imHi3_ok">
+            <property name="text">
+             <string>Ок</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_41">
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;λ, нм&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QDoubleSpinBox" name="imHi3_lambda">
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>532.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="page_Intens">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_8">
@@ -1512,7 +1627,7 @@
      <x>0</x>
      <y>0</y>
      <width>787</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -1542,6 +1657,7 @@
      <addaction name="norm_Shift0"/>
      <addaction name="norm_Shift0X"/>
      <addaction name="norm_ShiftRange"/>
+     <addaction name="norm_Shift0Xh"/>
     </widget>
     <widget class="QMenu" name="menu_Scale">
      <property name="title">
@@ -1590,6 +1706,7 @@
     <addaction name="actionNormData"/>
     <addaction name="separator"/>
     <addaction name="actionReHi3"/>
+    <addaction name="actionImHi3"/>
     <addaction name="flipData"/>
    </widget>
    <widget class="QMenu" name="menu_3">
@@ -1622,6 +1739,8 @@
      <string>Інструменти</string>
     </property>
     <addaction name="console"/>
+    <addaction name="separator"/>
+    <addaction name="actionDataDock"/>
    </widget>
    <addaction name="menu_4"/>
    <addaction name="menu_Hist"/>
@@ -1733,7 +1852,187 @@
    <addaction name="actionNormData"/>
    <addaction name="separator"/>
    <addaction name="actionReHi3"/>
+   <addaction name="actionImHi3"/>
    <addaction name="separator"/>
+  </widget>
+  <widget class="QDockWidget" name="DataDock">
+   <property name="features">
+    <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="spacing">
+        <number>1</number>
+       </property>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMinimumSize</enum>
+       </property>
+       <item>
+        <widget class="QTableWidget" name="namesTable">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>200</width>
+           <height>60000</height>
+          </size>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::DoubleClicked</set>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="columnCount">
+          <number>3</number>
+         </property>
+         <attribute name="horizontalHeaderVisible">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>15</number>
+         </attribute>
+         <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderCascadingSectionResizes">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Файл</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>#</string>
+          </property>
+         </column>
+         <column/>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout_17">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetMaximumSize</enum>
+         </property>
+         <item row="0" column="5">
+          <widget class="QToolButton" name="joinDataArrays">
+           <property name="cursor">
+            <cursorShape>CrossCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string>Об’єднати дані</string>
+           </property>
+           <property name="text">
+            <string>+</string>
+           </property>
+           <property name="shortcut">
+            <string>Ctrl+J</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QToolButton" name="rowMoveUp">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QToolButton" name="rowMoveDown">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/down.svg</normaloff>buttons/down.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QToolButton" name="multiPlot">
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/multiPlot.png</normaloff>buttons/multiPlot.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QToolButton" name="saveData">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QToolButton" name="deleteData">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="6">
+          <widget class="QCheckBox" name="workWithSelectedData">
+           <property name="toolTip">
+            <string>Застосовувати операції до обраних даних</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <action name="saveSettings">
    <property name="text">
@@ -2132,6 +2431,28 @@
     <string>Розвернути</string>
    </property>
   </action>
+  <action name="actionImHi3">
+   <property name="icon">
+    <iconset>
+     <normaloff>ui/buttons/ImHi3.png</normaloff>ui/buttons/ImHi3.png</iconset>
+   </property>
+   <property name="text">
+    <string>Обчислити Im(hi3)</string>
+   </property>
+  </action>
+  <action name="actionDataDock">
+   <property name="text">
+    <string>Панель даних</string>
+   </property>
+  </action>
+  <action name="norm_Shift0Xh">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Центрувати по X вручну</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>filtersList</tabstop>
@@ -2156,21 +2477,15 @@
   <tabstop>FiltFiltY</tabstop>
   <tabstop>FiltFiltOk</tabstop>
   <tabstop>mColumn</tabstop>
-  <tabstop>rowMoveUp</tabstop>
   <tabstop>isNormColumn</tabstop>
   <tabstop>yColumn</tabstop>
   <tabstop>filePath</tabstop>
   <tabstop>selectFile</tabstop>
   <tabstop>shift0</tabstop>
-  <tabstop>namesTable</tabstop>
-  <tabstop>saveData</tabstop>
-  <tabstop>multiPlot</tabstop>
   <tabstop>xColumn</tabstop>
   <tabstop>selectPartOfData</tabstop>
   <tabstop>delimiter</tabstop>
-  <tabstop>deleteData</tabstop>
   <tabstop>addToTable</tabstop>
-  <tabstop>rowMoveDown</tabstop>
   <tabstop>yInPercents</tabstop>
   <tabstop>normDataRemove</tabstop>
   <tabstop>normDataAdd</tabstop>

@@ -11,7 +11,7 @@ import scipy.interpolate as interp
 from scipy.optimize import leastsq
 import scipy.optimize as optimize
 from numpy.lib.stride_tricks import as_strided
-import matplotlib.pyplot as plt
+
 #import shelve
 #from glue_designer2 import  DesignerMainWindow
 #from ui.Ui_form import Ui_MainWindow
@@ -21,8 +21,10 @@ import matplotlib.pyplot as plt
 #import bspline
 #from console import scriptDialog
 import warnings
+from functools import wraps
 
 from mplwidget import MplWidget, SpanSelector
+import matplotlib.pyplot as plt
 from scipy.signal import filtfilt, butter  #lfilter, lfilter_zi
 import json
 import traceback
@@ -30,7 +32,7 @@ import datetime
 
 import cmath
 from calc_n2_newForVG import calcReChi3
-
+from calc_all_victor_1 import calcImChi3
 
 
 
@@ -50,20 +52,24 @@ def gaussian(x,amp=1,mean=0,sigma=1):
 def moving_average(x,y,step_size=.1,bin_size=1):
 	bin_centers  = sp.arange(x.min(), x.max()-0.5*step_size,step_size)+0.5*step_size
 	bin_avg = sp.zeros(len(bin_centers))
+	bin_err = sp.zeros(len(bin_centers))
 
-	eq = sp.poly1d(sp.polyfit(x,y,6))
+	eq = sp.poly1d(sp.polyfit(x,y,12))
 	for index in range(0,len(bin_centers)):
 		bin_center = bin_centers[index]
 		
 		items_in_bin = y[(x>(bin_center-bin_size*0.5) ) & (x<(bin_center+bin_size*0.5))]
 		if len(items_in_bin)==0:
 			bin_avg[index] = None
+			bin_err[index] = None
 		else:
 			bin_avg[index] = sp.mean(items_in_bin)
+			bin_err[index] = sp.std(items_in_bin)
 	bin_centers = bin_centers[-sp.isnan(bin_avg)]
 	bin_avg = bin_avg[-sp.isnan(bin_avg)]
+	bin_err = bin_err[-sp.isnan(bin_avg)]
 	
-	return (bin_centers,bin_avg)
+	return (bin_centers,bin_avg,bin_err)
 
 def weighted_moving_average(x,y,step_size=0.05,width=1):
 	bin_centers  = sp.arange(x.min(),x.max()-0.5*step_size,step_size)+0.5*step_size
@@ -80,7 +86,7 @@ def weighted_moving_average(x,y,step_size=0.05,width=1):
 # Масив даних, що буде містити дані, їх масштаби, кольори та коментарії
 class dataArray(sp.ndarray):
 
-	def __new__(cls, input_array, scales=[0,0], comments="", color='b', x_start=None, x_end=None):
+	def __new__(cls, input_array, scales=[0,0], comments=dict(), color='b', x_start=None, x_end=None):
 		# Input array is an already formed ndarray instan ce
 		# We first cast to be our class type
 		obj = sp.asarray(input_array).view(cls)
@@ -184,6 +190,8 @@ class QTR(QtGui.QMainWindow):
 		self.uiConnect()
 
 		self.plt, = self.mpl.canvas.ax.plot([], [], '.')
+		self.points, = self.mpl.canvas.ax.plot([], [], '.')
+		self.mplSpan = self.mpl.canvas.ax.axvspan(0, 0, facecolor='g', alpha=0.5)
 
 		#########################################################################
 		data = sp.rand(5,2)
@@ -202,6 +210,11 @@ class QTR(QtGui.QMainWindow):
 		
 		
 		self.ui.filePath.setText('./data/Cr2.dat')
+		self.selectedDataDict = dict()
+		self.ui.namesTable.setColumnWidth(0,  100);
+		self.ui.namesTable.setColumnWidth(1,  40);
+		self.ui.namesTable.setColumnWidth(2,  15);
+
 	#############################################################################
 	############	 Вкладка  "дані"	#########################################
 	#############################################################################
@@ -251,7 +264,7 @@ class QTR(QtGui.QMainWindow):
 				
 
 	def addNewData(self, name='new', data=sp.empty((0,1)),
-		color='red', scales=[0,0], comments="", xc='-', yc='-'):
+		color='red', scales=[0,0], comments=dict(), xc='-', yc='-'):
 		'''Додавання нових даних в таблицю та в словник'''
 
 		while name in self.data.keys():
@@ -261,6 +274,9 @@ class QTR(QtGui.QMainWindow):
 			else:
 				name+="_0"
 		
+		if 'shiftForLog10' not in comments.keys():
+			comments.update({'shiftForLog10': None})
+
 		D = dataArray(data, scales=scales, comments=comments, color=color)
 		self.data[name] = (D,)
 
@@ -301,21 +317,33 @@ class QTR(QtGui.QMainWindow):
 		self.ui.namesTable.setCurrentCell(counter - 1,0)
 		try:
 			self.nameBox.currentIndexChanged.disconnect(self.namesBoxLinks)
-		except RuntimeError:
+		except (RuntimeError,TypeError):
 			traceback.print_exc()
 
 		self.nameBox.clear()
+		if self.ui.normTable.rowCount()!=0:
+			for j in range(self.ui.normTable.rowCount()):
+				self.ui.normTable.cellWidget(j, 0).clear()
+				self.ui.normTable.cellWidget(j, 1).clear()
+				for i in range(counter):
+					text = self.ui.namesTable.item(i, 0).text()
+					self.ui.normTable.cellWidget(j, 1).addItem(text)
+					self.ui.normTable.cellWidget(j, 0).addItem(text)
+			
 		for i in range(counter):
 			text = self.ui.namesTable.item(i, 0).text()
 			self.nameBox.addItem(text)
+			
 		current = self.ui.namesTable.currentRow()
+
+
 		
 		self.nameBox.currentIndexChanged.connect(self.namesBoxLinks)
 		self.nameBox.setCurrentIndex(current)
 		
 		if hasattr(self, 'intensDialog'):
 				self.intensDialog.updateActiveDataList()
-		self.ui.namesTable.resizeColumnsToContents()
+		#self.ui.namesTable.resizeColumnsToContents()
 		#self.plotData(name)
 		return name
 
@@ -420,6 +448,10 @@ class QTR(QtGui.QMainWindow):
 				self.ui.Undo.setEnabled(False)
 				self.ui.Reset.setEnabled(False)
 		self.plotData(name)
+
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(name, self.sender)
+
 		
 	def resetData(self, state=None, name=None):
 		if name is None:
@@ -436,6 +468,9 @@ class QTR(QtGui.QMainWindow):
 		self.ui.Reset.setEnabled(False)
 		self.ui.Undo.setEnabled(False)
 
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(name, self.sender)
+
 	def removeAllData(self, state=None, name=None):
 		if name is None:
 			for i in self.data.keys():
@@ -443,6 +478,8 @@ class QTR(QtGui.QMainWindow):
 		else:
 			if name in self.data:
 				del self.data[name]
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(name, self.sender)
 
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
@@ -567,8 +604,16 @@ class QTR(QtGui.QMainWindow):
 	def updateNamesTable(self):
 		c = self.ui.namesTable.rowCount()
 		self.nameBox.clear()
+		c1 = self.ui.normTable.rowCount()
 		for i in range(c):
 			self.nameBox.addItem(self.ui.namesTable.item(i, 0).text())
+		for j in range(c1):
+			self.ui.normTable.cellWidget(j,0).clear()
+			self.ui.normTable.cellWidget(j,1).clear()
+			for i in range(c):
+				text = self.ui.namesTable.item(i, 0).text()
+				self.ui.normTable.cellWidget(j,0).addItem(text)
+				self.ui.normTable.cellWidget(j,1).addItem(text)
 		if hasattr(self, 'intensDialog'):
 			self.intensDialog.updateActiveDataList()
 
@@ -585,7 +630,7 @@ class QTR(QtGui.QMainWindow):
 			self.confDict['nameEditLock'] = True
 			print(dir(item))
 			self.updateNamesTable()
-			self.ui.namesTable.resizeColumnsToContents()
+			#self.ui.namesTable.resizeColumnsToContents()
 
 		
 		else:
@@ -682,8 +727,10 @@ class QTR(QtGui.QMainWindow):
 
 		print("-"*10)
 		for i in names:
-			print(self.data.keys(), i)
+			print('deleted:', self.data.keys(), i)
 			del self.data[i]
+			if i in self.selectedDataDict.keys():
+				self.selectedDataDict.pop(i,None)
 		print(self.data.keys())
 		self.updateNamesTable()
 
@@ -779,8 +826,7 @@ class QTR(QtGui.QMainWindow):
 	def norm_FirstPoint(self):
 		''' Нормування на першу точку '''
 
-		Name = self.currentName()
-		data,_ = self.getData(Name)
+		data, Name = self.getData()
 		if not data is None:
 			try:
 				data[:, 1] /= data[0, 1]
@@ -791,24 +837,40 @@ class QTR(QtGui.QMainWindow):
 				self.mpl.canvas.draw()
 				self.mpl.canvas.ax.lines.remove(l1)
 				self.mpl.canvas.ax.lines.remove(l2)
+				
 			except:
 				traceback.print_exc() 
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 				
 	def norm_Max(self):
 		''' Нормування на максимум '''
-		Name = self.currentName()
-		data,_ = self.getData(Name)
+		data, Name = self.getData()
 		if not data is None:
 			try:
 				data[:, 1] /= data[:, 1].max()
 				self.updateData(name=Name, data=data)
 			except:
-				traceback.print_exc() 
+				traceback.print_exc()
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+	'''
+	def decor(f):
+		@wraps(f)
+		def func_wrapper(Self):
+			Name = Self.currentName()
+			Self.processSelectedData(Name, Self.sender)
+			print("sdf")
+			return f(Self)
+		return func_wrapper
 
+	@decor
+	'''
 	def norm_Shift0X(self):
 		''' Центрування по X'''
-		Name = self.currentName()
-		data,_ = self.getData(Name)
+
+		data, Name = self.getData()
+
 		if not data is None:
 			try:
 				data[:,0]=data[:,0]-(data[:,0]*data[:,1]).sum()/data[:,1].sum()#data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
@@ -816,6 +878,64 @@ class QTR(QtGui.QMainWindow):
 				self.updateData(name=Name, data=data)
 			except:
 				traceback.print_exc()
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+
+	def norm_Shift0Xh(self, state):
+		''' Центрування по X вручну'''
+
+		data, Name = self.getData()
+
+		def on_press(event):
+			''' Отримання координат точки для нормування на точку '''
+			if not event.xdata is None and not event.ydata is None:
+				
+				
+				if not data is None:
+					
+					data[:,0] -= event.xdata#data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
+
+					self.updateData(Name, data=data)
+					yl = self.mpl.canvas.ax.get_ylim()
+					self.line, = self.mpl.canvas.ax.plot([0]*2, yl, 'r')
+					#self.points, = self.mpl.canvas.ax.plot(0, yl, 'ro', markersize=6)
+					self.mpl.canvas.draw()
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+					self.ui.norm_Shift0Xh.setChecked(False)
+					
+		def on_motion(event):
+			if not event.xdata is None and not event.ydata is None:
+				xl = self.mpl.canvas.ax.get_xlim() 
+				yl = self.mpl.canvas.ax.get_ylim()
+				self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
+				self.mpl.canvas.ax.set_xlim(xl)
+				self.mpl.canvas.ax.set_ylim(yl)
+				
+
+				self.line.set_xdata([event.xdata]*2)
+				self.line.set_ydata(yl)
+	
+				# redraw artist
+				self.mpl.canvas.ax.draw_artist(self.line)
+				self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
+				
+		if state:
+			self.cidpress = self.mpl.canvas.mpl_connect(
+					'button_press_event', on_press)
+			self.cidmotion = self.mpl.canvas.mpl_connect(
+					'motion_notify_event', on_motion)
+
+
+		else:
+			try:
+				self.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				self.update_graph()
+			except:
+				traceback.print_exc()
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 
 	def norm_ShiftRange(self, state):
 		'''Переміщення точок'''
@@ -842,7 +962,7 @@ class QTR(QtGui.QMainWindow):
 			def on_motion1(event):
 				if not event.xdata is None and not event.ydata is None and self.issecond:
 					
-					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
+					#self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
 					xy = self.mplSpan.get_xy()
 					self.mplSpan.set_xy([xy[0],xy[1],[event.xdata,xy[1][1]],[event.xdata,xy[0][1]]])
 
@@ -912,37 +1032,42 @@ class QTR(QtGui.QMainWindow):
 
 	def norm_Shift0(self):
 		''' Видалення фонової компоненти '''
-		Name = self.currentName()
-		data,_ = self.getData(Name)
+		#Name = self.currentName()
+		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_NormShift'))
+		shift_len = self.ui.norm_Shift0_len.value()
+		data, Name = self.getData()
+		newData = sp.copy(data)
 		if not data is None:
 			try:
-				p = int(len(data)/8)
+				p = int(len(data)/shift_len)
 				eq = sp.poly1d(sp.polyfit(data[:p,0], data[:p,1], 1))
 				y0 = eq(0.)
 				print(y0)
 				l1, = self.mpl.canvas.ax.plot(data[:p,0], eq(data[:p,0]), 'r-', markersize=6)
 				self.mpl.canvas.draw()
 				self.mpl.canvas.ax.lines.remove(l1)
-				data[:,1] -= y0
+				newData[:,1] -= y0
+
 				#data[:, 1] /= data[:, 1].max()
-				self.updateData(name=Name, data=data)
+				self.updateData(name=Name, data=data.clone(newData))
 				l1, = self.mpl.canvas.ax.plot(data[:p,0], eq(data[:p,0]), 'r-', markersize=6)
 				self.mpl.canvas.draw()
 				self.mpl.canvas.ax.lines.remove(l1)
 				
+
+				# Якщо ввімкнено, обробка решти даних
+				self.processSelectedData(Name, self.sender)
 			except:
-				traceback.print_exc() 
+				traceback.print_exc()
 	
 	def norm_Point(self, state):
 		''' Нормувати на вказану точку '''
-
-		
+		data, Name = self.getData()
 
 		def on_press(event):
 			''' Отримання координат точки для нормування на точку '''
 			if not event.xdata is None and not event.ydata is None:
-				Name = self.currentName()
-				data,_ = self.getData(Name)
+				
 				if not data is None:
 					data[:, 1] /= event.ydata
 					self.updateData(Name, data=data)
@@ -984,6 +1109,8 @@ class QTR(QtGui.QMainWindow):
 				self.update_graph()
 			except:
 				traceback.print_exc()
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 
 	###########################################################################
 	######################	Масштаби 	###############################
@@ -1011,14 +1138,15 @@ class QTR(QtGui.QMainWindow):
 			
 			for t in ui_actions:
 				t.toggled[bool].connect(self.setNewScale)
+			
+			
 		
 	# Змінити масштаб на новий
 	def setNewScale(self, state):
 		actions = ('actionY_X', 'actionX_Log10', 'actionY_Log10' )
 		senderName = self.sender().objectName()
-		Name = self.currentName()
-			
-		data,_ = self.getData(Name)
+		data, Name = self.getData()
+		comment = {}
 		if not data is None:
 			Scale = data.getScale()
 			#ui_obj = self.getUi([t + i for i in Names])
@@ -1040,10 +1168,20 @@ class QTR(QtGui.QMainWindow):
 				#ui_obj = getattr(self.ui, t + Names[0])
 				if Scale[index] != state:
 					if state == 1:
+						logShift = data[:,index].min()
+						print("logShift=%f"%logShift)
+						if logShift<0 and self.ui.Log10Shift.isChecked():
+							data.comments['shiftForLog10'] = logShift
+							data[:, index] -= logShift
+
 						data = data[data[:, index] > 0]
 						data[:,index] = sp.log10(data[:,index])
 					else:
+						
 						data[:,index] = sp.power(10.,data[:,index])
+						if data.comments['shiftForLog10'] != None and self.ui.Log10Shift.isChecked():
+							data[:, index] += data.comments['shiftForLog10']
+							data.comments['shiftForLog10'] = None
 					Scale[index] = int(state)
 					#ui_obj[0].setEnabled(##	not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
 					ui_actions[0].setEnabled(
@@ -1051,6 +1189,9 @@ class QTR(QtGui.QMainWindow):
 			
 			
 			self.updateData(name=Name, data=data, scales=Scale, showTmp=False)
+
+			# Якщо ввімкнено, обробка решти даних
+			self.processSelectedData(Name, self.sender)
 
 	###########################################################################
 	######################	Графічні методи 	###############################
@@ -1073,6 +1214,8 @@ class QTR(QtGui.QMainWindow):
 				XY[:,0].max() + xMargin) )
 			self.mpl.canvas.ax.set_ylim( (XY[:,1].min() - yMargin,\
 				XY[:,1].max() + yMargin) )
+			yl = self.mpl.canvas.ax.get_ylim()
+			self.mplSpan.set_xy([[0, yl[0]],[0, yl[1]],[0, yl[1]],[0, yl[0]]])
 		except:
 			traceback.print_exc()
 
@@ -1114,7 +1257,7 @@ class QTR(QtGui.QMainWindow):
 				prev_data[:, 1], color = new_color.name(), marker='+', linestyle='None', markersize=4, alpha=0.35)
 		
 		self.plt, = self.mpl.canvas.ax.plot(data[:, 0],\
-			data[:, 1],color = data.color, marker='o', linestyle='None', markersize=5, markeredgecolor="None", alpha=0.9)
+			data[:, 1],color = data.color, marker='o', linestyle='None',markeredgecolor=data.color, markersize=5, zorder=15, alpha=0.9)
 		
 		
 		if not hasattr(self, 'line'):
@@ -1413,6 +1556,9 @@ class QTR(QtGui.QMainWindow):
 			
 			self.updateData(name=Name, data=data.clone(sp.array([X, Y]).T))
 
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+
 
 	#  page_PolyFit
 	def polyApprox(self):
@@ -1445,6 +1591,9 @@ class QTR(QtGui.QMainWindow):
 			#self.mpl.canvas.ax.text(xl[0], yl[0], text, fontsize=15, color='orange')
 			
 			#self.mpl.canvas.draw()
+
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 
 	#  page_B_spline
 	"""
@@ -1495,7 +1644,7 @@ class QTR(QtGui.QMainWindow):
 		XY, Name = self.getData()
 		XY = XY[XY[:,0].argsort()]
 
-		X, Y = XY.T
+		X, Y = XY.T[:2]
 		#w_tmp = (X>=X.min()*xb) * (X<=X.max()*xe)
 		#Y = Y[w_tmp]
 		#X = X[w_tmp]
@@ -1513,10 +1662,12 @@ class QTR(QtGui.QMainWindow):
 		#print(weights,'====================', xb, xe, X.min()*xb, X.max()*xe)
 		tck = None
 		try:
-			tck = interp.splrep(X, Y, w=weights, t=knots, k=km, task=-1)#, xb=X.min()/xb, xe=X.max()/xe)
+			tck,fp,ier,msg = interp.splrep(X, Y, w=weights, t=knots, k=km, task=-1, full_output=True)#, xb=X.min()/xb, xe=X.max()/xe)
+			print("fp=%.3f\tier=%.3f\tmsg=%s"%(fp,ier,msg))
 		except ValueError:
 			traceback.print_exc()
 			print("X",X,"Y",Y,"w",weights,"knots",knots,sp.isnan(X).sum(),sp.isnan(Y).sum(),sp.isnan(weights).sum())
+		
 		xi = sp.arange(X.min(), X.max(), step)
 		fit = interp.splev(xi,tck)
 
@@ -1543,7 +1694,19 @@ class QTR(QtGui.QMainWindow):
 		w = ~sp.isnan(fit)
 		fit = fit[w]
 		xi = xi[w]
-		data = sp.array([xi, fit]).T
+		err = []
+		if self.confDict['showTmp']:			
+			for i in range(len(xi)):
+				w = (X>xi[i]-step/2)*(X<xi[i]+step/2)
+				try:
+					err.append(sp.mean(abs(Y[w]-fit[i])))
+				except ValueError:
+					traceback.print_exc()
+					err.append(sp.NaN)
+		if not len(err)==0:
+			data = sp.array([xi, fit, err]).T
+		else:
+			data = sp.array([xi, fit]).T
 		data = XY.clone(data)
 		
 
@@ -1558,8 +1721,17 @@ class QTR(QtGui.QMainWindow):
 			data = sp.array([xi, sp.poly1d(plsq[0])(xi)]).T
 		'''
 		self.updateData(name=Name, data=data)
+		err = sp.array(err)
+		xi = xi[-sp.isnan(err)]
+		fit = fit[-sp.isnan(err)]
+		err = err[-sp.isnan(err)]
 
-		self.mpl.canvas.ax.plot(xi, fit, '-r')
+		if self.confDict['showTmp']:
+			for i in range(len(xi)):
+				self.mpl.canvas.ax.plot([xi[i]]*2, [fit[i]-err[i], fit[i]+err[i]], '-r')
+			self.mpl.canvas.draw()
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 		
 	
 	def poly_cut(self, data=None, N=10, m=4,
@@ -1636,18 +1808,27 @@ class QTR(QtGui.QMainWindow):
 			self.mpl.canvas.ax.plot(out[:,0], Y_tmp, '-r')
 			self.mpl.canvas.draw()
 
+
+
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(name, self.sender)
+
 	def movingAverage(self):
 		'''Ковзаюче усереднення'''
 		data, name = self.getData()
 		step = self.getUi('AverageStep').value()
 		width = self.getUi('maWidth').value()
 		
-		x, y = moving_average(data[:,0], data[:,1],step,width)
-		new_data = data.clone(sp.array([x,y]).T)
+		x, y, err = moving_average(data[:,0], data[:,1],step,width)
+		new_data = data.clone(sp.array([x, y, err]).T)
 		self.updateData(name, data=new_data)
-		#if self.confDict['showTmp']:
-		#	self.mpl.canvas.ax.plot(x, y, '-r')
-		#	self.mpl.canvas.draw()
+		if self.confDict['showTmp']:
+			for i in range(len(x)):
+				self.mpl.canvas.ax.plot([x[i]]*2, [y[i]-err[i], y[i]+err[i]], '-r')
+			self.mpl.canvas.draw()
+
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(name, self.sender)
 	
 	def setFilters(self):
 		'''Посадка  на фільтри'''
@@ -1675,6 +1856,9 @@ class QTR(QtGui.QMainWindow):
 				#data[:,1] = data[:,1]/M[1]  #self.filtList[index][1]
 				self.updateData(name, data=data)
 			#self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
+
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
 
 	def setFiltLineEdit(self):
 		self.filtLineEdit = self.sender().objectName()[0]
@@ -1750,12 +1934,12 @@ class QTR(QtGui.QMainWindow):
 		for i in selected:
 			rows.append(i.row())
 			#name = self.ui.normTable.item(i.row(), 0).text()
-			del self.dataDict[name]
+			#del self.dataDict[name]
 			#print(self.dataDict.keys(), name)
 		rows.sort()
 		for i in rows[::-1]:
 			self.ui.normTable.removeRow(i)
-			self.nameBox.removeItem(i)
+			#self.nameBox.removeItem(i)
 		
 
 	def normTableItemClicked(self, item):
@@ -1778,13 +1962,38 @@ class QTR(QtGui.QMainWindow):
 				cY_tmp = sp.interpolate.interp1d(cData[:,0], cData[:,1],self.ui.normEvalType.currentText().lower())(x)
 				x = x[cY_tmp != 0]
 				y = y[cY_tmp != 0]
+
+				err = []
 				cY_tmp = cY_tmp[cY_tmp != 0]
-				y = y / cY_tmp
+				modifiers = QtGui.QApplication.keyboardModifiers()
+				if modifiers == QtCore.Qt.ShiftModifier:
+					print('Diff')
+					y = y - cY_tmp
+					if len(cData.T)==len(sData.T)==3:
+						sErr_tmp = sData[:,2][cY_tmp != 0]
+						cErr_tmp = sp.interpolate.interp1d(cData[:,0], cData[:,2],self.ui.normEvalType.currentText().lower())(x)
+						err = sp.sqrt(sErr_tmp**2+cErr_tmp**2)
+				else:
+					y = y / cY_tmp
+					if len(cData.T)==len(sData.T)==3:
+						sErr_tmp = sData[:,2][cY_tmp != 0]
+						cErr_tmp = sp.interpolate.interp1d(cData[:,0], cData[:,2],self.ui.normEvalType.currentText().lower())(x)
+						err = sp.sqrt((sErr_tmp/cY_tmp)**2+(cErr_tmp*y/cY_tmp**2)**2)
+						rel_err = err/y
+						rel_err = rel_err[-sp.isnan(rel_err)]
+						print("Mean rel. err: %.4f"%(sp.mean(rel_err)))
 				print(sp.shape(x),sp.shape(y))
 				
 				# Додавання результату в звичайній формі, або в дозовій
 				if not self.ui.cumSumNormData.isChecked():
-					outName = self.addNewData(name = name3, data=sp.array([x,y]).T)
+					if len(err)!=0:
+						outName = self.addNewData(name = name3, data=sp.array([x,y,err]).T)
+						if self.confDict['showTmp']:
+							for i in range(len(x)):
+								self.mpl.canvas.ax.plot([x[i]]*2, [y[i]-err[i], y[i]+err[i]], '-r')
+							self.mpl.canvas.draw()
+					else:
+						outName = self.addNewData(name = name3, data=sp.array([x,y]).T)
 				else:
 					outName = self.addNewData(name = name3, data=sp.array([sp.cumsum(x),y]).T)
 
@@ -1798,9 +2007,11 @@ class QTR(QtGui.QMainWindow):
 		'''Обрахунок Re(hi^(3))'''
 		
 		data, Name = self.getData()
+
 		
-				
 		a = self.ui.reHi3_a0.value()
+		if 'a' in data.comments and self.ui.workWithSelectedData.isChecked():
+			a = float(data.comments['a'])
 		Lambda = self.ui.reHi3_lambda.value()
 		n0 = self.ui.reHi3_n0.value()
 		d = self.ui.reHi3_d.value()
@@ -1813,11 +2024,39 @@ class QTR(QtGui.QMainWindow):
 		
 		
 		eq, na1, hi3a1, hi3t, Phit = calcReChi3(data, m=polyM, a=a,Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
-		self.ui.reHi3_console.setText("n2: " + na1, "1: " + str(hi3a1) + " 2: " + str(hi3t) + " Phit: " + str(Phit))
+		
+		self.updateData(name=Name, data=data, comments={'a': a})
+		text = "Data name: {}\nn2 = {} ; hi3_1 = {} ; hi3_2 = {} ; Phit = {}".format(Name, na1, hi3a1, hi3t, Phit)
+		print(text)
+		self.ui.reHi3_console.setText(text)
 		l1, = self.mpl.canvas.ax.plot(data[:,0], sp.poly1d(eq[::-1])(data[:,0]), 'r-', markersize=6)
 		self.mpl.canvas.draw()
-		self.mpl.canvas.ax.lines.remove(l1)	
+		self.mpl.canvas.ax.lines.remove(l1)
 
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+
+
+	# page_ImHi3
+	def recalcImHi3(self):
+		'''Обрахунок Im(hi^(3))'''
+		
+		data, Name = self.getData()
+		
+		Lambda = self.ui.imHi3_lambda.value()
+		n0 = self.ui.imHi3_n0.value()
+		d = self.ui.imHi3_d.value()
+				
+		
+		ImHi3, beta, Leff, x_new, y_new = calcImChi3(data, d=d, n0=n0, Lambda=Lambda)
+		
+		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g}, ImChi3[esu] = {:10g}".format(Name, Leff, beta, ImHi3)
+		print(text)
+		self.updateData(name=Name, data=data, comments=text)
+		self.ui.imHi3_console.setText(text)
+		l1, = self.mpl.canvas.ax.plot(x_new, y_new, 'r-', markersize=6)
+		self.mpl.canvas.draw()
+		self.mpl.canvas.ax.lines.remove(l1)
 
 	## Інтенсивність
 	def recalcAi2(self):
@@ -1831,6 +2070,7 @@ class QTR(QtGui.QMainWindow):
 		except:
 			traceback.print_exc()
 			self.ui.Ai2.setText(str(sqrt(Ai2)))
+
 	def calibrCoefFromFiles(self):
 		files = self.fileDialog.getOpenFileNames(self, "Select Files")
 		print(files)
@@ -1854,6 +2094,7 @@ class QTR(QtGui.QMainWindow):
 		
 		self.mpl.canvas.ax.plot(X,Y,'o')
 		self.mpl.canvas.draw()
+
 	def recalcIntensResult(self):
 		'''Перерахунок на інтенсивність
 		1064: 5.03*10**-5
@@ -1874,6 +2115,9 @@ class QTR(QtGui.QMainWindow):
 		except:
 			traceback.print_exc()
 
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+
 			
 	#=============================================================================
 	def getUi(self, attrNames):
@@ -1881,15 +2125,43 @@ class QTR(QtGui.QMainWindow):
 			return tuple(getattr(self.ui, i) for i in attrNames)
 		else:
 			return getattr(self.ui, attrNames)
+
 	
+
+	def processSelectedData(self, Name, sender):
+		'''Застосовувати операції для всіх обраних даних'''
+		if self.ui.workWithSelectedData.isChecked():
+			self.workWithSelectedData(state=True)
+			self.selectedDataDict.pop(Name, None)
+			print("selected data:", self.selectedDataDict.keys())
+			if len(self.selectedDataDict) >= 1:
+				self.nameBox.setCurrentIndex(next(iter(self.selectedDataDict.values())))
+				if hasattr(sender(), 'click'):
+					sender().click()
+				elif hasattr(sender(),'trigger'):
+					sender().trigger()
+				else:
+					pass
+				
+
+	def workWithSelectedData(self, state=False):
+		if state:
+			selected = self.ui.namesTable.selectionModel().selectedIndexes()
+			for i in selected:
+				#rows.append(i.row())
+				name = self.ui.namesTable.item(i.row(), 0).text()
+				self.selectedDataDict.update({name:i.row()})
+				#del self.data[name]
+				#print(self.data.keys(), name)
+				#names.append(name)
+
 	def getValue(self, names):
 		return (getattr(self.ui, i).value() for i in names)
 	
 	def setToolsLayer(self):
 		name = self.sender().objectName().split('action')[1]
 		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_'+name))
-		if name == 'B_spline':
-			self.AutoB_splineS()
+		
 
 	def uiConnect(self):
 		'''Пов’язвння сигналів з слотами'''
@@ -1899,6 +2171,8 @@ class QTR(QtGui.QMainWindow):
 		
 		##############  ReHi3	  ###############################################
 		self.ui.reHi3_ok.clicked.connect(self.recalcReHi3)
+		##############  ImHi3	  ###############################################
+		self.ui.imHi3_ok.clicked.connect(self.recalcImHi3)
 		##############  NormData   ###############################################
 		self.ui.normDataAdd.clicked.connect(self.normDataAdd)
 		self.ui.normDataRemove.clicked.connect(self.normDataRemove)
@@ -1937,7 +2211,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.actionSaveData.triggered.connect(self.saveData)
 		self.ui.multiPlot.clicked.connect(self.multiPlot)
 		self.ui.joinDataArrays.clicked.connect(self.joinDataArrays)
-
+		#self.ui.workWithSelectedData.toggled[bool].connect(self.workWithSelectedData)
 		# Усереднення для N імпульсів при певному положенні клину
 		self.ui.startStepAverage.toggled.connect(self.ui.startStepAverage_N.setEnabled)
 		##########################################################################
@@ -1962,7 +2236,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.norm_FirstPoint.triggered.connect(self.norm_FirstPoint)
 		self.ui.norm_Shift0.triggered.connect(self.norm_Shift0)
 		self.ui.norm_Shift0X.triggered.connect(self.norm_Shift0X)
-		self.ui.norm_ShiftRange.triggered.connect(self.norm_ShiftRange)
+		self.ui.norm_Shift0Xh.triggered[bool].connect(self.norm_Shift0Xh)
+		self.ui.norm_ShiftRange.triggered[bool].connect(self.norm_ShiftRange)
 		
 		
 		#self.ui.settings.triggered.connect(self.settings.show)
@@ -2017,10 +2292,11 @@ class QTR(QtGui.QMainWindow):
 		self.ui.actionData.triggered.connect(self.setToolsLayer)
 		self.ui.actionNormData.triggered.connect(self.setToolsLayer)
 		self.ui.actionReHi3.triggered.connect(self.setToolsLayer)
+		self.ui.actionImHi3.triggered.connect(self.setToolsLayer)
 		self.ui.actionFilters.triggered.connect(self.setToolsLayer)
 		self.ui.actionIntens.triggered.connect(self.setToolsLayer)
 		
-
+		self.ui.actionDataDock.triggered.connect(self.ui.DataDock.show)
 
 
 def main():
