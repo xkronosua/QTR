@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>787</width>
-    <height>573</height>
+    <width>1284</width>
+    <height>933</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -73,7 +73,7 @@
         <enum>QLayout::SetMinAndMaxSize</enum>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="mplWidget">
+        <layout class="QHBoxLayout" name="mplWidget">
          <property name="spacing">
           <number>1</number>
          </property>
@@ -113,7 +113,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>11</number>
       </property>
       <widget class="QWidget" name="page_Data">
        <property name="sizePolicy">
@@ -1477,6 +1477,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="F">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PICO&lt;/span&gt; -- 11cm&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CW&lt;/span&gt; -- 8cm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="minimum">
                <double>0.010000000000000</double>
               </property>
@@ -1484,7 +1487,7 @@
                <double>1000.000000000000000</double>
               </property>
               <property name="value">
-               <double>8.000000000000000</double>
+               <double>11.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -1505,7 +1508,7 @@
             <item row="2" column="1">
              <widget class="QLabel" name="label_30">
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;i&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; =&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;i&lt;/span&gt; =&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -1581,6 +1584,9 @@
             </item>
             <item row="1" column="2" colspan="4">
              <widget class="QLineEdit" name="calibr">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PICO:&lt;/p&gt;&lt;p&gt;	1064nm -- 5.03*10&lt;span style=&quot; vertical-align:super;&quot;&gt;-5&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; vertical-align:super;&quot;/&gt;532nm -- 8.7*10&lt;span style=&quot; vertical-align:super;&quot;&gt;-6&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxLength">
                <number>50</number>
               </property>
@@ -1593,6 +1599,9 @@
               </property>
               <property name="minimum">
                <number>0</number>
+              </property>
+              <property name="value">
+               <number>1</number>
               </property>
              </widget>
             </item>
@@ -1626,8 +1635,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>787</width>
-     <height>24</height>
+     <width>1284</width>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -1726,6 +1735,9 @@
     <addaction name="actionData"/>
     <addaction name="actionSaveData"/>
     <addaction name="Close"/>
+    <addaction name="actionSaveProject"/>
+    <addaction name="actionSaveAll"/>
+    <addaction name="actionOpenProject"/>
    </widget>
    <widget class="QMenu" name="menu_Hist">
     <property name="title">
@@ -1742,12 +1754,19 @@
     <addaction name="separator"/>
     <addaction name="actionDataDock"/>
    </widget>
+   <widget class="QMenu" name="menu_5">
+    <property name="title">
+     <string>Проект</string>
+    </property>
+    <addaction name="actionDelProjHistory"/>
+   </widget>
    <addaction name="menu_4"/>
    <addaction name="menu_Hist"/>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
    <addaction name="menu_3"/>
    <addaction name="menu_7"/>
+   <addaction name="menu_5"/>
   </widget>
   <widget class="QToolBar" name="toolBarGraph">
    <property name="acceptDrops">
@@ -1875,14 +1894,14 @@
        <item>
         <widget class="QTableWidget" name="namesTable">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="maximumSize">
           <size>
-           <width>200</width>
+           <width>400</width>
            <height>60000</height>
           </size>
          </property>
@@ -1959,14 +1978,11 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="3">
-          <widget class="QToolButton" name="rowMoveUp">
-           <property name="text">
-            <string>...</string>
-           </property>
+         <item row="0" column="4">
+          <widget class="QToolButton" name="multiPlot">
            <property name="icon">
             <iconset>
-             <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
+             <normaloff>buttons/multiPlot.png</normaloff>buttons/multiPlot.png</iconset>
            </property>
           </widget>
          </item>
@@ -1978,25 +1994,6 @@
            <property name="icon">
             <iconset>
              <normaloff>buttons/down.svg</normaloff>buttons/down.svg</iconset>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QToolButton" name="multiPlot">
-           <property name="icon">
-            <iconset>
-             <normaloff>buttons/multiPlot.png</normaloff>buttons/multiPlot.png</iconset>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QToolButton" name="saveData">
-           <property name="text">
-            <string>...</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
            </property>
           </widget>
          </item>
@@ -2017,6 +2014,17 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="3">
+          <widget class="QToolButton" name="rowMoveUp">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="6">
           <widget class="QCheckBox" name="workWithSelectedData">
            <property name="toolTip">
@@ -2024,6 +2032,17 @@
            </property>
            <property name="text">
             <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QToolButton" name="saveData">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
            </property>
           </widget>
          </item>
@@ -2451,6 +2470,26 @@
    </property>
    <property name="text">
     <string>Центрувати по X вручну</string>
+   </property>
+  </action>
+  <action name="actionSaveProject">
+   <property name="text">
+    <string>Зберегти проект</string>
+   </property>
+  </action>
+  <action name="actionSaveAll">
+   <property name="text">
+    <string>Зберегти все</string>
+   </property>
+  </action>
+  <action name="actionOpenProject">
+   <property name="text">
+    <string>Відкрити проект</string>
+   </property>
+  </action>
+  <action name="actionDelProjHistory">
+   <property name="text">
+    <string>Очистити історію</string>
    </property>
   </action>
  </widget>
