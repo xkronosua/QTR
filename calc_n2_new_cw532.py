@@ -1,7 +1,7 @@
 from pylab import *
 import cmath
 from cmath import *
-
+import sys
 '''
 
 #In[1]= (*
@@ -15,9 +15,9 @@ from cmath import *
 #In[3]= (*Input coeficient of On Axis Transmittance dependence \
 aproximation obtained in Origin*)
 '''
-def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12., f=8., r0=0.1):
+def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12., f=8., r0=0.1):
 
-	X, Y = XY.T
+	X, Y = XY[:,0], XY[:,1]
 	c = [float64(0.0)]*5
 	#A, B1, B2, B3, B4 = [0, 0, 0, 0, 0]
 	eq = np.polyfit(X, Y, m)[::-1]
@@ -34,14 +34,14 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 	a *= float64(0.0025)#10.5*0.0025
 
 	#In[10]= '''input Lambda in cm'''
-	##Lambda = 532*10**(-7)
+	Lambda *= 10**(-7)
 	k = 2*pi/Lambda
 	ld = k*a**2/2.
 	'''input refractive index n0'''
 	##n0 = 1.7
 	Rfl = ((1 - n0)/(1 + n0))**2
 	'''input thickness d in cm'''
-	##d = 14.46*10**(-4)
+	d *= 10**(-1)
 
 	#Out[10]= 0.0000532
 
@@ -133,11 +133,11 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 	#Out[41]= 566.904
 
 	#In[42]= 
-	n21 = (Th0/Th1)*(B1/A)*10**(-3)/c1*10**6
-	n22 = cmath.sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
-	n23 = (Th0/Th3*(B3/A))**(1/3)/c1*10**(3)
+	n21 = (Th0/Th1)*(B1/A)*10**(-3)/c1
+	#n22 = cmath.sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
+	#n23 = (Th0/Th3*(B3/A))**(1/3)/c1*10**(3)
 
-	print(n21,n22,n23)
+	print(n21)#,n22,n23)
 	#Out[42]= -1.03273*10**-9
 
 	#Out[43]= 0.
@@ -146,16 +146,16 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 
 	#In[45]= 
 	hi31 = 3*abs(n21)*(n0/(4*pi))**2
-	hi32 = 3*abs(n22)*(n0/(4*pi))**2
-	hi33 = 3*abs(n23)*(n0/(4*pi))**2
+	#hi32 = 3*abs(n22)*(n0/(4*pi))**2
+	#hi33 = 3*abs(n23)*(n0/(4*pi))**2
 
-	print(hi31,hi32,hi33)
+	print(hi31)#,hi32,hi33)
 	#Out[45]= 4.41439*10**-11
 
 	#Out[46]= 0.
 
 	#Out[47]= 0.
-
+	'''
 	#In[48]= 
 	n201v = B1/A*Th0/(Th1*c1)*10**(3)
 	n212v = B2/B1*Th1/(Th2*c1)*10**(3)
@@ -186,14 +186,14 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 	T2 = lambda Inten : Th0 + Th1*(na2*c1)*Inten + Th2*(na2*c1)**2*Inten**2 + Th3*(na2*c1)**3*Inten**3
 	T3 = lambda Inten : Th0 + Th1*(nt*c1)*Inten + Th2*(nt*c1)**2*Inten**2 + Th3*(nt*c1)**3*Inten**3 + Th4*(nt*c1)**4* Inten**4
 	Ex = lambda Inten : A + B1*Inten + B2*Inten**2 + B3*Inten**3 + B4*Inten**4 + 0.320
-
+	'''
 	'''
 	Plot[{ Ex[Inten], T3[Inten]}, {Inten, 10, 40}, 
 	 PlotStyle -> { Hue[0.4], Hue[0.9], Hue[0.1]}, 
 	 AxesLabel -> {"Intensity[MW]", "On-ax Tr[r=0.1 cm]"}, 
 	 PlotRange -> All]
 	'''
-
+	'''
 	print("hi3 1-st method")
 	hi3a1 = 3*na1*(n0/(4*pi))**2*10**(-3)
 	print (hi3a1)
@@ -206,7 +206,7 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 	print("\[CapitalDelta]\[Phi] theoretical is")
 	Phit = k*nt*d
 	print(Phit)
-
+	'''
 	#Out[54]= 5.16365*10**-7
 
 	#During evaluation of In[54]= Power::infy: Infinite cmath.expression 1/0 encountered. >>
@@ -237,14 +237,27 @@ def calc(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1,
 
 
 if __name__ == "__main__":
-	A = 0.9753
-	B1 = 0.00249
-	B2 = -0.00025
-	B3 = 0
-	B4 = 0
 	
-	eq = poly1d([B4,B3,B2,B1,A])
-	x = arange(100)
-	y = eq(x)
-	calc(vstack((x,y)).T, m=2, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
-		z=79.1, L=12, f=8,r0=0.1)
+	
+	print(len(sys.argv))
+	if len(sys.argv) == 1:
+		A = 0.9753
+		B1 = 0.00249
+		B2 = -0.00025
+		B3 = 0
+		B4 = 0
+		
+		eq = poly1d([B4,B3,B2,B1,A])
+		x = arange(100)
+		y = eq(x)
+		calcReChi3CW(vstack((x,y)).T, m=2, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
+			z=79.1, L=12, f=8,r0=0.1)
+	else:
+		'''
+		xy = loadtxt(sys.argv[1])
+		r = [float(i) for i in sys.argv[2].split(',')]
+		m = sys.argv[3]
+		eq = poly1d(polyfit(xy[:,0], xy[:,1], m)
+		calcReChi3CW(vstack(xy, m=m, a=48.02, Lambda=1064*10**-7, n0=1.7, d=0.2,
+			z=54-19.7, L=19.7, f=8,r0=0.1)
+		'''

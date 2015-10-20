@@ -14,6 +14,7 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
+
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
@@ -71,15 +72,20 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_32.setText(QtGui.QApplication.translate("Dialog", "Довжина хвилі: ", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_32.setText(
+            QtGui.QApplication.translate("Dialog", "Довжина хвилі: ", None, QtGui.QApplication.UnicodeUTF8))
         self.length.setItemText(0, QtGui.QApplication.translate("Dialog", "1064", None, QtGui.QApplication.UnicodeUTF8))
         self.length.setItemText(1, QtGui.QApplication.translate("Dialog", "532", None, QtGui.QApplication.UnicodeUTF8))
         self.length.setItemText(2, QtGui.QApplication.translate("Dialog", "633", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("Dialog", "Тип експерименту:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(
+            QtGui.QApplication.translate("Dialog", "Тип експерименту:", None, QtGui.QApplication.UnicodeUTF8))
         self.typeexp.setItemText(0, QtGui.QApplication.translate("Dialog", "CW", None, QtGui.QApplication.UnicodeUTF8))
-        self.typeexp.setItemText(1, QtGui.QApplication.translate("Dialog", "PICO", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.main), QtGui.QApplication.translate("Dialog", "Основне", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QtGui.QApplication.translate("Dialog", "Tab 2", None, QtGui.QApplication.UnicodeUTF8))
+        self.typeexp.setItemText(1,
+                                 QtGui.QApplication.translate("Dialog", "PICO", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.main),
+                                  QtGui.QApplication.translate("Dialog", "Основне", None,
+                                                               QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2),
+                                  QtGui.QApplication.translate("Dialog", "Tab 2", None, QtGui.QApplication.UnicodeUTF8))
         self.Close.setText(QtGui.QApplication.translate("Dialog", "Закрити", None, QtGui.QApplication.UnicodeUTF8))
         self.Ok.setText(QtGui.QApplication.translate("Dialog", "Ok", None, QtGui.QApplication.UnicodeUTF8))
-

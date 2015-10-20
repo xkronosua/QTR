@@ -37,7 +37,6 @@ from calc_all_victor_1 import calcImChi3
 from calc_n2_new_cw532 import calcReChi3CW
 
 
-
 def loadUi(uifilename, parent=None):
 	# loader = QtUiTools.QUiLoader(parent)
 	ui = uic.loadUi(uifilename)  # loader.load(uifilename)

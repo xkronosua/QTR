@@ -24,7 +24,7 @@ def calcReChi3(XY, m=1, a=24, Lambda=532., n0=1.5, d=50 * 10 ** (-4), z=68, L=14
     B4 = 10**-50
     '''
 
-    X, Y = XY[:,0], XY[:,1]
+    X, Y = XY.T
     c = [float64(0.0)] * 5
     # A, B1, B2, B3, B4 = [0, 0, 0, 0, 0]
     eq = np.polyfit(X, Y, m)[::-1]

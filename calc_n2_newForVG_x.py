@@ -2,7 +2,7 @@ from pylab import *
 import cmath
 
 
-def calcReChi3(XY, m=1, a=24, Lambda=532., n0=1.5, d=50 * 10 ** (-4), z=68, L=14., f=11, r0=0.1):
+def calcReChi3(XY, m=3, a=37.25, Lambda=532., n0=2., d=240 * 10 ** (-7), z=34.5, L=24., f=11, r0=0.1):
     '''
 
     #In[1]= (*
@@ -110,7 +110,7 @@ def calcReChi3(XY, m=1, a=24, Lambda=532., n0=1.5, d=50 * 10 ** (-4), z=68, L=14
     Th3 = 1 / (Norm1 * 8) * (1 / 3 * cmath.exp(-8 * r02 * (7 + b2) / (ar2 * (49 + b2))) *
                              cmath.sin(48 * r02 * b / (ar2 * (49 + b2))) -
                              cmath.exp(-8 * r02 * (15 + b2) * (1 + b2) / (ar2 * (25 + b2) * (9 + b2))) *
-                             cmath.sin(16 * r02 * b * (1 + b2) / (ar2 * (25 + b2) * (9 + b2)))) * (1 / cmath.sqrt(4))
+                             cmath.sin(16 * r02 * b * (1 + b2) / (ar2 * (25 + b2) * (9 + b2))))  # *(1/cmath.sqrt(4))
 
     '''!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'''
 
@@ -190,7 +190,7 @@ def calcReChi3(XY, m=1, a=24, Lambda=532., n0=1.5, d=50 * 10 ** (-4), z=68, L=14
     # In[54]=
     na1 = (abs(n21) + abs(n22) + abs(n23)) * 10 ** (3) / 3
     na2 = (abs(n212v) + abs(n223v)) * 10 ** (3) / 2
-    nt = 0.03 * 10 ** 1
+    nt = 0.0001 * 10 ** 3
     T1 = lambda Inten: Th0 + Th1 * (na1 * c1) * Inten + Th2 * (na1 * c1) ** 2 * Inten ** 2 + Th3 * (
                                                                                                    na1 * c1) ** 3 * Inten ** 3
     T2 = lambda Inten: Th0 + Th1 * (na2 * c1) * Inten + Th2 * (na2 * c1) ** 2 * Inten ** 2 + Th3 * (
@@ -252,13 +252,13 @@ def calcReChi3(XY, m=1, a=24, Lambda=532., n0=1.5, d=50 * 10 ** (-4), z=68, L=14
 
 
 if __name__ == "__main__":
-    A = 0.77683
-    B1 = 1.83241
-    B2 = 0
-    B3 = 0
-    B4 = 0
+    A = 0.94427
+    B1 = -0.09217
+    B2 = 0.03656
+    B3 = -0.00458
+    B4 = 1.70206 * 10 ** -7
 
     eq = poly1d([B4, B3, B2, B1, A])
     x = arange(100)
     y = eq(x)
-    calcReChi3(vstack((x, y)).T, m=1)
+    calcReChi3(vstack((x, y)).T, m=4)
