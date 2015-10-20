@@ -22,7 +22,7 @@ tmp
 __pycache__
 old
 stable
-
+*.dat
 # Installer logs
 pip-log.txt
 
