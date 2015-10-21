@@ -2,57 +2,49 @@ import scipy as sp
 from scipy.optimize import leastsq
 
 
-def calcImChi3(data, d=0.5, n0=1.33, Lambda=1064, leastsq_default=[0.5, -0.00001],exp_type="CW"):
-    sp.can_cast(sp.complex128, sp.float64, casting='safe')
-    
-    X, Y = data[:,0], data[:,1]
-    print(type(X[0]), type(Y))
-    Lambda *= 10 ** -7
-    if exp_type == "CW":
-        print("CW"+"="*20)
-        fit_func = lambda I, T0, bLeff: T0 * sp.log(1 + bLeff * I)  / (bLeff * I) 
-
-        def residuals(p, x, y):
-            err = (y - fit_func(x, p[0], p[1]))**2
+def calcImChi3(data, d=0.5, n0=1.33, Lambda=1064, exp_type="CW"):
+    sp.can_cast(sp.complex128,sp.float64, casting='safe')
+    X = data[:,0]
+    Y = data[:,1]
+    print(data.shape)
+    Lambda*=10**-7
+    if exp_type=="CW":
+        fit_func = lambda  I, T0, bLeff: T0*sp.log(1+bLeff*I)/(bLeff*I)
+        def residuals( p, y, x): 
+            err = y - fit_func(x, p[0], p[1])
             err = sp.array(err, dtype='complex128')
-            return err.real ** 2 + err.imag ** 2
+            return err.real**2+err.imag**2
 
-        params = leastsq(residuals, leastsq_default, args=(X, Y), factor=10)
+        params = leastsq(residuals,[0.999,-0.00001], args=(Y, X))
         T0, bLeff = params[0]
-        print("T0 = %f, bLeff = %f" % (T0, bLeff))
-        Leff = -(1. - T0) / (sp.log(T0) / d)
+        print("T0 = %f, bLeff = %f"%(T0, bLeff))
+        Leff = -(1. - T0)/(sp.log(T0)/d)
         print('Leff', Leff)
-        beta = bLeff / Leff
-        c = 2.998 * 10 ** 10
-        ImHi3 = (n0 ** 2 * Lambda * c * beta * 10 ** -14) / (19.2 * sp.pi ** 3)
+        beta = bLeff/Leff
+        c = 2.998*10**10
+        ImHi3 = (n0**2*Lambda*c*beta*10**-14)/(19.2*sp.pi**3)
         print("ImHi3", ImHi3)
         x_new = sp.linspace(X.min(), X.max(), 300)
         y_new = fit_func(x_new, T0, bLeff)
-        return (ImHi3, beta, Leff, x_new, y_new, [T0, bLeff])
-    if exp_type == "PICO":
-        print("PICO"+"="*20)
-        fit_func = lambda I, T0, bLeff: T0 * sp.log(1 + bLeff * I) * (1 + 0.228 * bLeff * I) / (bLeff * I) / (
-        1 + 0.136 * bLeff * I)
-
-        def residuals(p, x, y):
-            err = (y - fit_func(x, p[0], p[1]))
+    if exp_type=="PICO":
+        fit_func = lambda  I, T0, bLeff: T0*sp.log(1+bLeff*I)*(1+0.228*bLeff*I)/(bLeff*I)/(1+0.136*bLeff*I)
+        def residuals( p, y, x): 
+            err = y - fit_func(x, p[0], p[1])
             err = sp.array(err, dtype='complex128')
-            return sp.sqrt(err.real ** 2 + err.imag ** 2)
+            return err.real**2+err.imag**2
 
-        params = leastsq(residuals, leastsq_default, args=(X,Y))
+        params = leastsq(residuals,[0.999,-0.00001], args=(Y, X))
         T0, bLeff = params[0]
-        print("T0 = %f, bLeff = %f" % (T0, bLeff))
-        Leff = -(1. - T0) / (sp.log(T0) / d)
+        print("T0 = %f, bLeff = %f"%(T0, bLeff))
+        Leff = -(1. - T0)/(sp.log(T0)/d)
         print('Leff', Leff)
-        beta = bLeff / Leff
-        c = 2.998 * 10 ** 10
-        ImHi3 = (n0 ** 2 * Lambda * c * beta * 10 ** -14) / (19.2 * sp.pi ** 3)
+        beta = bLeff/Leff
+        c = 2.998*10**10
+        ImHi3 = (n0**2*Lambda*c*beta*10**-14)/(19.2*sp.pi**3)
         print("ImHi3", ImHi3)
         x_new = sp.linspace(X.min(), X.max(), 300)
         y_new = fit_func(x_new, T0, bLeff)
-
-
-        return (ImHi3, beta, Leff, x_new, y_new, [T0, bLeff])
+    return (ImHi3, beta, Leff, x_new, y_new)
 
 
 if __name__ == "__main__":

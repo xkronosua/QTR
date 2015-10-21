@@ -2250,24 +2250,35 @@ class QTR(QtGui.QMainWindow):
 	def recalcImHi3(self):
 		'''Обрахунок Im(hi^(3))'''
 
-		data, Name = self.getData()
-
+		data = []
+		Name = ""
 		Lambda = self.ui.imHi3_lambda.value()
 		n0 = self.ui.imHi3_n0.value()
 		d = self.ui.imHi3_d.value()
 		exp_type = self.ui.exp_type.currentText()
-		if self.leastsq_params_ImChi3[0] is None or self.leastsq_params_ImChi3[1] is None:
-			self.leastsq_params_ImChi3 = [data[:,1].mean(), d]
-		try:
-			ImHi3, beta, Leff, x_new, y_new, self.leastsq_params_ImChi3 = calcImChi3(data, d=d, n0=n0, Lambda=Lambda,
-				leastsq_default = self.leastsq_params_ImChi3, exp_type=exp_type)
-		except:
-			ImHi3, beta, Leff, x_new, y_new, self.leastsq_params_ImChi3 = calcImChi3(data, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
-			traceback.print_exc()
-		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g}, ImChi3[esu] = {:10g}".format(Name, Leff, beta,
-		                                                                                           ImHi3)
+		tmp = []
+		if self.ui.actionProcessView.isChecked():
+			name = self.currentName()
+
+			if name in self.data:
+				data = self.data[name]['main'][self.dIndex(name)]
+				xl = self.mpl.canvas.ax.get_xlim()
+				x_start = sp.where(data[:, 0] >= xl[0])[0][0]
+				x_end = sp.where(data[:, 0] <= xl[1])[0][-1]
+
+				#subregion = self.data[name]['tmp']['activeSubregion']
+				tmp = data[x_start:x_end]
+				Name = name
+		else:
+			data, Name = self.getData()
+			tmp = data[:]
+				
+		#print(tmp.shape)
+		ImHi3, beta, Leff, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
+		
+		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g}, ImChi3[esu] = {:10g}".format(Name, Leff, beta, ImHi3)
 		print(text)
-		#self.updateData(name=Name, data=data, comments={"ImChi3_info":text})
+		#self.updateData(name=Name, clone=data)#, comments=text)
 		self.ui.imHi3_console.setText(text)
 		l1, = self.mpl.canvas.ax.plot(x_new, y_new, 'r-', markersize=6)
 		self.mpl.canvas.draw()
