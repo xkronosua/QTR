@@ -3,6 +3,8 @@
 import sys, os, signal, random, glob
 #import pdb
 from PyQt4 import QtGui, QtCore, uic  # QtUiTools
+from PyQt4.QtCore import QSettings, qDebug
+
 
 import scipy as sp
 
@@ -35,6 +37,8 @@ import cmath
 from calc_n2_newForVG import calcReChi3
 from calc_all_victor_1 import calcImChi3
 from calc_n2_new_cw532 import calcReChi3CW
+
+from guisave import *
 
 
 
@@ -122,8 +126,12 @@ class dataArray(sp.ndarray):
 		self.x_start = getattr(obj, 'x_start', None)
 		self.x_end = getattr(obj, 'x_end', None)
 		self.attrs = getattr(obj, 'attrs', None)
+		
 
 	def getScale(self): return [self.scaleX, self.scaleY]
+
+
+
 
 
 class QTR(QtGui.QMainWindow):
@@ -151,13 +159,15 @@ class QTR(QtGui.QMainWindow):
 	projectPath = ""
 	projectName = ''
 	leastsq_params_ImChi3 = [None, None]
+	Settings = None
 
 	def __init__(self, parent=None):
 		super(QTR, self).__init__(parent)
 
+		self.settings = QSettings('settings.ini', QSettings.IniFormat)
 		self.PATH = self.MAIN_DIRECTORY
 		self.ui = loadUi(os.path.join(self.MAIN_DIRECTORY, 'mainwindow.ui'), self)
-
+		
 		if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")):
 			os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp"))
 		self.projectName = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -168,6 +178,7 @@ class QTR(QtGui.QMainWindow):
 
 		self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
 
+		
 		## mpl
 		self.lock = 0
 		self.issecond = 0
@@ -224,12 +235,24 @@ class QTR(QtGui.QMainWindow):
 	
 		# self.ui.stackedWidget.setCurrentIndex(6)
 		self.ui.show()
-
-		self.ui.filePath.setText('/home/kronosua/work/QTR/data/Jul2715/nd18.dat')
+		
 		self.selectedDataDict = dict()
 		self.ui.namesTable.setColumnWidth(0, 100);
 		self.ui.namesTable.setColumnWidth(1, 40);
 		self.ui.namesTable.setColumnWidth(2, 15);
+
+
+		try:
+			#print("loadSettingsFromIni:", self.settings.value('loadSettingsFromIni'))
+			#if self.settings.value('loadSettingsFromIni')=='true':
+			guirestore(self.ui, self.settings)
+		except:
+			traceback.print_exc()
+		if self.ui.filePath.text() == "":
+			self.ui.filePath.setText('/home/kronosua/work/QTR/data/Jul2715/nd18.dat')
+
+		QtGui.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
+
 
 	#############################################################################g
 	############	 Вкладка  "дані"	#########################################
@@ -269,6 +292,8 @@ class QTR(QtGui.QMainWindow):
 		'''Побудова даних:)'''
 		self.update_graph()
 
+	def showTmpConfig(self):
+		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_NormShift'))
 	# array = self.getData(name)
 	# self.plt.set_data(array[:,0], array[:,1])
 	# self.plt.set_color(array.color)
@@ -375,6 +400,7 @@ class QTR(QtGui.QMainWindow):
 		main_subgroup = group.create_group('main')
 		tmp_subgroup = group.create_group('tmp')
 		tmp_subgroup.create_dataset('activeSubregion', (2, 2), maxshape=(None, 3))
+		tmp_subgroup.create_dataset('active', (2, 2), maxshape=(None, 3))
 		dset = main_subgroup.create_dataset('0', data=data)
 
 		dset.attrs['scales'] = scales
@@ -464,20 +490,36 @@ class QTR(QtGui.QMainWindow):
 
 	def getData(self, name=None):
 		'''Доступ до активних даних'''
-
+		print(name)
 		if name is None:
 			name = self.currentName()
+		print(name)
+		data = None
+		if name is None:
+			return(None, None)
 
-		if name in self.data:
-			data = self.data[name]['main'][self.dIndex(name)]  # self.data[name]['main'][0].copy()
+		elif name in self.data:
+			prev_data = self.data[name]['main'][self.dIndex(name)]  # self.data[name]['main'][0].copy()
 
+			#data = self.data[name]['main'].create_dataset(str(int(self.dIndex(name))+1), data=prev_data)
+			print(prev_data[:,0].min())
+			data = self.data[name]['tmp']['active']
+			tmp = prev_data.value
+			data.resize(len(tmp), 0)
+			data.resize(len(tmp.T), 1)
+			data[:] = tmp
+			print(data.shape)
+
+			for i in prev_data.attrs.keys():
+				data.attrs[i] = prev_data.attrs[i]
 			if self.ui.actionProcessView.isChecked():
 				xl = self.mpl.canvas.ax.get_xlim()
+				print(xl,data[:,0].min(), sp.where(data[:, 0] >= xl[0])[0][0],"-"*10)
 				x_start = sp.where(data[:, 0] >= xl[0])[0][0]
 				x_end = sp.where(data[:, 0] <= xl[1])[0][-1]
 
 				subregion = self.data[name]['tmp']['activeSubregion']
-				tmp = data[x_start:x_end]
+				tmp = data.value[x_start:x_end]
 				subregion.resize(len(tmp), 0)
 				subregion.resize(len(tmp.T), 1)
 
@@ -486,11 +528,19 @@ class QTR(QtGui.QMainWindow):
 				print(subregion, type(subregion), subregion.shape)
 				for i in data.attrs.keys():
 					subregion.attrs[i] = data.attrs[i]
+				prev_data.attrs['x_start'] = x_start
+				prev_data.attrs['x_end'] = x_end
+				prev_data.attrs['processView'] = True
 				subregion.attrs['x_start'] = x_start
 				subregion.attrs['x_end'] = x_end
+				subregion.attrs['processView'] = True
+				data.attrs['x_start'] = x_start
+				data.attrs['x_end'] = x_end
 				data.attrs['processView'] = True
 				return (subregion, name)
 			else:
+				prev_data.attrs['processView'] = False
+				
 				data.attrs['processView'] = False
 				return (data, name)
 
@@ -506,7 +556,7 @@ class QTR(QtGui.QMainWindow):
 		return names
 
 	def updateData(self, name, data=None, clone=None, color=None,
-	               scales=None, comments=None, x_start=None, x_end=None, shiftForLog10=None, showTmp=True):
+	               scales=None, comments=None, x_start=sp.nan, x_end=sp.nan, shiftForLog10=None, showTmp=True):
 		'''Оновлення існуючих даних та їх атрибутів'''
 		prev_data = []
 		if name in self.data.keys():
@@ -516,70 +566,78 @@ class QTR(QtGui.QMainWindow):
 
 		if data is None and color is None and scales is None and comments is None and clone is None:
 			print("foo")
-		if clone is None:
-			if data is None:
-				data = prev_data
-			if color is None:
-				#print(prev_data)
-				color = prev_data.attrs['color']
-			else:
-				print('Color: ', color)
-			if scales is None:
-				scales = prev_data.attrs['scales']
-			if shiftForLog10 is None:
-				shiftForLog10 = prev_data.attrs['shiftForLog10']
-			if comments is None:
-				comments = {i: prev_data.attrs[i] for i in prev_data.attrs.keys()}
-		else:
+		
+		
+		if data is None:
+			data = prev_data
+			print("type(data) == 'NoneType'")
+			
+		elif type(data) == sp.ndarray:
+			print("type(data) == 'numpy.ndarray'")
+			
+			tdata = self.data[name]['tmp']['active']
+			
+			tdata.resize(len(data), 0)
+			tdata.resize(len(data.T), 1)
+			tdata[:] = data
+			data = tdata
+			for i in prev_data.attrs.keys():
+				data.attrs[i] = prev_data.attrs[i]
 
-			if color is None:
-				print(prev_data)
-				color = clone.attrs['color']
-			else:
-				print('Color: ', color)
-			if scales is None:
-				scales = clone.attrs['scales']
-			if shiftForLog10 is None:
-				shiftForLog10 = clone.attrs['shiftForLog10']
-			if x_start is None:
-				x_start = clone.attrs['x_start']
-			if x_end is None:
-				x_end = clone.attrs['x_end']
-			if comments is None:
-				comments = {i: clone.attrs[i] for i in clone.attrs.keys()}
+
+
+		elif type(data) == h5py._hl.dataset.Dataset:
+			print("type(data) == 'h5py._hl.dataset.Dataset'")
+			
+		
+		else:
+			print(type(data))
+			
+		
+		if type(clone) == h5py._hl.dataset.Dataset:
+			attrs = dict(clone.attrs)
+			for i in attrs.keys():
+				data.attrs[i] = attrs[i]
+
+		
 		update_subregion = True
-		print(color)
+		
 		try:
 			update_subregion = prev_data.attrs['processView']
-			#print(x_start, x_end)
-			if hasattr(data, 'x_start') and x_start is None:
-				if not data.attrs['x_start'] is None:
+			print(update_subregion, x_start, x_end, prev_data.attrs['x_start'], data.attrs['x_start'], 'x_start' is data.attrs.keys() , x_start is sp.nan,
+								not data.attrs['x_start'] is None)
+			if x_start is sp.nan:
+				if not data.attrs['x_start'] is sp.nan:
 					x_start = data.attrs['x_start']
 
-			if hasattr(data, 'x_end') and x_end is None:
-				if not data.attrs['x_end'] is None:
+			if x_end is sp.nan:
+				if not data.attrs['x_end'] is sp.nan:
 					x_end = data.attrs['x_end']
 
 			#print(x_start, x_end)#, prev_data.attrs['x_start'], prev_data.attrs['x_end'])
 
-			if x_start is None and x_end is None:
+			if x_start is sp.nan and x_end is sp.nan:
 				update_subregion = False
 			else:
-				if x_start is None:
+				if x_start is sp.nan:
 					x_start = sp.where(data[:, 0] == data[:, 0].min())[0][0]
-				elif x_end is None:
+				elif x_end is sp.nan:
 					x_end = sp.where(data[:, 0] == data[:, 0].max())[0][0]
 				else:
 					pass
 			
 			
 			print('Update_subregion: ', update_subregion, x_start, x_end)
+			
 			if update_subregion:
 				if x_start >= x_end:
 					warnings.warn("\nupdate_subregion:\tx_start >= x_end", UserWarning)
 				# print(prev_data[:x_start], data, prev_data[x_end:], prev_data, data.x_end, data.x_start)
-
-				data = sp.vstack((prev_data[0:int(x_start)], data[:, :2], prev_data[int(x_end):-1]))
+				tdata = sp.vstack((prev_data[0:int(x_start)], data[:, :2], prev_data[int(x_end):-1]))
+				data.resize(len(tdata), 0)
+				data.resize(len(tdata.T), 1)
+				data[:] = tdata
+				
 			else:
 				pass
 		except:
@@ -588,17 +646,32 @@ class QTR(QtGui.QMainWindow):
 		new_hist_item = str(1 + int(self.dIndex(name)))
 		# print(new_hist_item, [i for i in self.data[name]['main'].keys()], )
 		dset = self.data[name]['main'].create_dataset(new_hist_item, data=data)
-		for i in comments.keys():
-			dset.attrs[i] = comments[i]
+		#for i in comments.keys():
+		#	dset.attrs[i] = comments[i]
+		#print('dset.attrs["scales"]', dset.attrs['scales'])
+		if scales is None:
+			scales = data.attrs['scales']
 		dset.attrs['scales'] = scales
 		print('dset.attrs["scales"]', dset.attrs['scales'])
+		if color is None:
+			color = data.attrs['color']
 		dset.attrs['color'] = color
+		if shiftForLog10 is None:
+			shiftForLog10 = data.attrs['shiftForLog10']
 		dset.attrs['shiftForLog10'] = shiftForLog10
 		if update_subregion:
-			dset.attrs['processView'] = False
-		#	dset.attrs['x_end'] = None
-		# dset.attrs['x_start'] = x_start
-
+			try:
+				dset.attrs['processView'] = False
+				dset.attrs['x_end'] = sp.nan
+				dset.attrs['x_start'] = sp.nan
+				self.ui.actionProcessView.setChecked(False)
+			except:
+				traceback.print_exc()
+		else:
+			
+			dset.attrs['x_end'] = dset.value[:,0].max()
+			dset.attrs['x_start'] = dset.value[:,0].max()
+				
 		# self.data[name]['main'] = (dataArray(data, scales=scales, comments=comments, color=color), self.data[name]['main'])
 
 		self.ui.Undo.setEnabled(True)
@@ -606,16 +679,23 @@ class QTR(QtGui.QMainWindow):
 
 		self.syncData()
 		print(sys.getsizeof(self.data))
-		self.update_graph(name, showTmp=showTmp)
+		self.update_graph(name=name,data=dset, showTmp=showTmp)
 		self.mprint(len(dset))
+
+	def dublicateData(self):
+		data, name = self.getData()
+		print("dublicateData")
+		self.addNewData(name=name+"_c", data=data.value)
 
 	def undoData(self, state=None, name=None):
 		if name is None:
 			name = self.currentName()
 		print("UndoData:\t" + name)
-		if len(self.data[name]['main']) > 1:
+		if len(self.data[name]['main']) >= 1:
 			del self.data[name]['main'][self.dIndex(name)]
-			print(len(self.data[name]['main']))  # self.data[name]['main'] = self.data[name]['main'][1]
+			print("dataLen:",len(self.data[name]['main']), self.data[name]['main'].keys())  # self.data[name]['main'] = self.data[name]['main'][1]
+			for i in self.data[name]['main'].keys():
+				print(i)
 			if len(self.data[name]['main']) == 1:  # len(self.data[name]['main']) != 2:
 				self.ui.Undo.setEnabled(False)
 				self.ui.Reset.setEnabled(False)
@@ -633,6 +713,7 @@ class QTR(QtGui.QMainWindow):
 			for key in self.data[name]['main'].keys():
 				if key != '0':
 					del self.data[name]['main'][key]
+			print("dataLen:",len(self.data[name]['main'])) 
 		# if len(self.data[name]['main']) == 2:
 		#	data = self.data[name]['main']
 		#	while len(data) == 2:
@@ -743,7 +824,13 @@ class QTR(QtGui.QMainWindow):
 					print(self.ui.isNormColumn.isChecked())
 					if self.ui.isNormColumn.isChecked():
 						m = data[:, mc]
-						XY = sp.array([x / m, y / m]).T
+						col = self.ui.Norm_col_select.currentText()
+						if col == "All":
+							XY = sp.array([x / m, y / m]).T
+						elif col == "X":
+							XY = sp.array([x / m, y]).T
+						elif col == "Y":
+							XY = sp.array([x, y / m]).T
 					else:
 						XY = sp.array([x, y]).T
 					# XY = XY[XY[:,0] != 0]
@@ -854,7 +941,7 @@ class QTR(QtGui.QMainWindow):
 		row = self.ui.namesTable.currentRow()
 		if self.ui.namesTable.item(row, 0) is None:
 			print('Name: None')
-			return
+			return None
 		else:
 			return self.ui.namesTable.item(row, 0).text()
 
@@ -1019,7 +1106,7 @@ class QTR(QtGui.QMainWindow):
 		data, Name = self.getData()
 		if not data is None:
 			try:
-				data[:, 1] /= data[0, 1]
+				data[:, 1] /= self.abs(data[0, 1])
 				self.updateData(name=Name, data=data)
 				xl = self.mpl.canvas.ax.get_xlim()
 				l1, = self.mpl.canvas.ax.plot(xl, [1] * 2, 'r')
@@ -1038,7 +1125,7 @@ class QTR(QtGui.QMainWindow):
 		data, Name = self.getData()
 		if not data is None:
 			try:
-				data[:, 1] /= data[:, 1].max()
+				data[:, 1] /= self.abs(data[:, 1].max())
 				self.updateData(name=Name, data=data)
 			except:
 				traceback.print_exc()
@@ -1083,7 +1170,7 @@ class QTR(QtGui.QMainWindow):
 			try:
 				p = self.ui.norm_at_X.value()
 				y1 = interp.interp1d(data[:,0], data[:,1])(p)
-				data[:,1] /= y1
+				data[:,1] /= self.abs(y1)
 				self.updateData(name=Name, data=data)
 			except:
 				traceback.print_exc()
@@ -1207,8 +1294,11 @@ class QTR(QtGui.QMainWindow):
 						print(xmin, xmax, w.sum())
 
 						m = data[:, 1][w].mean()
-
-						data[:, 1][w] *= (event.ydata) / m
+						modifiers = QtGui.QApplication.keyboardModifiers()
+						if modifiers == QtCore.Qt.ControlModifier:
+							data[:,1][w] = sp.log10(10**data[:,1][w]*10**(self.abs(event.ydata)) / 10**self.abs(m))
+						else:
+							data[:, 1][w] *= self.abs(event.ydata) / self.abs(m)
 						Data[:] = data
 						self.updateData(name=Name, data=Data)
 						self.mpl.canvas.mpl_disconnect(self.cidpress)
@@ -1238,7 +1328,18 @@ class QTR(QtGui.QMainWindow):
 				self.update_graph()
 			except:
 				traceback.print_exc()
+	def ShiftXY(self):
+		data, Name = self.getData()
+		shiftX = self.ui.ShiftXVal.value()
+		shiftY = self.ui.ShiftYVal.value()
 
+		data[:,0] -= shiftX
+		data[:,1] -= shiftY
+		self.updateData(name=Name, data=data)
+		
+		# Якщо ввімкнено, обробка решти даних
+		self.processSelectedData(Name, self.sender)
+		
 	def norm_Shift0(self):
 		''' Видалення фонової компоненти '''
 		# Name = self.currentName()
@@ -1278,7 +1379,7 @@ class QTR(QtGui.QMainWindow):
 			if not event.xdata is None and not event.ydata is None:
 
 				if not data is None:
-					data[:, 1] /= event.ydata
+					data[:, 1] /= self.abs(event.ydata)
 					self.updateData(Name, data=data)
 					xl = self.mpl.canvas.ax.get_xlim()
 					self.mpl.canvas.ax.plot(xl, [1] * 2, 'r')
@@ -1430,7 +1531,7 @@ class QTR(QtGui.QMainWindow):
 		except:
 			traceback.print_exc()
 
-	def update_graph(self, name=None, showTmp=True):
+	def update_graph(self, name=None, data=None, showTmp=True):
 		"""Updates the graph with new X and Y"""
 		# TODO: rewrite this routine, to get better performance
 
@@ -1441,79 +1542,82 @@ class QTR(QtGui.QMainWindow):
 		if name is None:
 			data, name = self.getData()
 
-		else:
+		if data is None:
 			data, _ = self.getData(name)
-		print("points: ", len(data))
-		if self.confDict['autoscale'] and len(data) > 2:
-			self.Rescale()
+		if name is None:
+			print('noData')
+		else:
+			print("points: ", len(data))
+			if self.confDict['autoscale'] and len(data) > 2:
+				self.Rescale()
 
-		if self.background != None:
-			# save initial x and y limits
-			self.xl = self.mpl.canvas.ax.get_xlim()
-			self.yl = self.mpl.canvas.ax.get_ylim()
+			if self.background != None:
+				# save initial x and y limits
+				self.xl = self.mpl.canvas.ax.get_xlim()
+				self.yl = self.mpl.canvas.ax.get_ylim()
 
-		# clear the axes
-		self.mpl.canvas.ax.clear()
-		# plot graph
-		self.mpl.canvas.ax.axis[:].invert_ticklabel_direction()
-		# self.mpl.canvas.ax.set_xticks(self.mpl.canvas.ax.get_xticks()[1:-1])
-
-
-		if self.confDict['showTmp'] and len(self.data[name]['main']) > 1 and showTmp:
-			# print(data.attrs['color'])
-			prev_data = self.data[name]['main'][str(int(self.dIndex(name)) - 1)]
-			c = QtGui.QColor(data.attrs['color']).getRgb()
-			new_color = QtGui.QColor(255 - c[0], 255 - c[1], 255 - c[2], 255)
-			self.plt_tmp, = self.mpl.canvas.ax.plot(prev_data[:, 0], \
-			                                        prev_data[:, 1], color=new_color.name(), marker='+',
-			                                        linestyle='None', markersize=4, alpha=0.35)
-
-		self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
-		                                    data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
-		                                    markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
-		self.mprint(len(data))
-		if not hasattr(self, 'line'):
-			# creating line
-			self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'g--', animated=True)
-		if not hasattr(self, 'points'):
-			# creating points
-			self.points, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'mo', animated=True, markersize=3)
-		if not hasattr(self.ui, 'rectab'):
-			# creating rectangle
-			self.rect, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'm--', animated=True)
-			self.rectab, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-			self.rectbc, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-			self.rectcd, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-			self.rectda, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-		# TODO: create a circle
-		# enable grid
-		self.mpl.canvas.ax.grid(True)
-
-		if self.background != None:
-			# set x and y limits
-			self.mpl.canvas.ax.set_xlim(self.xl)
-			self.mpl.canvas.ax.set_ylim(self.yl)
+			# clear the axes
+			self.mpl.canvas.ax.clear()
+			# plot graph
+			self.mpl.canvas.ax.axis[:].invert_ticklabel_direction()
+			# self.mpl.canvas.ax.set_xticks(self.mpl.canvas.ax.get_xticks()[1:-1])
 
 
-		# self.set_x_log(self.ui.xLogScale.isChecked(), redraw = False)
-		# self.set_y_log(self.ui.yLogScale.isChecked(), redraw = False)
-		# force an image redraw
-		self.mpl.canvas.draw()
+			if self.confDict['showTmp'] and len(self.data[name]['main']) > 1 and showTmp:
+				# print(data.attrs['color'])
+				prev_data = self.data[name]['main'][str(int(self.dIndex(name)) - 1)]
+				c = QtGui.QColor(data.attrs['color']).getRgb()
+				new_color = QtGui.QColor(255 - c[0], 255 - c[1], 255 - c[2], 255)
+				self.plt_tmp, = self.mpl.canvas.ax.plot(prev_data[:, 0], \
+				                                        prev_data[:, 1], color=new_color.name(), marker='+',
+				                                        linestyle='None', markersize=4, alpha=0.35)
 
-		# copy background
-		self.background = \
-			self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
-		# make edit buttons enabled
+			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
+			                                    data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
+			                                    markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
+			self.mprint(len(data))
+			if not hasattr(self, 'line'):
+				# creating line
+				self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'g--', animated=True)
+			if not hasattr(self, 'points'):
+				# creating points
+				self.points, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'mo', animated=True, markersize=3)
+			if not hasattr(self.ui, 'rectab'):
+				# creating rectangle
+				self.rect, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'm--', animated=True)
+				self.rectab, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
+				self.rectbc, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
+				self.rectcd, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
+				self.rectda, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
+			# TODO: create a circle
+			# enable grid
+			self.mpl.canvas.ax.grid(True)
 
-		self.ui.mplactionCut_by_line.setEnabled(self.background != None)
-		self.ui.mplactionCut_by_rect.setEnabled(self.background != None)
+			if self.background != None:
+				# set x and y limits
+				self.mpl.canvas.ax.set_xlim(self.xl)
+				self.mpl.canvas.ax.set_ylim(self.yl)
 
-	# self.mpl.canvas.ax.relim()
-	# self.mpl.canvas.ax.autoscale_view()
 
-	# if sp.shape(data) != self.tempShape :
-	#	self.tempShape = sp.shape(data)
-	#	self.data_signal.emit()
+			# self.set_x_log(self.ui.xLogScale.isChecked(), redraw = False)
+			# self.set_y_log(self.ui.yLogScale.isChecked(), redraw = False)
+			# force an image redraw
+			self.mpl.canvas.draw()
+
+			# copy background
+			self.background = \
+				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
+			# make edit buttons enabled
+
+			self.ui.mplactionCut_by_line.setEnabled(self.background != None)
+			self.ui.mplactionCut_by_rect.setEnabled(self.background != None)
+
+		# self.mpl.canvas.ax.relim()
+		# self.mpl.canvas.ax.autoscale_view()
+
+		# if sp.shape(data) != self.tempShape :
+		#	self.tempShape = sp.shape(data)
+		#	self.data_signal.emit()
 
 	def draw_line(self):
 		self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
@@ -2372,6 +2476,12 @@ class QTR(QtGui.QMainWindow):
 		else:
 			return getattr(self.ui, attrNames)
 
+	def abs(self, val):
+		if self.ui.absOperations.isChecked():
+			return abs(val)
+		else:
+			return val
+
 	def processSelectedData(self, Name, sender):
 		'''Застосовувати операції для всіх обраних даних'''
 		if self.ui.workWithSelectedData.isChecked():
@@ -2404,12 +2514,14 @@ class QTR(QtGui.QMainWindow):
 	def setToolsLayer(self):
 		name = self.sender().objectName().split('action')[1]
 		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_' + name))
-	"""
+	
 	def closeEvent(self, QCloseEvent):
 		print("Close...")
-		self.ProjectFile.flush()
-		self.ProjectFile.close()
-
+		guisave(self.ui, self.settings)
+		sys.exit()
+		#QCloseEvent.accept()
+		
+	"""
 	def changeEvent(self,event):
 		if(event.type()==QtCore.QEvent.WindowStateChange):
 			print("QtCore.QEvent.WindowStateChange")
@@ -2487,6 +2599,7 @@ class QTR(QtGui.QMainWindow):
 
 		# self.ui.processView.toggled[bool].connect(self.processView)
 		self.ui.actionProcessView.toggled[bool].connect(self.processView)
+		self.ui.actionDublicateData.triggered.connect(self.dublicateData)
 
 		## norm
 		self.ui.norm_Max.triggered.connect(self.norm_Max)
@@ -2497,6 +2610,7 @@ class QTR(QtGui.QMainWindow):
 		self.ui.norm_Shift0Xh.triggered[bool].connect(self.norm_Shift0Xh)
 		self.ui.norm_ShiftRange.triggered[bool].connect(self.norm_ShiftRange)
 		self.ui.norm_AtX.triggered.connect(self.norm_AtX)
+		self.ui.ShiftXY.clicked.connect(self.ShiftXY)
 
 
 		# self.ui.settings.triggered.connect(self.settings.show)
@@ -2528,8 +2642,8 @@ class QTR(QtGui.QMainWindow):
 		self.ui.actionSaveAll.triggered.connect(self.saveAll)
 		self.ui.actionSaveProject.triggered.connect(self.saveProject)
 		self.ui.actionOpenProject.triggered.connect(self.openProject)
-		#self.connect(self.ui, QtCore.SIGNAL('triggered()'), self.closeEvent) 
-		#self.ui.Close.triggered.connect(self.closeEvent)
+		#self.connect(self.ui, QtCore.SIGNAL('destroyed(QObject *)'), self.closeEvent) 
+		self.ui.Close.triggered.connect(self.closeEvent)
 		'''
 		#self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
 
@@ -2574,4 +2688,6 @@ def main():
 
 
 if __name__ == "__main__":
+	#logging.basicConfig(level=logging.DEBUG)
 	main()
+
