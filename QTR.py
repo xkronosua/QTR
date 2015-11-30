@@ -1,9 +1,13 @@
 #!/usr/bin/python3
 # _*_ coding: utf-8 _*_
+from __future__ import print_function
+# This must be the first statement before other statements.
+# You may only put a quoted or triple quoted string, 
+# Python comments or blank lines before the __future__ line.
 import sys, os, signal, random, glob
 #import pdb
-from PyQt4 import QtGui, QtCore, uic  # QtUiTools
-from PyQt4.QtCore import QSettings, qDebug
+from PyQt5 import QtGui, QtCore, uic, QtWidgets # QtUiTools
+from PyQt5.QtCore import QSettings, qDebug
 
 
 import scipy as sp
@@ -40,7 +44,28 @@ from calc_n2_new_cw532 import calcReChi3CW
 
 from guisave import *
 
+import logging
+from pprint import pformat
 
+
+
+
+def print(*args, **kwargs):
+	"""My custom print() function."""
+	# Adding new arguments to the print function signature 
+	# is probably a bad idea.
+	# Instead consider testing if custom argument keywords
+	# are present in kwargs
+	if 'type' in kwargs:
+		if kwargs['type'] == "error":
+			logging.error((args))
+	else:
+		logging.debug((args))
+	#__builtins__.print('My overridden print() function!')
+	#return __builtins__.print(*args, **kwargs)
+
+#def print(*args):
+#	logging.debug((args))
 
 def loadUi(uifilename, parent=None):
 	# loader = QtUiTools.QUiLoader(parent)
@@ -48,7 +73,7 @@ def loadUi(uifilename, parent=None):
 	return ui
 
 
-def swap(x, y):    return y, x  # переворот точок для обрізки
+def swap(x, y):	return y, x  # переворот точок для обрізки
 
 
 # We're going to weight with a Gaussian function
@@ -61,7 +86,7 @@ def moving_average(x, y, step_size=.1, bin_size=1):
 	bin_avg = sp.zeros(len(bin_centers))
 	bin_err = sp.zeros(len(bin_centers))
 
-	eq = sp.poly1d(sp.polyfit(x, y, 12))
+	eq = sp.poly1d(sp.polyfit(x, y, 8))
 	for index in range(0, len(bin_centers)):
 		bin_center = bin_centers[index]
 
@@ -112,7 +137,7 @@ class dataArray(sp.ndarray):
 	def clone(self, array):
 		'''передача атрибутів'''
 		return dataArray(array, color=self.color, scales=self.attrs['scales'],
-		                 comments=self.comments, x_start=self.x_start, x_end=self.x_end)
+						 comments=self.comments, x_start=self.x_start, x_end=self.x_end)
 
 	def __array_finalize__(self, obj):
 		# see InfoArray.__array_finalize__ for comments
@@ -134,7 +159,7 @@ class dataArray(sp.ndarray):
 
 
 
-class QTR(QtGui.QMainWindow):
+class QTR(QtWidgets.QMainWindow):
 	try:
 		MAIN_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 	except NameError:
@@ -172,7 +197,7 @@ class QTR(QtGui.QMainWindow):
 			os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp"))
 		self.projectName = datetime.now().strftime("%Y%m%d-%H%M%S")
 		self.projectPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp",
-		                                self.projectName + ".hdf5")
+										self.projectName + ".hdf5")
 		self.ProjectFile = h5py.File(self.projectPath, 'a')
 		self.data = self.ProjectFile.create_group(self.projectName)
 
@@ -197,11 +222,11 @@ class QTR(QtGui.QMainWindow):
 			QtGui.QIcon(os.path.join(self.MAIN_DIRECTORY, './buttons/norm_On.png')))
 		self.ui.menu_norm.setActiveAction(self.ui.norm_FirstPoint)
 
-		self.statusBarMessage = QtGui.QLabel()
+		self.statusBarMessage = QtWidgets.QLabel()
 		self.statusBarMessage.setObjectName('statusBarMessage')
 		self.ui.statusbar.addPermanentWidget(self.statusBarMessage)
 		## випадаючий список назв даних
-		self.nameBox = QtGui.QComboBox()
+		self.nameBox = QtWidgets.QComboBox()
 		self.nameBox.setObjectName('fastDataComboBox')
 		self.ui.statusbar.addPermanentWidget(self.nameBox)
 
@@ -214,7 +239,7 @@ class QTR(QtGui.QMainWindow):
 		self.filtLineEdit = 'X'
 
 		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_Data'))
-		self.fileDialog = QtGui.QFileDialog(self)
+		self.fileDialog = QtWidgets.QFileDialog(self)
 		self.uiConnect()
 
 		self.plt, = self.mpl.canvas.ax.plot([], [], '.')
@@ -251,7 +276,7 @@ class QTR(QtGui.QMainWindow):
 		if self.ui.filePath.text() == "":
 			self.ui.filePath.setText('/home/kronosua/work/QTR/data/Jul2715/nd18.dat')
 
-		QtGui.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
 
 
 	#############################################################################g
@@ -310,8 +335,8 @@ class QTR(QtGui.QMainWindow):
 		data, _ = self.getData(Name)
 		if not data is None:
 			filename = self.fileDialog.getSaveFileName(self,
-			                                           'Save File',
-			                                           os.path.join(self.PATH, Name))  # [0] 		!!!! Для PySide
+													   'Save File',
+													   os.path.join(self.PATH, Name))  # [0] 		!!!! Для PySide
 
 			print(filename)
 			if filename:
@@ -333,8 +358,8 @@ class QTR(QtGui.QMainWindow):
 
 	def saveProject(self):
 		filename = self.fileDialog.getSaveFileName(self,
-		                                           'Save File',
-		                                           os.path.join(self.PATH, self.ProjectFile.filename))
+												   'Save File',
+												   os.path.join(self.PATH, self.ProjectFile.filename))
 		print("SaveTo:", filename)
 
 		self.ProjectFile.flush()
@@ -362,7 +387,7 @@ class QTR(QtGui.QMainWindow):
 
 		self.ProjectFile.flush()
 		# self.ProjectFile.close()
-		filename = self.fileDialog.getOpenFileName(self, 'Open Project', self.PATH)
+		filename = self.fileDialog.getOpenFileName(self, 'Open Project', self.PATH)[0]
 		print("Open:", filename)
 		# del self.ProjectFile
 		# shutil.move(self.projectPath, filename)
@@ -376,12 +401,12 @@ class QTR(QtGui.QMainWindow):
 				newItem = newItem['main'][index]
 				print(j, newItem, index)
 				self.addNewData(name=j, data=newItem, color=newItem.attrs['color'],
-				                scales=newItem.attrs['scales'], comments=newItem.attrs)
+								scales=newItem.attrs['scales'], comments=newItem.attrs)
 		# self.data = self.ProjectFile[self.projectName]
 		ProjectFile.close()
 
 	def addNewData(self, name='new', data=sp.empty((0, 1)),
-	               color='red', scales=[0, 0], comments=dict(), xc='-', yc='-'):
+				   color='red', scales=[0, 0], comments=dict(), xc='-', yc='-'):
 		'''Додавання нових даних в таблицю та в словник'''
 
 		while name in self.data.keys():
@@ -425,18 +450,18 @@ class QTR(QtGui.QMainWindow):
 		except RuntimeError:
 			traceback.print_exc()
 
-		newItem0 = QtGui.QTableWidgetItem()
+		newItem0 = QtWidgets.QTableWidgetItem()
 		newItem0.setText(name)
 		newItem0.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsSelectable)
 		self.ui.namesTable.setItem(counter - 1, 0, newItem0)
-		newItem1 = QtGui.QTableWidgetItem()
+		newItem1 = QtWidgets.QTableWidgetItem()
 
 		newItem1.setText("(" + str(xc) + ',' + str(yc) + ")")
 		newItem1.setFlags(QtCore.Qt.ItemIsEnabled)
 		self.ui.namesTable.setItem(counter - 1, 1, newItem1)
 
-		newItem2 = QtGui.QTableWidgetItem()
-		# col = QtGui.QColorDialog.getColor()
+		newItem2 = QtWidgets.QTableWidgetItem()
+		# col = QtWidgets.QColorDialog.getColor()
 		newItem2.setBackground(QtGui.QColor(color))
 
 		newItem2.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -556,7 +581,7 @@ class QTR(QtGui.QMainWindow):
 		return names
 
 	def updateData(self, name, data=None, clone=None, color=None,
-	               scales=None, comments=None, x_start=sp.nan, x_end=sp.nan, shiftForLog10=None, showTmp=True):
+				   scales=None, comments=None, x_start=sp.nan, x_end=sp.nan, shiftForLog10=None, showTmp=True):
 		'''Оновлення існуючих даних та їх атрибутів'''
 		prev_data = []
 		if name in self.data.keys():
@@ -565,7 +590,7 @@ class QTR(QtGui.QMainWindow):
 			raise KeyError
 
 		if data is None and color is None and scales is None and comments is None and clone is None:
-			print("foo")
+			print("foo",type="error")
 		
 		
 		if data is None:
@@ -680,7 +705,7 @@ class QTR(QtGui.QMainWindow):
 		self.syncData()
 		print(sys.getsizeof(self.data))
 		self.update_graph(name=name,data=dset, showTmp=showTmp)
-		self.mprint(len(dset))
+		self.mprintf(len(dset))
 
 	def dublicateData(self):
 		data, name = self.getData()
@@ -746,7 +771,7 @@ class QTR(QtGui.QMainWindow):
 
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
-		path = self.fileDialog.getOpenFileNames(self, caption="Open Files", directory=self.PATH, )  # [0])  # для PiSide
+		path = self.fileDialog.getOpenFileNames(self, caption="Open Files", directory=self.PATH, )   [0]  # для PiSide
 		print(path)
 		if len(path) > 0:
 			self.PATH = os.path.dirname(path[0])
@@ -870,9 +895,9 @@ class QTR(QtGui.QMainWindow):
 							self.norm_Shift0()
 
 						# except (ValueError, IOError, IndexError):
-						#	self.mprint("loadData: readError")
+						#	self.mprintf("loadData: readError")
 				else:
-					self.mprint('loadData: pathError')
+					print('loadData: pathError', type="error")
 
 	def updateNamesTable(self):
 		c = self.ui.namesTable.rowCount()
@@ -931,7 +956,7 @@ class QTR(QtGui.QMainWindow):
 			self.confDict["nameEditLock"] = False
 
 		elif clicked.column() == 2:
-			col = QtGui.QColorDialog.getColor()
+			col = QtWidgets.QColorDialog.getColor()
 			self.ui.namesTable.item(clicked.row(), 2).setBackground(col)
 
 			self.updateData(item0.text(), color=col.name())
@@ -1153,7 +1178,7 @@ class QTR(QtGui.QMainWindow):
 		if not data is None:
 			try:
 				data[:, 0] = data[:, 0] - (data[:, 0] * data[:, 1]).sum() / data[:,
-				                                                            1].sum()  # data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
+																			1].sum()  # data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
 
 				self.updateData(name=Name, data=data)
 			except:
@@ -1245,7 +1270,7 @@ class QTR(QtGui.QMainWindow):
 					w = (data[:, 0] > xmin) * (data[:, 0] < xmax)
 					tmp = data[:]
 					self.points, = self.mpl.canvas.ax.plot(tmp[w][:, 0].mean(), tmp[w][:, 1].mean(), '+r',
-					                                       markersize=16, zorder=20, alpha=1)
+														   markersize=16, zorder=20, alpha=1)
 
 					self.mpl.canvas.draw()
 
@@ -1272,11 +1297,11 @@ class QTR(QtGui.QMainWindow):
 					if not event.xdata is None and not event.ydata is None:
 						if not hasattr(self, 'mplSpan'):
 							self.mplSpan = self.mpl.canvas.ax.axvspan(event.xdata, event.xdata, facecolor='g',
-							                                          alpha=0.5)
+																	  alpha=0.5)
 						else:
 							yl = self.mpl.canvas.ax.get_ylim()
 							self.mplSpan.set_xy([[event.xdata, yl[0]], [event.xdata, yl[1]], [event.xdata, yl[1]],
-							                     [event.xdata, yl[0]]])
+												 [event.xdata, yl[0]]])
 						self.mpl.canvas.draw()
 					# self.mpl.canvas.mpl_disconnect(self.cidpress)
 					# self.mpl.canvas.mpl_disconnect(self.cidmotion)
@@ -1294,7 +1319,7 @@ class QTR(QtGui.QMainWindow):
 						print(xmin, xmax, w.sum())
 
 						m = data[:, 1][w].mean()
-						modifiers = QtGui.QApplication.keyboardModifiers()
+						modifiers = QtWidgets.QApplication.keyboardModifiers()
 						if modifiers == QtCore.Qt.ControlModifier:
 							data[:,1][w] = sp.log10(10**data[:,1][w]*10**(self.abs(event.ydata)) / 10**self.abs(m))
 						else:
@@ -1508,10 +1533,14 @@ class QTR(QtGui.QMainWindow):
 	###########################################################################
 	######################	Графічні методи 	###############################
 	###########################################################################
-	def Rescale(self):
+	def Rescale(self,data=None):
 
 		try:
-			XY, _ = self.getData()
+			XY = None
+			if data is None:
+				XY, _ = self.getData()
+			else:
+				XY = data
 			xMargin = abs(XY[:, 0].max() - XY[:, 0].min()) * 0.05
 			yMargin = abs(XY[:, 1].max() - XY[:, 1].min()) * 0.05
 			print(xMargin, ":", yMargin)
@@ -1523,9 +1552,9 @@ class QTR(QtGui.QMainWindow):
 				yMargin = 0
 
 			self.mpl.canvas.ax.set_xlim((XY[:, 0].min() - xMargin, \
-			                             XY[:, 0].max() + xMargin))
+										 XY[:, 0].max() + xMargin))
 			self.mpl.canvas.ax.set_ylim((XY[:, 1].min() - yMargin, \
-			                             XY[:, 1].max() + yMargin))
+										 XY[:, 1].max() + yMargin))
 			yl = self.mpl.canvas.ax.get_ylim()
 			self.mplSpan.set_xy([[0, yl[0]], [0, yl[1]], [0, yl[1]], [0, yl[0]]])
 		except:
@@ -1547,9 +1576,9 @@ class QTR(QtGui.QMainWindow):
 		if name is None:
 			print('noData')
 		else:
-			print("points: ", len(data))
+			print("points: %d"% len(data))
 			if self.confDict['autoscale'] and len(data) > 2:
-				self.Rescale()
+				self.Rescale(data)
 
 			if self.background != None:
 				# save initial x and y limits
@@ -1569,13 +1598,13 @@ class QTR(QtGui.QMainWindow):
 				c = QtGui.QColor(data.attrs['color']).getRgb()
 				new_color = QtGui.QColor(255 - c[0], 255 - c[1], 255 - c[2], 255)
 				self.plt_tmp, = self.mpl.canvas.ax.plot(prev_data[:, 0], \
-				                                        prev_data[:, 1], color=new_color.name(), marker='+',
-				                                        linestyle='None', markersize=4, alpha=0.35)
+														prev_data[:, 1], color=new_color.name(), marker='+',
+														linestyle='None', markersize=4, alpha=0.35)
 
 			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
-			                                    data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
-			                                    markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
-			self.mprint(len(data))
+												data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
+												markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
+			self.mprintf(len(data))
 			if not hasattr(self, 'line'):
 				# creating line
 				self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'g--', animated=True)
@@ -1683,11 +1712,11 @@ class QTR(QtGui.QMainWindow):
 					self.y1, self.y2 = swap(self.y1, self.y2)
 				try:
 					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-					    (self.x3 - self.x2) + self.y2
+						(self.x3 - self.x2) + self.y2
 					X = data[:, 0]
 					Y = data[:, 1]
 					yy = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-					     (X - self.x2) + self.y2
+						 (X - self.x2) + self.y2
 				except:
 					y = 0.
 				if self.y3 >= y:
@@ -1973,7 +2002,7 @@ class QTR(QtGui.QMainWindow):
 		tck = None
 		try:
 			tck, fp, ier, msg = interp.splrep(X, Y, w=weights, t=knots, k=km, task=-1,
-			                                  full_output=True)  # , xb=X.min()/xb, xe=X.max()/xe)
+											  full_output=True)  # , xb=X.min()/xb, xe=X.max()/xe)
 			print("fp=%.3f\tier=%.3f\tmsg=%s" % (fp, ier, msg))
 		except ValueError:
 			traceback.print_exc()
@@ -2047,7 +2076,7 @@ class QTR(QtGui.QMainWindow):
 		self.processSelectedData(Name, self.sender)
 
 	def poly_cut(self, data=None, N=10, m=4,
-	             p=0.80, AC=False, discrete=False):
+				 p=0.80, AC=False, discrete=False):
 		'''	Обрізка вздовж кривої апроксиміції поліномом.
 		m		-	степінь полінома
 		p		-	відсоток від максимального викиду
@@ -2130,10 +2159,13 @@ class QTR(QtGui.QMainWindow):
 		data, name = self.getData()
 		step = self.getUi('AverageStep').value()
 		width = self.getUi('maWidth').value()
-
-		x, y, err = moving_average(data[:, 0], data[:, 1], step, width)
-		new_data = sp.array([x, y, err]).T
-		self.updateData(name, clone=data, data=new_data)
+		try:
+			x, y, err = moving_average(data[:, 0], data[:, 1], step, width)
+			new_data = sp.array([x, y, err]).T
+			self.updateData(name, clone=data, data=new_data)
+		except:
+			traceback.print_exc()
+		
 		if self.confDict['showTmp']:
 			for i in range(len(x)):
 				self.mpl.canvas.ax.plot([x[i]] * 2, [y[i] - err[i], y[i] + err[i]], '-r')
@@ -2167,7 +2199,7 @@ class QTR(QtGui.QMainWindow):
 
 				# data[:,1] = data[:,1]/M[1]  #self.filtList[index][1]
 				self.updateData(name, data=data)
-			# self.mprint("Filters [X,Y]: %s" % str(self.filtList[index]))
+			# self.mprintf("Filters [X,Y]: %s" % str(self.filtList[index]))
 
 		# Якщо ввімкнено, обробка решти даних
 		self.processSelectedData(name, self.sender)
@@ -2212,11 +2244,11 @@ class QTR(QtGui.QMainWindow):
 		counter = self.ui.normTable.rowCount()
 		self.ui.normTable.setRowCount(counter + 1)
 		for i in range(5):
-			newItem = QtGui.QTableWidgetItem()
+			newItem = QtWidgets.QTableWidgetItem()
 			self.ui.normTable.setItem(counter, i, newItem)
 
-		combo1 = QtGui.QComboBox()
-		combo2 = QtGui.QComboBox()
+		combo1 = QtWidgets.QComboBox()
+		combo2 = QtWidgets.QComboBox()
 		names = self.getNamesList()
 		for i in names:
 			combo1.addItem(i)
@@ -2231,9 +2263,9 @@ class QTR(QtGui.QMainWindow):
 		self.ui.normTable.item(counter, 2).setFlags(QtCore.Qt.ItemIsEnabled)
 		self.ui.normTable.item(counter, 4).setFlags(QtCore.Qt.ItemIsEnabled)
 
-	# normButton = QtGui.QToolButton()
+	# normButton = QtWidgets.QToolButton()
 	# self.ui.normTable.setCellWidget(counter, 2, normButton)
-	# saveButton = QtGui.QToolButton()
+	# saveButton = QtWidgets.QToolButton()
 	# self.ui.normTable.setCellWidget(counter, 4, saveButton)
 
 
@@ -2277,21 +2309,21 @@ class QTR(QtGui.QMainWindow):
 
 				err = []
 				cY_tmp = cY_tmp[cY_tmp != 0]
-				modifiers = QtGui.QApplication.keyboardModifiers()
+				modifiers = QtWidgets.QApplication.keyboardModifiers()
 				if modifiers == QtCore.Qt.ShiftModifier:
 					print('Diff')
 					y = y - cY_tmp
 					if len(cData[:, :].T) == len(sData[:, :].T) == 3:
 						sErr_tmp = sData[:, 2][cY_tmp != 0]
 						cErr_tmp = sp.interpolate.interp1d(cData[:, 0], cData[:, 2],
-						                                   self.ui.normEvalType.currentText().lower())(x)
+														   self.ui.normEvalType.currentText().lower())(x)
 						err = sp.sqrt(sErr_tmp ** 2 + cErr_tmp ** 2)
 				else:
 					y = y / cY_tmp
 					if len(cData[:, :].T) == len(sData[:, :].T) == 3:
 						sErr_tmp = sData[:, 2][cY_tmp != 0]
 						cErr_tmp = sp.interpolate.interp1d(cData[:, 0], cData[:, 2],
-						                                   self.ui.normEvalType.currentText().lower())(x)
+														   self.ui.normEvalType.currentText().lower())(x)
 						err = sp.sqrt((sErr_tmp / cY_tmp) ** 2 + (cErr_tmp * y / cY_tmp ** 2) ** 2)
 						rel_err = err / y
 						rel_err = rel_err[-sp.isnan(rel_err)]
@@ -2467,7 +2499,7 @@ class QTR(QtGui.QMainWindow):
 		self.processSelectedData(Name, self.sender)
 
 	# =============================================================================
-	def mprint(self, text):
+	def mprintf(self, text):
 		self.statusBarMessage.setText(str(text))
 
 	def getUi(self, attrNames):
@@ -2532,7 +2564,7 @@ class QTR(QtGui.QMainWindow):
 			source is self.ui):
 			pos = event.exit()
 			print('mouse move: (%d, %d)' % (pos.x(), pos.y()))
-		return QtGui.QWidget.eventFilter(self, source, event)
+		return QWidget.eventFilter(self, source, event)
 	"""
 	def uiConnect(self):
 		'''Пов’язвння сигналів з слотами'''
@@ -2681,13 +2713,13 @@ class QTR(QtGui.QMainWindow):
 def main():
 	signal.signal(signal.SIGINT, signal.SIG_DFL)  # Застосування Ctrl+C в терміналі
 
-	app = QtGui.QApplication(sys.argv)
+	app = QtWidgets.QApplication(sys.argv)
 	win = QTR()
 
 	sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
-	#logging.basicConfig(level=logging.DEBUG)
+	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 	main()
 

@@ -1,15 +1,15 @@
 import matplotlib
 
-matplotlib.use('Qt4Agg', force=True)
+matplotlib.use('Qt5Agg', force=True)
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # Python Qt4 bindings for GUI objects
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 # import the NavigationToolbar Qt4Agg widget
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
-
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 # import the Qt4Agg FigureCanvas object, that binds Figure to
 # Qt4Agg backend. It also inherits from QWidget
+from PyQt5.QtWidgets import QWidget, QSizePolicy, QToolButton, QVBoxLayout
 
 from matplotlib.widgets import SpanSelector
 
@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 import mpl_toolkits.axisartist as axisartist
 #				"figure.facecolor": 'white'
 style = {
-    'backend': 'qt4agg',
+    'backend': 'qt5agg',
 
     "font.size": 9.0,
 
@@ -75,8 +75,8 @@ class MplCanvas(FigureCanvas):
         FigureCanvas.__init__(self, self.fig)
         # we define the widget as expandable
         FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+                                   QSizePolicy.Expanding,
+                                   QSizePolicy.Expanding)
         # notify the system of updated policy
         FigureCanvas.updateGeometry(self)
 
@@ -90,7 +90,7 @@ class vNavigationToolbar(NavigationToolbar):
         # Search through existing buttons
         # next use for placement of custom button
         next = None
-        for c in self.findChildren(QtGui.QToolButton):
+        for c in self.findChildren(QToolButton):
             if next is None:
                 next = c
             # Don't want to see subplots and customize
@@ -105,19 +105,19 @@ class vNavigationToolbar(NavigationToolbar):
             #	next=None
 
 
-class MplWidget(QtGui.QWidget):
+class MplWidget(QWidget):
     """Widget defined in Qt Designer"""
 
     def __init__(self, parent=None):
         # initialization of Qt MainWindow widget
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         # set the canvas to the Matplotlib widget
         self.canvas = MplCanvas()
         self.ntb = vNavigationToolbar(self.canvas, self)
 
         # self.mpl.ntb.addWidget(ntbButtons[1])
         # create a vertical box layout
-        self.vbl = QtGui.QVBoxLayout()
+        self.vbl = QVBoxLayout()
         # add mpl widget to the vertical box
         self.vbl.addWidget(self.canvas)
         # self.vbl.addWidget(self.ntb)
