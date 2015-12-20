@@ -286,6 +286,7 @@
    <addaction name="mplactionCut_by_line"/>
    <addaction name="mplactionCut_by_rect"/>
    <addaction name="movePoint"/>
+   <addaction name="action_find2Tangent"/>
   </widget>
   <widget class="QToolBar" name="toolBarScale">
    <property name="windowTitle">
@@ -2703,6 +2704,21 @@
    </property>
    <property name="text">
     <string>Дублювати</string>
+   </property>
+  </action>
+  <action name="action_find2Tangent">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>buttons/tan2p.svg</normaloff>buttons/tan2p.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Точка перегину</string>
+   </property>
+   <property name="toolTip">
+    <string>Знайти точку перегин на кривій</string>
    </property>
   </action>
  </widget>

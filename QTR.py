@@ -336,7 +336,7 @@ class QTR(QtWidgets.QMainWindow):
 		if not data is None:
 			filename = self.fileDialog.getSaveFileName(self,
 													   'Save File',
-													   os.path.join(self.PATH, Name))  # [0] 		!!!! Для PySide
+													   os.path.join(self.PATH, Name))   [0] #		!!!! Для PySide
 
 			print(filename)
 			if filename:
@@ -1124,6 +1124,70 @@ class QTR(QtWidgets.QMainWindow):
 				'motion_notify_event', on_motion)
 			self.cidpress = self.mpl.canvas.mpl_connect(
 				'button_press_event', on_press)
+	
+	def find_2Tangent(self):
+		'''Переміщення точок'''
+		data, Name = self.getData()
+		if not data is None:
+			X, Y = data[:,0],data[:,1]
+			t = interp.InterpolatedUnivariateSpline(X, Y)
+			dt = t.derivative()
+			def find_tangent_line_l(x,y):
+				w = X<=x
+				XX = X[w]
+				YY = Y[w]
+				r = abs(YY-y+dt(XX)*(x-XX))
+				w = sp.where(r == r.min())[0]
+				f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
+				return f
+			def find_tangent_line_r(x,y):
+				w = X>=x
+				XX = X[w]
+				YY = Y[w]
+				r = abs(YY-y+dt(XX)*(x-XX))
+				w = sp.where(r == r.min())[0]
+				f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
+				return f
+			
+			def on_motion(event):
+				if not event.xdata is None and not event.ydata is None:
+					xl = self.mpl.canvas.ax.get_xlim()
+					yl = self.mpl.canvas.ax.get_ylim()
+					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
+					self.mpl.canvas.ax.set_xlim(xl)
+					self.mpl.canvas.ax.set_ylim(yl)
+					# print(nearest_x, data[nearest_x, 1], event.xdata)
+					yl = self.mpl.canvas.ax.get_ylim()
+					
+					yy_l = find_tangent_line_l(event.xdata, event.ydata)
+					yy_r = find_tangent_line_r(event.xdata, event.ydata)
+					x_new = sp.array([xl[0],event.xdata,xl[1]])
+					y_new = sp.array([yy_l(xl[0]), yy_l(event.xdata), yy_r(xl[1])])
+					self.line.set_data(x_new, y_new)
+					#self.points.set_xdata(data[nearest_x, 0])
+					#self.points.set_ydata(data[nearest_x, 1])
+					# redraw artist
+					self.mpl.canvas.ax.draw_artist(self.line)
+					#self.mpl.canvas.ax.draw_artist(self.points)
+					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
+
+			def on_press(event):
+				if not event.xdata is None and not event.ydata is None:
+
+					
+					
+					self.mpl.canvas.ax.plot(event.xdata, event.ydata,'ro', markersize=6)
+					self.mpl.canvas.draw()
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				else:
+					self.mpl.canvas.mpl_disconnect(self.cidpress)
+					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+
+			self.cidmotion = self.mpl.canvas.mpl_connect(
+				'motion_notify_event', on_motion)
+			self.cidpress = self.mpl.canvas.mpl_connect(
+				'button_press_event', on_press)
 
 	def norm_FirstPoint(self):
 		''' Нормування на першу точку '''
@@ -1217,7 +1281,7 @@ class QTR(QtWidgets.QMainWindow):
 
 					self.updateData(Name, data=data)
 					yl = self.mpl.canvas.ax.get_ylim()
-					self.line, = self.mpl.canvas.ax.plot([0] * 2, yl, 'r')
+					self.line, = self.mpl.canvas.ax.plot([0] * 3, [yl[0], (yl[0]+yl[1])/2, yl[1]], 'r')
 					# self.points, = self.mpl.canvas.ax.plot(0, yl, 'ro', markersize=6)
 					self.mpl.canvas.draw()
 					self.mpl.canvas.mpl_disconnect(self.cidpress)
@@ -2662,6 +2726,7 @@ class QTR(QtWidgets.QMainWindow):
 		##	mpl
 		self.ui.mplactionCut_by_line.toggled[bool].connect(self.cut_line)
 		self.ui.mplactionCut_by_rect.toggled[bool].connect(self.cut_rect)
+		self.ui.action_find2Tangent.toggled[bool].connect(self.find_2Tangent)
 
 		## Інтенсивність
 		self.ui.recalcAi2.clicked.connect(self.recalcAi2)
