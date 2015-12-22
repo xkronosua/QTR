@@ -1,6 +1,11 @@
 import sys
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+try:
+	from PyQt5.QtCore import *
+	from PyQt5.QtWidgets import *
+except:
+	from PyQt4.QtCore import *
+	from PyQt4.QtGui import *
+
 import inspect
 
 #===================================================================

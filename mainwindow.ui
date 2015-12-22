@@ -59,7 +59,7 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_4">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QWidget" name="horizontalWidget" native="true">
       <property name="sizePolicy">
@@ -206,6 +206,7 @@
     <addaction name="separator"/>
     <addaction name="action_5"/>
     <addaction name="processView"/>
+    <addaction name="action_ShowErrors"/>
    </widget>
    <widget class="QMenu" name="menu_4">
     <property name="title">
@@ -606,7 +607,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>4</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="page_Data">
         <property name="sizePolicy">
@@ -897,7 +898,7 @@
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="AverageStep">
               <property name="decimals">
-               <number>6</number>
+               <number>9</number>
               </property>
               <property name="minimum">
                <double>0.000001000000000</double>
@@ -916,7 +917,7 @@
             <item row="1" column="2">
              <widget class="QDoubleSpinBox" name="maWidth">
               <property name="decimals">
-               <number>6</number>
+               <number>9</number>
               </property>
               <property name="minimum">
                <double>0.000001000000000</double>
@@ -1113,10 +1114,10 @@
             <item row="1" column="0">
              <widget class="QDoubleSpinBox" name="B_splineStep">
               <property name="decimals">
-               <number>3</number>
+               <number>9</number>
               </property>
               <property name="minimum">
-               <double>0.001000000000000</double>
+               <double>-2.000000000000000</double>
               </property>
               <property name="maximum">
                <double>999999999.000000000000000</double>
@@ -1380,7 +1381,7 @@
             <item row="1" column="0">
              <widget class="QDoubleSpinBox" name="ApproxStep">
               <property name="decimals">
-               <number>4</number>
+               <number>9</number>
               </property>
               <property name="minimum">
                <double>0.001000000000000</double>
@@ -2246,6 +2247,29 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockWidget_Console">
+   <property name="windowIcon">
+    <iconset>
+     <normaloff>buttons/filters.png</normaloff>buttons/filters.png</iconset>
+   </property>
+   <property name="toolTip">
+    <string/>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockConsole">
+    <layout class="QVBoxLayout" name="verticalLayout_6">
+     <item>
+      <widget class="QTextEdit" name="outputConsole">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="saveSettings">
    <property name="text">
     <string>зберегти</string>
@@ -2719,6 +2743,14 @@
    </property>
    <property name="toolTip">
     <string>Знайти точку перегин на кривій</string>
+   </property>
+  </action>
+  <action name="action_ShowErrors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Показувати похибки</string>
    </property>
   </action>
  </widget>

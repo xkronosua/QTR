@@ -1,13 +1,30 @@
 #!/usr/bin/python3
 # _*_ coding: utf-8 _*_
 from __future__ import print_function
+
+
 # This must be the first statement before other statements.
 # You may only put a quoted or triple quoted string, 
 # Python comments or blank lines before the __future__ line.
+
+
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("--qt4", dest="qt4", action="store_true", help="for pyqt4", default=False)
+parser.add_option("--qt5", dest="qt5", action="store_true", help="for pyqt5", default=True)
+(ScriptOptions, ScriptArgs) = parser.parse_args()
+print(ScriptOptions, ScriptArgs)
 import sys, os, signal, random, glob
 #import pdb
-from PyQt5 import QtGui, QtCore, uic, QtWidgets # QtUiTools
-from PyQt5.QtCore import QSettings, qDebug
+if ScriptOptions.qt4:
+	print("Qt4")
+	from PyQt4 import QtGui, QtCore, uic, QtGui as QtWidgets # QtUiTools
+	from PyQt4.QtCore import QSettings, qDebug
+else:
+	print("Qt5")
+	from PyQt5 import QtGui, QtCore, uic, QtWidgets # QtUiTools
+	from PyQt5.QtCore import QSettings, qDebug
 
 
 import scipy as sp
@@ -46,7 +63,6 @@ from guisave import *
 
 import logging
 from pprint import pformat
-
 
 
 
@@ -273,11 +289,13 @@ class QTR(QtWidgets.QMainWindow):
 			guirestore(self.ui, self.settings)
 		except:
 			traceback.print_exc()
+
 		if self.ui.filePath.text() == "":
 			self.ui.filePath.setText('/home/kronosua/work/QTR/data/Jul2715/nd18.dat')
 
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
-
+		self.ui.tabifyDockWidget(self.ui.dockWidget_Console, self.ui.DataDock)
+	
 
 	#############################################################################g
 	############	 Вкладка  "дані"	#########################################
@@ -334,7 +352,13 @@ class QTR(QtWidgets.QMainWindow):
 		Name = self.currentName()
 		data, _ = self.getData(Name)
 		if not data is None:
-			filename = self.fileDialog.getSaveFileName(self,
+			filename = ""
+			if ScriptOptions.qt4:
+				filename = self.fileDialog.getSaveFileName(self,
+														   'Save File',
+														   os.path.join(self.PATH, Name))
+			else:
+				filename = self.fileDialog.getSaveFileName(self,
 													   'Save File',
 													   os.path.join(self.PATH, Name))   [0] #		!!!! Для PySide
 
@@ -360,6 +384,7 @@ class QTR(QtWidgets.QMainWindow):
 		filename = self.fileDialog.getSaveFileName(self,
 												   'Save File',
 												   os.path.join(self.PATH, self.ProjectFile.filename))
+		if not ScriptOptions.qt4: filename = filename[0]
 		print("SaveTo:", filename)
 
 		self.ProjectFile.flush()
@@ -377,8 +402,8 @@ class QTR(QtWidgets.QMainWindow):
 				for k in group_item['main'].keys():
 					if k != lastIndex:
 						del group_item['main'][k]
-				if 'tmp' in group_item.keys():
-					del group_item['tmp']
+				#if 'tmp' in group_item.keys():
+				#	del group_item['tmp']
 		self.ProjectFile.flush()
 		self.data = self.ProjectFile[self.projectName]
 		print(self.data, [i for i in self.data.items()])
@@ -387,7 +412,9 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.ProjectFile.flush()
 		# self.ProjectFile.close()
-		filename = self.fileDialog.getOpenFileName(self, 'Open Project', self.PATH)[0]
+		filename = self.fileDialog.getOpenFileName(self, 'Open Project', self.PATH)
+		if not ScriptOptions.qt4: filename = filename[0]
+		
 		print("Open:", filename)
 		# del self.ProjectFile
 		# shutil.move(self.projectPath, filename)
@@ -771,8 +798,11 @@ class QTR(QtWidgets.QMainWindow):
 
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
-		path = self.fileDialog.getOpenFileNames(self, caption="Open Files", directory=self.PATH, )   [0]  # для PiSide
+		
+		path = self.fileDialog.getOpenFileNames(self, caption="Open Files", directory=self.PATH, )
 		print(path)
+		if not ScriptOptions.qt4: path = path[0]
+		
 		if len(path) > 0:
 			self.PATH = os.path.dirname(path[0])
 			# self.Path[active[0]] = path
@@ -1061,7 +1091,7 @@ class QTR(QtWidgets.QMainWindow):
 		for i in selected:
 			name = self.ui.namesTable.item(i.row(), 0).text()
 			data, _ = self.getData(name)
-			dList.append(data)
+			dList.append(data[:,:2])
 			nList.append(name)
 		Data = sp.vstack(dList)
 		Name = "+".join(nList)
@@ -1125,9 +1155,10 @@ class QTR(QtWidgets.QMainWindow):
 			self.cidpress = self.mpl.canvas.mpl_connect(
 				'button_press_event', on_press)
 	
-	def find_2Tangent(self):
+	def find_2Tangent(self, state):
 		'''Переміщення точок'''
 		data, Name = self.getData()
+		self.issecond = 0
 		if not data is None:
 			X, Y = data[:,0],data[:,1]
 			t = interp.InterpolatedUnivariateSpline(X, Y)
@@ -1148,7 +1179,7 @@ class QTR(QtWidgets.QMainWindow):
 				w = sp.where(r == r.min())[0]
 				f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
 				return f
-			
+			k = 0
 			def on_motion(event):
 				if not event.xdata is None and not event.ydata is None:
 					xl = self.mpl.canvas.ax.get_xlim()
@@ -1172,22 +1203,37 @@ class QTR(QtWidgets.QMainWindow):
 					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
 
 			def on_press(event):
-				if not event.xdata is None and not event.ydata is None:
 
-					
+				if not event.xdata is None and not event.ydata is None:
 					
 					self.mpl.canvas.ax.plot(event.xdata, event.ydata,'ro', markersize=6)
 					self.mpl.canvas.draw()
 					self.mpl.canvas.mpl_disconnect(self.cidpress)
 					self.mpl.canvas.mpl_disconnect(self.cidmotion)
+					print('press')
+					self.ui.action_find2Tangent.setChecked(False)
+					self.mprintf("XY: %.3f, %.3f"%(event.xdata, event.ydata))
+
 				else:
 					self.mpl.canvas.mpl_disconnect(self.cidpress)
 					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-
-			self.cidmotion = self.mpl.canvas.mpl_connect(
-				'motion_notify_event', on_motion)
+				
+		if state:
 			self.cidpress = self.mpl.canvas.mpl_connect(
 				'button_press_event', on_press)
+			self.cidmotion = self.mpl.canvas.mpl_connect(
+				'motion_notify_event', on_motion)
+
+
+		else:
+			try:
+				self.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				#self.update_graph()
+				self.ui.action_find2Tangent.setChecked(False)
+
+			except:
+				traceback.print_exc()
 
 	def norm_FirstPoint(self):
 		''' Нормування на першу точку '''
@@ -1797,7 +1843,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.ui.mplactionCut_by_line.setChecked(False)
 		else:
 
-			self.ui.mplactionCut_by_line.setChecked(False)
+			#self.ui.mplactionCut_by_line.setChecked(False)
 			return
 
 	def on_motion(self, event):
@@ -1807,7 +1853,8 @@ class QTR(QtWidgets.QMainWindow):
 			self.y2 = event.ydata
 			self.draw_line()
 		else:
-			self.ui.mplactionCut_by_line.setChecked(False)
+			pass
+			#self.ui.mplactionCut_by_line.setChecked(False)
 
 	def on_release(self, event):
 		'''on release we reset the press data'''
@@ -1823,7 +1870,17 @@ class QTR(QtWidgets.QMainWindow):
 			else:
 				self.mpl.canvas.mpl_disconnect(self.cidpress)
 		else:
-			self.ui.mplactionCut_by_line.setChecked(False)
+			self.x2 = self.line.get_xdata()[-1]
+			self.y2 = self.line.get_ydata()[-1]
+			self.issecond = 1
+			#self.draw_line()
+			if self.x1 and self.x2 and self.y1 and self.y2:
+				# self.mpl.canvas.mpl_disconnect(self.cidpress)
+				self.mpl.canvas.mpl_disconnect(self.cidmotion)
+				self.mpl.canvas.mpl_disconnect(self.cidrelease)
+			else:
+				self.mpl.canvas.mpl_disconnect(self.cidpress)
+			#self.ui.mplactionCut_by_line.setChecked(False)
 
 	############################### Rect ####################################
 	def cut_rect(self, state):
@@ -2101,7 +2158,7 @@ class QTR(QtWidgets.QMainWindow):
 		fit = fit[w]
 		xi = xi[w]
 		err = []
-		if self.confDict['showTmp']:
+		if self.ui.action_ShowErrors.isChecked():
 			for i in range(len(xi)):
 				w = (X > xi[i] - step / 2) * (X < xi[i] + step / 2)
 				try:
@@ -2132,7 +2189,7 @@ class QTR(QtWidgets.QMainWindow):
 		fit = fit[-sp.isnan(err)]
 		err = err[-sp.isnan(err)]
 
-		if self.confDict['showTmp']:
+		if self.ui.action_ShowErrors.isChecked():
 			for i in range(len(xi)):
 				self.mpl.canvas.ax.plot([xi[i]] * 2, [fit[i] - err[i], fit[i] + err[i]], '-r')
 			self.mpl.canvas.draw()
@@ -2230,7 +2287,7 @@ class QTR(QtWidgets.QMainWindow):
 		except:
 			traceback.print_exc()
 		
-		if self.confDict['showTmp']:
+		if self.ui.action_ShowErrors.isChecked():
 			for i in range(len(x)):
 				self.mpl.canvas.ax.plot([x[i]] * 2, [y[i] - err[i], y[i] + err[i]], '-r')
 			self.mpl.canvas.draw()
@@ -2398,7 +2455,7 @@ class QTR(QtWidgets.QMainWindow):
 				if not self.ui.cumSumNormData.isChecked():
 					if len(err) != 0:
 						outName = self.addNewData(name=name3, data=sp.array([x, y, err]).T)
-						if self.confDict['showTmp']:
+						if self.ui.action_ShowErrors.isChecked():
 							for i in range(len(x)):
 								self.mpl.canvas.ax.plot([x[i]] * 2, [y[i] - err[i], y[i] + err[i]], '-r')
 							self.mpl.canvas.draw()
@@ -2499,6 +2556,7 @@ class QTR(QtWidgets.QMainWindow):
 
 	def calibrCoefFromFiles(self):
 		files = self.fileDialog.getOpenFileNames(self, caption="Файли калібровки", directory=self.PATH, )
+		if not ScriptOptions.qt4: files = files[0]
 		if files:
 			print(files)
 			X, Y = [], []
@@ -2564,6 +2622,11 @@ class QTR(QtWidgets.QMainWindow):
 
 	# =============================================================================
 	def mprintf(self, text):
+		
+		self.ui.outputConsole.insertPlainText("\n"+str(text))
+
+		sb = self.ui.outputConsole.verticalScrollBar()
+		sb.setValue(sb.maximum())
 		self.statusBarMessage.setText(str(text))
 
 	def getUi(self, attrNames):
@@ -2785,6 +2848,6 @@ def main():
 
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+	logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 	main()
 
