@@ -1,4 +1,5 @@
 import matplotlib
+qtType = None
 try:
 	matplotlib.use('Qt5Agg', force=True)
 
@@ -10,6 +11,7 @@ try:
 	# import the Qt4Agg FigureCanvas object, that binds Figure to
 	# Qt4Agg backend. It also inherits from QWidget
 	from PyQt5.QtWidgets import QWidget, QSizePolicy, QToolButton, QVBoxLayout
+	qtType = 'Qt5'
 except:
 	matplotlib.use('Qt4Agg', force=True)
 
@@ -21,7 +23,7 @@ except:
 	# import the Qt4Agg FigureCanvas object, that binds Figure to
 	# Qt4Agg backend. It also inherits from QWidget
 	from PyQt4.QtGui import QWidget, QSizePolicy, QToolButton, QVBoxLayout
-
+	qtType = 'Qt4'
 from matplotlib.widgets import SpanSelector
 
 # Matplotlib Figure object
@@ -100,7 +102,7 @@ class MplCanvas(FigureCanvas):
 		# causes problems with code that uses the result of the
 		# draw() to update plot elements.
 		FigureCanvas.draw(self)
-		self._priv_update()
+		if qtType == 'Qt5': self._priv_update()
 
 
 class vNavigationToolbar(NavigationToolbar):

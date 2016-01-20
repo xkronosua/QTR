@@ -137,7 +137,7 @@
      </property>
      <property name="icon">
       <iconset>
-       <normaloff>../QTR-0.3.9/QTR/ui/ui/buttons/norm_On.png</normaloff>../QTR-0.3.9/QTR/ui/ui/buttons/norm_On.png</iconset>
+       <normaloff>buttons/norm_On.png</normaloff>buttons/norm_On.png</iconset>
      </property>
      <addaction name="norm_Max"/>
      <addaction name="norm_Point"/>
@@ -165,7 +165,7 @@
      </property>
      <property name="icon">
       <iconset theme="edit-cut">
-       <normaloff>../QTR-0.3.9/QTR/ui</normaloff>../QTR-0.3.9/QTR/ui</iconset>
+       <normaloff>ui/ui</normaloff>ui/ui</iconset>
      </property>
      <addaction name="mplactionCut_by_line"/>
      <addaction name="mplactionCut_by_rect"/>
@@ -477,7 +477,7 @@
           <widget class="QToolButton" name="multiPlot">
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/multiPlot.png</normaloff>../QTR-0.3.9/QTR/buttons/multiPlot.png</iconset>
+             <normaloff>buttons/multiPlot.png</normaloff>buttons/multiPlot.png</iconset>
            </property>
           </widget>
          </item>
@@ -498,7 +498,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/down.svg</normaloff>../QTR-0.3.9/QTR/buttons/down.svg</iconset>
+             <normaloff>buttons/down.svg</normaloff>buttons/down.svg</iconset>
            </property>
           </widget>
          </item>
@@ -515,7 +515,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/remove.svg</normaloff>../QTR-0.3.9/QTR/buttons/remove.svg</iconset>
+             <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
            </property>
           </widget>
          </item>
@@ -526,7 +526,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/up.svg</normaloff>../QTR-0.3.9/QTR/buttons/up.svg</iconset>
+             <normaloff>buttons/up.svg</normaloff>buttons/up.svg</iconset>
            </property>
           </widget>
          </item>
@@ -537,7 +537,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/save.svg</normaloff>../QTR-0.3.9/QTR/buttons/save.svg</iconset>
+             <normaloff>buttons/save.svg</normaloff>buttons/save.svg</iconset>
            </property>
           </widget>
          </item>
@@ -813,7 +813,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/add.svg</normaloff>../QTR-0.3.9/QTR/buttons/add.svg</iconset>
+             <normaloff>buttons/add.svg</normaloff>buttons/add.svg</iconset>
            </property>
            <property name="iconSize">
             <size>
@@ -1616,7 +1616,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/remove.svg</normaloff>../QTR-0.3.9/QTR/buttons/remove.svg</iconset>
+             <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
            </property>
           </widget>
          </item>
@@ -1627,7 +1627,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../QTR-0.3.9/QTR/buttons/add.svg</normaloff>../QTR-0.3.9/QTR/buttons/add.svg</iconset>
+             <normaloff>buttons/add.svg</normaloff>buttons/add.svg</iconset>
            </property>
           </widget>
          </item>
@@ -2302,7 +2302,7 @@
   <action name="Close">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/Reset.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/Reset.png</iconset>
+     <normaloff>buttons/Reset.png</normaloff>buttons/Reset.png</iconset>
    </property>
    <property name="text">
     <string>Вийти</string>
@@ -2317,7 +2317,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/Y_X.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/Y_X.png</iconset>
+     <normaloff>buttons/Y_X.png</normaloff>buttons/Y_X.png</iconset>
    </property>
    <property name="text">
     <string>y -&gt; Y/X</string>
@@ -2329,7 +2329,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/LgX.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/LgX.png</iconset>
+     <normaloff>buttons/LgX.png</normaloff>buttons/LgX.png</iconset>
    </property>
    <property name="text">
     <string>x -&gt; Log10</string>
@@ -2341,7 +2341,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/LgY.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/LgY.png</iconset>
+     <normaloff>buttons/LgY.png</normaloff>buttons/LgY.png</iconset>
    </property>
    <property name="text">
     <string>y -&gt; Log10</string>
@@ -2377,7 +2377,7 @@
   <action name="Undo">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/buttons/undo.svg</normaloff>../QTR-0.3.9/QTR/buttons/undo.svg</iconset>
+     <normaloff>buttons/undo.svg</normaloff>buttons/undo.svg</iconset>
    </property>
    <property name="text">
     <string>Назад</string>
@@ -2392,7 +2392,7 @@
   <action name="Reset">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/buttons/reset.svg</normaloff>../QTR-0.3.9/QTR/buttons/reset.svg</iconset>
+     <normaloff>buttons/reset.svg</normaloff>buttons/reset.svg</iconset>
    </property>
    <property name="text">
     <string>Скинути</string>
@@ -2404,7 +2404,7 @@
   <action name="norm_Max">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_Max.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_Max.png</iconset>
+     <normaloff>buttons/norm_Max.png</normaloff>buttons/norm_Max.png</iconset>
    </property>
    <property name="text">
     <string>Нормувати на максимум</string>
@@ -2416,7 +2416,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_Point.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_Point.png</iconset>
+     <normaloff>buttons/norm_Point.png</normaloff>buttons/norm_Point.png</iconset>
    </property>
    <property name="text">
     <string>Нормувати на вказану точку</string>
@@ -2435,7 +2435,7 @@
   <action name="norm_FirstPoint">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_FirstPoint.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/norm_FirstPoint.png</iconset>
+     <normaloff>buttons/norm_FirstPoint.png</normaloff>buttons/norm_FirstPoint.png</iconset>
    </property>
    <property name="text">
     <string>Нормувати на першу точку</string>
@@ -2450,7 +2450,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/Rescale.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/Rescale.png</iconset>
+     <normaloff>buttons/Rescale.png</normaloff>buttons/Rescale.png</iconset>
    </property>
    <property name="text">
     <string>Автомасштабування</string>
@@ -2465,7 +2465,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/ShowTmp.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/ShowTmp.png</iconset>
+     <normaloff>buttons/ShowTmp.png</normaloff>buttons/ShowTmp.png</iconset>
    </property>
    <property name="text">
     <string>Проміжні побудови</string>
@@ -2477,7 +2477,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/line.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/line.png</iconset>
+     <normaloff>buttons/line.png</normaloff>buttons/line.png</iconset>
    </property>
    <property name="text">
     <string>Лінією</string>
@@ -2489,7 +2489,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/rect.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/rect.png</iconset>
+     <normaloff>buttons/rect.png</normaloff>buttons/rect.png</iconset>
    </property>
    <property name="text">
     <string>Прямокутником</string>
@@ -2498,7 +2498,7 @@
   <action name="movePoint">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/movePoint.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/movePoint.png</iconset>
+     <normaloff>buttons/movePoint.png</normaloff>buttons/movePoint.png</iconset>
    </property>
    <property name="text">
     <string>Перемістити точки</string>
@@ -2512,7 +2512,7 @@
   <action name="actionAverage">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/average.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/average.png</iconset>
+     <normaloff>buttons/average.png</normaloff>buttons/average.png</iconset>
    </property>
    <property name="text">
     <string>average</string>
@@ -2521,7 +2521,7 @@
   <action name="actionFiltFilt">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/filtfilt.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/filtfilt.png</iconset>
+     <normaloff>buttons/filtfilt.png</normaloff>buttons/filtfilt.png</iconset>
    </property>
    <property name="text">
     <string>filtfilt</string>
@@ -2530,7 +2530,7 @@
   <action name="actionB_spline">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/b_spline.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/b_spline.png</iconset>
+     <normaloff>buttons/b_spline.png</normaloff>buttons/b_spline.png</iconset>
    </property>
    <property name="text">
     <string>b-spline</string>
@@ -2539,7 +2539,7 @@
   <action name="actionPolyFit">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/polyFit.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/polyFit.png</iconset>
+     <normaloff>buttons/polyFit.png</normaloff>buttons/polyFit.png</iconset>
    </property>
    <property name="text">
     <string>polyFit</string>
@@ -2548,7 +2548,7 @@
   <action name="actionPolyCut">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/polyCut.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/polyCut.png</iconset>
+     <normaloff>buttons/polyCut.png</normaloff>buttons/polyCut.png</iconset>
    </property>
    <property name="text">
     <string>polyCut</string>
@@ -2557,7 +2557,7 @@
   <action name="actionOpenFiles">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/open.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/open.png</iconset>
+     <normaloff>buttons/open.png</normaloff>buttons/open.png</iconset>
    </property>
    <property name="text">
     <string>Відкрити файли</string>
@@ -2566,7 +2566,7 @@
   <action name="actionData">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/selectData.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/selectData.png</iconset>
+     <normaloff>buttons/selectData.png</normaloff>buttons/selectData.png</iconset>
    </property>
    <property name="text">
     <string>вибрати дані</string>
@@ -2578,7 +2578,7 @@
   <action name="actionNormData">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/normData.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/normData.png</iconset>
+     <normaloff>buttons/normData.png</normaloff>buttons/normData.png</iconset>
    </property>
    <property name="text">
     <string>Нормувати</string>
@@ -2587,7 +2587,7 @@
   <action name="actionReHi3">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/reHi3.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/reHi3.png</iconset>
+     <normaloff>buttons/reHi3.png</normaloff>buttons/reHi3.png</iconset>
    </property>
    <property name="text">
     <string>Обчислити Re(hi3)</string>
@@ -2596,7 +2596,7 @@
   <action name="actionFilters">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/filters.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/filters.png</iconset>
+     <normaloff>buttons/filters.png</normaloff>buttons/filters.png</iconset>
    </property>
    <property name="text">
     <string>Посадити на фільтри</string>
@@ -2605,7 +2605,7 @@
   <action name="actionSaveData">
    <property name="icon">
     <iconset theme="filesave">
-     <normaloff>../QTR-0.3.9/QTR/ui</normaloff>../QTR-0.3.9/QTR/ui</iconset>
+     <normaloff>ui/ui</normaloff>ui/ui</iconset>
    </property>
    <property name="text">
     <string>Зберегти</string>
@@ -2630,7 +2630,7 @@
   <action name="actionIntens">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/buttons/Intens.png</normaloff>../QTR-0.3.9/QTR/buttons/Intens.png</iconset>
+     <normaloff>buttons/Intens.png</normaloff>buttons/Intens.png</iconset>
    </property>
    <property name="text">
     <string>Інтенсивність</string>
@@ -2645,7 +2645,7 @@
    </property>
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/buttons/ViewProcess.png</normaloff>../QTR-0.3.9/QTR/buttons/ViewProcess.png</iconset>
+     <normaloff>buttons/ViewProcess.png</normaloff>buttons/ViewProcess.png</iconset>
    </property>
    <property name="text">
     <string>Видимий</string>
@@ -2670,7 +2670,7 @@
   <action name="actionImHi3">
    <property name="icon">
     <iconset>
-     <normaloff>../QTR-0.3.9/QTR/ui/buttons/ImHi3.png</normaloff>../QTR-0.3.9/QTR/ui/buttons/ImHi3.png</iconset>
+     <normaloff>buttons/ImHi3.png</normaloff>buttons/ImHi3.png</iconset>
    </property>
    <property name="text">
     <string>Обчислити Im(hi3)</string>
@@ -2806,8 +2806,8 @@
   <tabstop>PolyM</tabstop>
  </tabstops>
  <resources>
-  <include location="../QTR-0.3.9/QTR/ui/res.qrc"/>
-  <include location="../QTR-0.3.9/QTR/ui/res.qrc"/>
+  <include location="res.qrc"/>
+  <include location="res.qrc"/>
  </resources>
  <connections/>
 </ui>
