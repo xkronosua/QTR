@@ -72,10 +72,10 @@ from pprint import pformat
 import pandas
 
 filtersDict_indicatrix = {"532": {1:1,'1': 1, "OP06": 1/10**0.6, "OP09": 1/10**0.9, "OP18": 1/10**1.8}}
-def convertRawFilter(filt,wavelenght):
+def convertRawFilter(filt,waveLenght="532"):
 	filt = filt.upper()
 	filters = filt.replace(' ','').replace('\n','').replace('\t','').split(',')
-	conv = [filtersDict_indicatrix[wavelenght][i] for i in filters]
+	conv = [filtersDict_indicatrix[waveLenght][i] for i in filters]
 	res = 1
 	for i in conv:
 		res*=i
@@ -89,7 +89,7 @@ def isIndicatrixData(filename):
 				return True
 				break
 
-def indicatrixRaw2Data(filename):
+def indicatrixRaw2Data(filename,convertRawFilter_=convertRawFilter):
 	
 	header = []
 	comments = []
@@ -107,8 +107,8 @@ def indicatrixRaw2Data(filename):
 				#print(n, line)
 				comments.append([n,line.split(';')])
 			if line.startswith('#Filter:'):
-				print(n, line)
-				filtersRaw.append([n, convertRawFilter(line.split(':')[-1], WAVELENGHT)])
+				print(n, line,	line.split(':')[-1], WAVELENGHT, convertRawFilter_(line.split(':')[-1], WAVELENGHT))
+				filtersRaw.append([n, convertRawFilter_(line.split(':')[-1], WAVELENGHT)])
 			if line.startswith('#ch'):
 				header = line[1:-1].split('\t')
 		#headiter = takewhile(lambda s: ss(s), fobj)
@@ -936,7 +936,7 @@ class QTR(QtWidgets.QMainWindow):
 						if path.split('.')[-1] == 'npy':
 							data = sp.load(path)
 						elif isIndicatrixData(path):
-							data = indicatrixRaw2Data(path)
+							data = indicatrixRaw2Data(path,self.filtCalc)
 							xc = 0
 							yc = 1
 						else:
@@ -2451,7 +2451,7 @@ class QTR(QtWidgets.QMainWindow):
 
 		if filters:
 			if not filtTable is None:
-				filters = filters.replace(' ', '').replace('+', ',').replace(';', ',')
+				filters = filters.replace(' ', '').replace('+', ',').replace(';', ',').replace('\n','')
 				res = 1.
 				try:
 					res = sp.multiply.reduce([filtTable[waveLength][i.upper()] for i in filters.split(",")])

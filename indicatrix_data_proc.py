@@ -11,9 +11,9 @@ comments = []
 #	filtersDict = json.load(f)	
 filtersDict = {"532": {1:1,
 							'1': 1,
-							"OP06": 10**-0.6,
-							"OP09": 10**-0.9,
-							"OP18": 10**-1.8
+							"OP06": 10**-0.6*1.5,
+							"OP09": 10**-0.9*1.5,
+							"OP18": 10**-1.8*1.5
 							}}
 filtersRaw = []
 WAVELENGHT = "532"
