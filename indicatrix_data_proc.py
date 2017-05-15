@@ -9,7 +9,12 @@ header = []
 comments = []
 #with open('filters.dict') as f:
 #	filtersDict = json.load(f)	
-filtersDict = {"532": {1:1,'1': 1, "OP06": 1/10**0.6, "OP09": 1/10**0.9, "OP18": 1/10**1.8}}
+filtersDict = {"532": {1:1,
+							'1': 1,
+							"OP06": 10**-0.6,
+							"OP09": 10**-0.9,
+							"OP18": 10**-1.8
+							}}
 filtersRaw = []
 WAVELENGHT = "532"
 

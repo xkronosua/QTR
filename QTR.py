@@ -67,6 +67,69 @@ import logging
 from pprint import pformat
 
 
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+import pandas
+
+filtersDict_indicatrix = {"532": {1:1,'1': 1, "OP06": 1/10**0.6, "OP09": 1/10**0.9, "OP18": 1/10**1.8}}
+def convertRawFilter(filt,wavelenght):
+	filt = filt.upper()
+	filters = filt.replace(' ','').replace('\n','').replace('\t','').split(',')
+	conv = [filtersDict_indicatrix[wavelenght][i] for i in filters]
+	res = 1
+	for i in conv:
+		res*=i
+	return res
+
+def isIndicatrixData(filename):
+	testStr = "#ch1\tch2\tch3\tch4\tN\tlastUpdate_time\tlaser_dt\tangle"
+	with open(filename, 'r') as fobj:
+		for line in fobj:
+			if line.startswith('#ch1'):
+				return True
+				break
+
+def indicatrixRaw2Data(filename):
+	
+	header = []
+	comments = []
+	#with open('filters.dict') as f:
+	#	filtersDict = json.load(f)	
+	
+	filtersRaw = []
+	WAVELENGHT = "532"
+	
+	with open(filename, 'r') as fobj:
+		# takewhile returns an iterator over all the lines 
+		# that start with the comment string
+		for n,line in enumerate(fobj):
+			if line.startswith('#'):
+				#print(n, line)
+				comments.append([n,line.split(';')])
+			if line.startswith('#Filter:'):
+				print(n, line)
+				filtersRaw.append([n, convertRawFilter(line.split(':')[-1], WAVELENGHT)])
+			if line.startswith('#ch'):
+				header = line[1:-1].split('\t')
+		#headiter = takewhile(lambda s: ss(s), fobj)
+		# you may want to process the headers differently, 
+		# but here we just convert it to a list
+		#header = list(headiter)
+	df = pandas.read_csv(filename, comment='#',sep='\t',names = header)
+	df['filter'] = pandas.np.ones(len(df))
+	k = pandas.np.where(df['N']==1)[0]
+
+	for i in range(len(k)-1):
+		df['filter'][k[i]:k[i+1]] = filtersRaw[i][1]
+
+	df['scat'] = df['ch3']/df['filter']
+	df = df[df['scat']>=0]
+
+	return df.loc[:,['angle','scat']].values
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 def _print(*args, **kwargs):
 	"""My custom print() function."""
@@ -872,12 +935,17 @@ class QTR(QtWidgets.QMainWindow):
 						x, y, m = [], [], []
 						if path.split('.')[-1] == 'npy':
 							data = sp.load(path)
+						elif isIndicatrixData(path):
+							data = indicatrixRaw2Data(path)
+							xc = 0
+							yc = 1
 						else:
 							try:
 								data = sp.loadtxt(path, delimiter=self.getDelimiter())
 							except:
 								try:
 									data = sp.loadtxt(path)
+									
 								except:
 									# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
 									traceback.print_exc()
@@ -941,7 +1009,7 @@ class QTR(QtWidgets.QMainWindow):
 
 					color = 'cyan'
 					state = 1  # ---------------------------------------------
-
+					
 					if state:
 						self.addNewData(data=XY, scales=[0, 0], name=Name, color=color, xc=xc, yc=yc)
 
@@ -1642,7 +1710,7 @@ class QTR(QtWidgets.QMainWindow):
 					i.setEnabled(not ui_actions[0].isChecked())
 
 			else:
-				index = bool(senderName[6] != "X")
+				index = int(senderName[6] != "X")
 				# ui_obj = getattr(self.ui, t + Names[0])
 				# print(Scale, state)
 
