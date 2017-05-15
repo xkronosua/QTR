@@ -33,6 +33,8 @@ import scipy.interpolate as interp
 from scipy.optimize import leastsq
 import scipy.optimize as optimize
 from numpy.lib.stride_tricks import as_strided
+from scipy.signal import medfilt
+from scipy.signal import argrelextrema
 
 # import shelve
 # from glue_designer2 import  DesignerMainWindow
@@ -57,7 +59,7 @@ import shutil
 import cmath
 from calc_n2_newForVG import calcReChi3
 from calc_all_victor_1 import calcImChi3
-from calc_n2_new_cw532 import calcReChi3CW
+from calc_n2_new_cw532_1 import calcReChi3CW
 
 from guisave import *
 
@@ -66,12 +68,13 @@ from pprint import pformat
 
 
 
-def print(*args, **kwargs):
+def _print(*args, **kwargs):
 	"""My custom print() function."""
 	# Adding new arguments to the print function signature 
 	# is probably a bad idea.
 	# Instead consider testing if custom argument keywords
 	# are present in kwargs
+	#print(kwargs)
 	if 'type' in kwargs:
 		if kwargs['type'] == "error":
 			logging.error((args))
@@ -85,7 +88,12 @@ def print(*args, **kwargs):
 
 def loadUi(uifilename, parent=None):
 	# loader = QtUiTools.QUiLoader(parent)
+	#try:
+	#	ui = __import__(uifilename.split('.')[-2].replace('/','').split('\\')[-1].split('/')[-1])
+		
+	#except:
 	ui = uic.loadUi(uifilename)  # loader.load(uifilename)
+	#	traceback.print_exc()
 	return ui
 
 
@@ -207,7 +215,11 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.settings = QSettings('settings.ini', QSettings.IniFormat)
 		self.PATH = self.MAIN_DIRECTORY
+		
+		#logging.getLogger().setLevel(100)
 		self.ui = loadUi(os.path.join(self.MAIN_DIRECTORY, 'mainwindow.ui'), self)
+		#logging.getLogger().setLevel(40)
+		
 		
 		if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")):
 			os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp"))
@@ -286,7 +298,10 @@ class QTR(QtWidgets.QMainWindow):
 		try:
 			#print("loadSettingsFromIni:", self.settings.value('loadSettingsFromIni'))
 			#if self.settings.value('loadSettingsFromIni')=='true':
+			#logging.getLogger().setLevel(100)
 			guirestore(self.ui, self.settings)
+			#logging.getLogger().setLevel(40)
+			
 		except:
 			traceback.print_exc()
 
@@ -521,7 +536,7 @@ class QTR(QtWidgets.QMainWindow):
 					elif text == lastCell1:
 						lastInd[1] = i
 					self.ui.normTable.cellWidget(j, 0).addItem(text)
-					self.ui.normTable.cellWidget(j, 1).addItem(text)
+					#self.ui.normTable.cellWidget(j, 1).addItem(text)
 					self.ui.normTable.cellWidget(j, 1)
 				self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
 				self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
@@ -867,12 +882,18 @@ class QTR(QtWidgets.QMainWindow):
 									# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
 									traceback.print_exc()
 									with open(path) as f:
-										line = f.readline()
+										for i in range(50):
+											line = f.readline()
+											if line[0]=='#':
+												pass
+											else:
+												break
 									nCols = len(line.split(self.getDelimiter()))
+									print('nCols=',nCols)
 									conv = lambda valstr: float(valstr.decode("utf-8").replace(',', '.'))
 									c = {i: conv for i in range(nCols)}
 									data = sp.genfromtxt(path, delimiter=self.getDelimiter(), dtype=float, converters=c)
-
+						#print(data)
 						x, y = data[:, [xc, yc]].T
 					except:
 						traceback.print_exc()
@@ -880,6 +901,11 @@ class QTR(QtWidgets.QMainWindow):
 					if self.ui.isNormColumn.isChecked():
 						m = data[:, mc]
 						col = self.ui.Norm_col_select.currentText()
+						mPow = self.ui.Norm_Col_Pow.value()
+						kk =	 1.2/1.9
+						m = (medfilt(m*kk,7))**mPow
+						#m = (m)**mPow
+
 						if col == "All":
 							XY = sp.array([x / m, y / m]).T
 						elif col == "X":
@@ -913,7 +939,7 @@ class QTR(QtWidgets.QMainWindow):
 
 					Name = os.path.splitext(os.path.basename(path))[0]
 
-					color = 'blue'
+					color = 'cyan'
 					state = 1  # ---------------------------------------------
 
 					if state:
@@ -938,21 +964,21 @@ class QTR(QtWidgets.QMainWindow):
 		for j in range(c1):
 			lastCell0 = self.ui.normTable.cellWidget(j, 0).currentText()
 			self.ui.normTable.cellWidget(j, 0).clear()
-			lastCell1 = self.ui.normTable.cellWidget(j, 1).currentText()
-			self.ui.normTable.cellWidget(j, 1).clear()
-			lastInd = [0, 0]
+			#lastCell1 = self.ui.normTable.cellWidget(j, 1).currentText()
+			#self.ui.normTable.cellWidget(j, 1).clear()
+			#lastInd = [0, 0]
 			for i in range(c):
 				text = self.ui.namesTable.item(i, 0).text()
 				print(text, lastCell0)
-				if text == lastCell0:
-					lastInd[0] = i
-				elif text == lastCell1:
-					lastInd[1] = i
+				#if text == lastCell0:
+				#	lastInd[0] = i
+				#elif text == lastCell1:
+				#	lastInd[1] = i
 				self.ui.normTable.cellWidget(j, 0).addItem(text)
-				self.ui.normTable.cellWidget(j, 1).addItem(text)
-				self.ui.normTable.cellWidget(j, 1)
-			self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
-			self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
+				#self.ui.normTable.cellWidget(j, 1).addItem(text)
+				#self.ui.normTable.cellWidget(j, 1)
+			#self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
+			#self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
 		if hasattr(self, 'intensDialog'):
 			self.intensDialog.updateActiveDataList()
 
@@ -961,7 +987,7 @@ class QTR(QtWidgets.QMainWindow):
 		if item.column() == 0 and self.confDict['tableEditedName'] and not self.confDict['nameEditLock'] \
 				and item.text() not in self.data.keys():
 
-			# print(self.confDict['tableEditedName'], item.text(), self.data.keys())
+			print(self.confDict['tableEditedName'], item.text(), self.data.keys())
 			self.data[item.text()] = self.data[self.confDict['tableEditedName']]
 			del self.data[self.confDict['tableEditedName']]
 			self.ui.namesTable.item(item.row(), 0).setText(item.text())
@@ -1030,7 +1056,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.ui.namesTable.insertRow(row + 2)
 				for i in range(self.ui.namesTable.columnCount()):
 					self.ui.namesTable.setItem(row + 2, i, self.ui.namesTable.takeItem(row, i))
-					self.ui.namesTable.setCurrentCell(row + 2, column)
+					self.ui.namesTable.setCurrentCell(row + 2, 0)
 				self.ui.namesTable.removeRow(row)
 
 		if action == "Up":
@@ -1040,7 +1066,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.ui.namesTable.insertRow(row - 1)
 				for i in range(self.ui.namesTable.columnCount()):
 					self.ui.namesTable.setItem(row - 1, i, self.ui.namesTable.takeItem(row + 1, i))
-					self.ui.namesTable.setCurrentCell(row - 1, column)
+					self.ui.namesTable.setCurrentCell(row - 1, 0)
 				self.ui.namesTable.removeRow(row + 1)
 		self.updateNamesTable()
 
@@ -1078,7 +1104,13 @@ class QTR(QtWidgets.QMainWindow):
 		for i in selected:
 			name = self.ui.namesTable.item(i.row(), 0).text()
 			data, _ = self.getData(name)
-			lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'], alpha=0.5)[0])
+			modifiers = QtWidgets.QApplication.keyboardModifiers()
+			if modifiers == QtCore.Qt.ControlModifier:
+				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'], alpha=0.5)[0])
+			else:
+
+				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'])[0])
+				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], "-", color=data.attrs['color'], alpha=0.6)[0])
 		self.mpl.canvas.draw()
 		for i in lines:
 			self.mpl.canvas.ax.lines.remove(i)
@@ -1714,6 +1746,9 @@ class QTR(QtWidgets.QMainWindow):
 			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
 												data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
 												markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
+			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
+												data[:, 1], color=data.attrs['color'],  linestyle='-',
+												markeredgecolor=data.attrs['color'],  zorder=16, alpha=0.3)
 			self.mprintf(len(data))
 			if not hasattr(self, 'line'):
 				# creating line
@@ -2531,9 +2566,9 @@ class QTR(QtWidgets.QMainWindow):
 			tmp = data[:]
 				
 		#print(tmp.shape)
-		ImHi3, beta, Leff, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
+		ImHi3, beta, Leff, T0, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
 		
-		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g}, ImChi3[esu] = {:10g}".format(Name, Leff, beta, ImHi3)
+		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g},T_0 = {:10g}, ImChi3[esu] = {:10g}".format(Name, Leff,T0, beta, ImHi3)
 		print(text)
 		#self.updateData(name=Name, clone=data)#, comments=text)
 		self.ui.imHi3_console.setText(text)
@@ -2546,7 +2581,11 @@ class QTR(QtWidgets.QMainWindow):
 		'''Перерахунок радіусу пучка'''
 		z, f, Ae = self.getValue(("Z", "F", "R"))
 		length = float(self.ui.intensWaveLENGTH.currentText())
-		Ae *= 25 * 10 ** -4
+		modifiers = QtWidgets.QApplication.keyboardModifiers()
+		if modifiers == QtCore.Qt.ShiftModifier:
+			pass
+		else:
+			Ae *= 25 * 10 ** -4
 		try:
 			Ai2 = 2 * Ae ** 2 * ((1 - z / f) ** 2 + (z * length * 10 ** -7 / sp.pi / Ae ** 2) ** 2) / 4
 			self.ui.Ai2.setText(str(sp.sqrt(Ai2)))
@@ -2848,6 +2887,6 @@ def main():
 
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
+	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
 	main()
 

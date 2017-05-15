@@ -1,7 +1,7 @@
 import matplotlib
-qtType = None
+qType = None
 try:
-	matplotlib.use('Qt5Agg', force=True)
+	#matplotlib.use('Qt5Agg', force=True)
 
 	from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 	# Python Qt4 bindings for GUI objects
@@ -11,9 +11,9 @@ try:
 	# import the Qt4Agg FigureCanvas object, that binds Figure to
 	# Qt4Agg backend. It also inherits from QWidget
 	from PyQt5.QtWidgets import QWidget, QSizePolicy, QToolButton, QVBoxLayout
-	qtType = 'Qt5'
+	qType = 'qt5'
 except:
-	matplotlib.use('Qt4Agg', force=True)
+	#matplotlib.use('Qt4Agg', force=True)
 
 	from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 	# Python Qt4 bindings for GUI objects
@@ -23,7 +23,8 @@ except:
 	# import the Qt4Agg FigureCanvas object, that binds Figure to
 	# Qt4Agg backend. It also inherits from QWidget
 	from PyQt4.QtGui import QWidget, QSizePolicy, QToolButton, QVBoxLayout
-	qtType = 'Qt4'
+	qType = 'qt4'
+
 from matplotlib.widgets import SpanSelector
 
 # Matplotlib Figure object
@@ -102,7 +103,7 @@ class MplCanvas(FigureCanvas):
 		# causes problems with code that uses the result of the
 		# draw() to update plot elements.
 		FigureCanvas.draw(self)
-		if qtType == 'Qt5': self._priv_update()
+		if qType == "qt5": self._priv_update()
 
 
 class vNavigationToolbar(NavigationToolbar):

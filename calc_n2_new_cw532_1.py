@@ -15,10 +15,10 @@ import sys
 #In[3]= (*Input coeficient of On Axis Transmittance dependence \
 aproximation obtained in Origin*)
 '''
-def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4), z=79.1, L=12., f=8., r0=0.1):
+def calcReChi3CW(XY, m=1, a=10.5, Lambda=532, n0=1.7, d=14.46*10**(-4), z=79.1, L=12., f=8., r0=0.1):
 
 	X, Y = XY[:,0], XY[:,1]
-	X*=10**-3*10**-6
+	X*=10**-3
 	c = [float64(0.0)]*5
 	#A, B1, B2, B3, B4 = [0, 0, 0, 0, 0]
 	eq = np.polyfit(X, Y, m)[::-1]
@@ -27,22 +27,25 @@ def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4),
 		if i > m: break
 		c[i] = j
 	A, B1, B2, B3, B4 = c
-	print(A,B1,B2,B3,B4)
+	print("-----\n",A,B1,B2,B3,B4)
 	
 	#In[8]= 
 
 	#In[9]= '''input a in pixel obtained from gaus1.exe'''
 	a *= float64(0.0025)#10.5*0.0025
+	print(a)
 
 	#In[10]= '''input Lambda in cm'''
 	Lambda *= 10**(-7)
+	print(Lambda)
 	k = 2*pi/Lambda
 	ld = k*a**2/2.
 	'''input refractive index n0'''
 	##n0 = 1.7
 	Rfl = ((1 - n0)/(1 + n0))**2
 	'''input thickness d in cm'''
-	d *= 10**(-1)
+	d *= 0.1
+	print(d)
 
 	#Out[10]= 0.0000532
 
@@ -76,7 +79,7 @@ def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4),
 	b = -k*w**2*(1 - z/R)/(2*z)
 	b2 = b**2
 	ar2 = w**2*(1 + b2)*(z/lds)**2
-	Norm1 = 1 - cmath.exp(-2*k*r02/ar2)
+	Norm1 = 1 - cmath.exp(-2*r02/ar2)
 	wInt = w/cmath.sqrt(2)
 	print("ww", w)
 	#Out[25]= 0.0170141
@@ -134,11 +137,11 @@ def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4),
 	#Out[41]= 566.904
 
 	#In[42]= 
-	n21 = (Th0/Th1)*(B1/A)*10**(-3)/c1
-	#n22 = cmath.sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
-	#n23 = (Th0/Th3*(B3/A))**(1/3)/c1*10**(3)
+	n21 = (Th0/Th1)*(B1/A)/c1*10**3
+	n22 = cmath.sqrt((B2/A)*(Th0/Th2))/c1*10**(3)
+	n23 = (Th0/Th3*(B3/A))**(1/3)/c1*10**(3)
 
-	print(n21)#,n22,n23)
+	print(n21,n22,n23)
 	#Out[42]= -1.03273*10**-9
 
 	#Out[43]= 0.
@@ -147,10 +150,10 @@ def calcReChi3CW(XY, m=1, a=10.5, Lambda=532*10**(-7), n0=1.7, d=14.46*10**(-4),
 
 	#In[45]= 
 	hi31 = 3*abs(n21)*(n0/(4*pi))**2
-	#hi32 = 3*abs(n22)*(n0/(4*pi))**2
-	#hi33 = 3*abs(n23)*(n0/(4*pi))**2
+	hi32 = 3*abs(n22)*(n0/(4*pi))**2
+	hi33 = 3*abs(n23)*(n0/(4*pi))**2
 
-	print(hi31)#,hi32,hi33)
+	print(hi31,hi32,hi33)
 	#Out[45]= 4.41439*10**-11
 
 	#Out[46]= 0.
@@ -242,17 +245,19 @@ if __name__ == "__main__":
 	
 	print(len(sys.argv))
 	if len(sys.argv) == 1:
-		A = 0.9753
-		B1 = 0.00249
-		B2 = -0.00025
+		A = 1.0177#0.9753
+		B1 = -1.74882*10**(-1)#0.00249
+		B2 = 1.40326*10**(-4)#-0.00025
 		B3 = 0
 		B4 = 0
 		
 		eq = poly1d([B4,B3,B2,B1,A])
 		x = arange(100)
 		y = eq(x)
-		calcReChi3CW(vstack((x,y)).T, m=2, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
-			z=79.1, L=12, f=8,r0=0.1)
+		calcReChi3CW(vstack((x,y)).T, m=2, a=49, Lambda=1064, n0=1.33, d=4,
+			z=50, L=14, f=8,r0=0.1)
+		#calcReChi3CW(vstack((x,y)).T, m=2, a=10.5, Lambda=532*10**-7, n0=1.7, d=14.46*10**(-4),
+		#	z=79.1, L=12, f=8,r0=0.1)
 	else:
 		'''
 		xy = loadtxt(sys.argv[1])

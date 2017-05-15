@@ -8,14 +8,18 @@ def calcImChi3(data, d=0.5, n0=1.33, Lambda=1064, exp_type="CW"):
     Y = data[:,1]
     print(data.shape)
     Lambda*=10**-7
+    eq = sp.polyfit(X,Y,1)[0]
+    print("Sign:",eq/abs(eq))
+    bSign = eq/abs(eq)*0.001
+    T0 = 1
     if exp_type=="CW":
         fit_func = lambda  I, T0, bLeff: T0*sp.log(1+bLeff*I)/(bLeff*I)
         def residuals( p, y, x): 
             err = y - fit_func(x, p[0], p[1])
             err = sp.array(err, dtype='complex128')
             return err.real**2+err.imag**2
-
-        params = leastsq(residuals,[0.999,-0.00001], args=(Y, X))
+        
+        params = leastsq(residuals,[0.5,bSign], args=(Y, X))
         T0, bLeff = params[0]
         print("T0 = %f, bLeff = %f"%(T0, bLeff))
         Leff = -(1. - T0)/(sp.log(T0)/d)
@@ -33,7 +37,7 @@ def calcImChi3(data, d=0.5, n0=1.33, Lambda=1064, exp_type="CW"):
             err = sp.array(err, dtype='complex128')
             return err.real**2+err.imag**2
 
-        params = leastsq(residuals,[0.999,-0.00001], args=(Y, X))
+        params = leastsq(residuals,[0.5,bSign], args=(Y, X))
         T0, bLeff = params[0]
         print("T0 = %f, bLeff = %f"%(T0, bLeff))
         Leff = -(1. - T0)/(sp.log(T0)/d)
@@ -44,7 +48,7 @@ def calcImChi3(data, d=0.5, n0=1.33, Lambda=1064, exp_type="CW"):
         print("ImHi3", ImHi3)
         x_new = sp.linspace(X.min(), X.max(), 300)
         y_new = fit_func(x_new, T0, bLeff)
-    return (ImHi3, beta, Leff, x_new, y_new)
+    return (ImHi3, beta, Leff, T0, x_new, y_new)
 
 
 if __name__ == "__main__":

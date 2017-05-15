@@ -88,18 +88,21 @@ def guirestore(ui, settings):
 			
 			name = obj.objectName()
 			value = settings.value(name)  # get stored value from registry
-			obj.setText(value)  # restore lineEditFile
+			if not value is None: 
+				obj.setText(value)  # restore lineEditFile
 		if isinstance(obj, QDoubleSpinBox):
 			
 			name = obj.objectName()
 			value = settings.value(name)  # get stored value from registry
-			obj.setValue(float(value))  # restore lineEditFile
+			if not value is None: 
+				obj.setValue(float(value))  # restore lineEditFile
 
 		if isinstance(obj, QSpinBox):
 			
 			name = obj.objectName()
 			value = settings.value(name)  # get stored value from registry
-			obj.setValue(int(value))  # restore lineEditFile
+			if not value is None: 
+				obj.setValue(int(value))  # restore lineEditFile
 		if isinstance(obj, QAction):
 			name = obj.objectName()
 			value = settings.value(name)  # get stored value from registry
