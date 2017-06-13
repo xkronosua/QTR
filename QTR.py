@@ -17,6 +17,7 @@ parser.add_option("--qt5", dest="qt5", action="store_true", help="for pyqt5", de
 print(ScriptOptions, ScriptArgs)
 import sys, os, signal, random, glob
 #import pdb
+ScriptOptions.qt4 = True
 if ScriptOptions.qt4:
 	print("Qt4")
 	from PyQt4 import QtGui, QtCore, uic, QtGui as QtWidgets # QtUiTools
@@ -35,6 +36,7 @@ import scipy.optimize as optimize
 from numpy.lib.stride_tricks import as_strided
 from scipy.signal import medfilt
 from scipy.signal import argrelextrema
+
 
 # import shelve
 # from glue_designer2 import  DesignerMainWindow
@@ -70,6 +72,11 @@ from pprint import pformat
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 #$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 import pandas
+###############################################
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
+###############################################
+
 
 filtersDict_indicatrix = {"532": {1:1,'1': 1, "OP06": 1/10**0.6, "OP09": 1/10**0.9, "OP18": 1/10**1.8}}
 def convertRawFilter(filt,waveLenght="532"):
@@ -272,6 +279,7 @@ class QTR(QtWidgets.QMainWindow):
 	projectName = ''
 	leastsq_params_ImChi3 = [None, None]
 	Settings = None
+	uiToolsDict = {}
 
 	def __init__(self, parent=None):
 		super(QTR, self).__init__(parent)
@@ -279,8 +287,44 @@ class QTR(QtWidgets.QMainWindow):
 		self.settings = QSettings('settings.ini', QSettings.IniFormat)
 		self.PATH = self.MAIN_DIRECTORY
 		
+		
 		#logging.getLogger().setLevel(100)
-		self.ui = loadUi(os.path.join(self.MAIN_DIRECTORY, 'mainwindow.ui'), self)
+		self.ui = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/mainwindow.ui'), self)
+		self.activeToolsLayout = QVBoxLayout()
+		self.ui.activeTools.setLayout(self.activeToolsLayout)
+
+		
+		
+		self.uiAverageWindow = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/AverageWindow.ui'), self)
+		self.addToolUi(self.uiAverageWindow) 
+		self.uiDataLoad = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/DataLoad.ui'), self)
+		self.addToolUi(self.uiDataLoad) 
+		self.uiImChi3 = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/ImChi3.ui'), self)
+		self.addToolUi(self.uiImChi3)   
+		self.uiNormShift = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/NormShift.ui'), self)
+		self.addToolUi(self.uiNormShift) 
+		self.uiReChi3 = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/ReChi3.ui'), self)
+		self.addToolUi(self.uiReChi3)
+		self.uiB_spline = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/B_spline.ui'), self)
+		self.addToolUi(self.uiB_spline)
+		self.uiFilters = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/Filters.ui'), self)
+		self.addToolUi(self.uiFilters) 
+		self.uiIntensCalibr = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/IntensCalibr.ui'), self)
+		self.addToolUi(self.uiIntensCalibr)   
+		self.uiPolyCut = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/PolyCut.ui'), self)
+		self.addToolUi(self.uiPolyCut)  
+		self.uiFiltFilt = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/FiltFilt.ui'), self)
+		self.addToolUi(self.uiFiltFilt)  
+		self.uiPolyFit = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/PolyFit.ui'), self)
+		self.addToolUi(self.uiPolyFit)  
+		self.uiNormData = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/NormData.ui'), self)
+		self.addToolUi(self.uiNormData) 
+
+		print("ToolsList:", self.uiToolsDict.keys())
+		#self.ui.toolsWidget.setWidget(self.toolsWidget)
+
+
+		 
 		#logging.getLogger().setLevel(40)
 		
 		
@@ -300,9 +344,11 @@ class QTR(QtWidgets.QMainWindow):
 		self.issecond = 0
 		self.background = None
 
-		self.mpl = MplWidget(self)
-		self.ui.mplWidget.addWidget(self.mpl)
-		self.ui.addToolBar(self.mpl.ntb)
+		#self.mpl = MplWidget(self)
+		#self.ui.mplWidget.addWidget(self.mpl)
+		self.mplPlotInit()
+			
+		#self.ui.addToolBar(self.mpl.ntb)
 
 		##< mpl
 
@@ -310,7 +356,7 @@ class QTR(QtWidgets.QMainWindow):
 		## випадаючий список варіантів нормування
 		self.ui.toolBarGraph.addAction(self.ui.menu_norm.menuAction())
 		self.ui.menu_norm.menuAction().setIcon(
-			QtGui.QIcon(os.path.join(self.MAIN_DIRECTORY, './buttons/norm_On.png')))
+			QtGui.QIcon(os.path.join(self.MAIN_DIRECTORY, 'buttons/norm_On.png')))
 		self.ui.menu_norm.setActiveAction(self.ui.norm_FirstPoint)
 
 		self.statusBarMessage = QtWidgets.QLabel()
@@ -323,19 +369,20 @@ class QTR(QtWidgets.QMainWindow):
 
 
 		## фільтри
-		fDict = self.filtersDict[self.ui.filtWaveLENGTH.currentText()]
+		fDict = self.filtersDict[self.uiFilters.filtWaveLENGTH.currentText()]
 		for i in fDict:
 			self.ui.filtersList.addItem(i + "\t\t" + str(fDict[i]))
 
 		self.filtLineEdit = 'X'
 
-		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_Data'))
+		self.setToolsLayer(layer=self.uiDataLoad)
 		self.fileDialog = QtWidgets.QFileDialog(self)
+		self.fileDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
 		self.uiConnect()
 
-		self.plt, = self.mpl.canvas.ax.plot([], [], '.')
-		self.points, = self.mpl.canvas.ax.plot([], [], '.')
-		self.mplSpan = self.mpl.canvas.ax.axvspan(0, 0, facecolor='g', alpha=0.5)
+		#self.plt = self.mpl.canvas.ax.plot([], [], '.')
+		#self.points = self.mpl.canvas.ax.plot([], [], '.')
+		#self.mplSpan = self.mpl.canvas.ax.axvspan(0, 0, facecolor='g', alpha=0.5)
 
 		#########################################################################
 		data = sp.rand(5, 2)
@@ -362,18 +409,77 @@ class QTR(QtWidgets.QMainWindow):
 			#print("loadSettingsFromIni:", self.settings.value('loadSettingsFromIni'))
 			#if self.settings.value('loadSettingsFromIni')=='true':
 			#logging.getLogger().setLevel(100)
-			guirestore(self.ui, self.settings)
+			#guirestore(self.ui, self.settings)
 			#logging.getLogger().setLevel(40)
-			
+			pass
 		except:
 			traceback.print_exc()
 
 		if self.ui.filePath.text() == "":
-			self.ui.filePath.setText('/home/kronosua/work/QTR/data/Jul2715/nd18.dat')
+			self.ui.filePath.setText('/home/kronosua/work/QTR/test.dat')
 
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
-		self.ui.tabifyDockWidget(self.ui.dockWidget_Console, self.ui.DataDock)
+		#self.ui.tabifyDockWidget(self.ui.dockWidget_Console, self.ui.DataDock)
 	
+	def mplPlotInit(self):
+		self.mplWin = pg.GraphicsWindow()
+		self.mpl = self.mplWin.addPlot(row=1, col=0) #pg.PlotWidget(name='mainPlot')  ## giving the plots names allows us to link their axes together
+		
+		self.ui.mplWidget.addWidget(self.mplWin)
+		self.pointsPlot = self.mpl.plot( pen=(200,200,200), symbolBrush=(255,0,0), symbolPen='w')
+		self.pointsPlotTmp = self.mpl.plot( pen=(200,200,200,20), symbolBrush=(0,255,0,20), symbolPen='c')
+		self.pointsPlotTmp.setZValue(-10)
+		self.cutLinePlot = self.mpl.plot( pen=(255,0,0), symbolBrush=(255,0,0,50), symbolPen='w')
+		#self.polyLine = pg.PolyLineROI([[0,0]],closed=False)
+		#self.mpl.addItem(self.polyLine) 
+		self.cutLineStart = []
+		self.vLine = pg.InfiniteLine(angle=90, movable=False)
+		self.hLine = pg.InfiniteLine(angle=0, movable=False)
+		self.mpl.addItem(self.vLine, ignoreBounds=True)
+		self.mpl.addItem(self.hLine, ignoreBounds=True)
+		self.mplLabel = QtWidgets.QLabel()#pg.LabelItem(justify='center')
+		self.ui.toolBarHistory.addWidget(self.mplLabel)
+		self.mpl.showGrid(x=True, y=True)
+		self.mouseProxyMoveRestoreBG()
+		self.regionForProcessing = pg.ROI([0,0], [10,10],pen=(0,20))
+		self.mpl.addItem(self.regionForProcessing)
+		## handles scaling horizontally around center
+		self.regionForProcessing.addScaleHandle([1, 0.5], [0.5, 0.5])
+		self.regionForProcessing.addScaleHandle([0, 0.5], [0.5, 0.5])
+
+		## handles scaling vertically from opposite edge
+		self.regionForProcessing.addScaleHandle([0.5, 0], [0.5, 1])
+		self.regionForProcessing.addScaleHandle([0.5, 1], [0.5, 0])
+
+		## handles scaling both vertically and horizontally
+		self.regionForProcessing.addScaleHandle([1, 1], [0, 0])
+		self.regionForProcessing.addScaleHandle([0, 0], [1, 1])
+		self.regionForProcessing.addScaleHandle([0, 1], [1, 0])
+		self.regionForProcessing.addScaleHandle([1, 0], [0, 1])
+		self.regionForProcessing.hide()
+
+	def mouseProxyMoveRestoreBG(self):
+		self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=15, slot=self.bgMouseMoveReader)
+		#self.mplWin.addItem(self.mplLabel)
+	def bgMouseMoveReader(self,evt):
+		pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+		#print(pos)
+		vb = self.mpl.vb
+		if self.mpl.sceneBoundingRect().contains(pos):
+			mousePoint = vb.mapSceneToView(pos)
+			x, y = mousePoint.x(), mousePoint.y()
+			if self.ui.actionX_Log10.isChecked():
+				x = 10**(x)
+			if self.ui.actionY_Log10.isChecked():
+				y = 10**(y)
+			self.mousePosition = [x,y]
+			#print(mousePoint)
+			#if index > 0 and index < len(data):
+			if x!=mousePoint.x() or y!=mousePoint.y():
+				self.mplLabel.setText("<span style='color:green'>x=%0.4f|%0.4E</span>,   <span style='color: red'>y=%0.4f|%0.4E</span>" % (mousePoint.x(),x, mousePoint.x(),y))
+			else:
+				self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
+			
 
 	#############################################################################g
 	############	 Вкладка  "дані"	#########################################
@@ -398,7 +504,7 @@ class QTR(QtWidgets.QMainWindow):
 		else:
 			open(self.projectPath, 'a').close()
 			self.ProjectFile = h5py.File(self.projectPath, 'a')
-			self.ProjectFile.copy(self.data, self.data.name)
+			self.ProjectFile.copyfloa(self.data, self.data.name)
 			self.ProjectFile.flush()
 			self.data = self.ProjectFile[self.projectName]
 		# data_new = ProjectFile_new.create_group(self.projectName)
@@ -414,7 +520,7 @@ class QTR(QtWidgets.QMainWindow):
 		self.update_graph()
 
 	def showTmpConfig(self):
-		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_NormShift'))
+		self.setToolsLayer(layer=self.uiNormShift)
 	# array = self.getData(name)
 	# self.plt.set_data(array[:,0], array[:,1])
 	# self.plt.set_color(array.color)
@@ -426,14 +532,14 @@ class QTR(QtWidgets.QMainWindow):
 	def saveData(self):
 		'''Збереження активного масиву до текстового файлу'''
 		if self.sender().objectName() == 'actionSaveData':
-			self.ui.stackedWidget.setCurrentWidget(self.getUi('page_Data'))
+			self.setToolsLayer(layer=self.uiDataLoad)
 		Name = self.currentName()
 		data, _ = self.getData(Name)
 		if not data is None:
 			filename = ""
 			if ScriptOptions.qt4:
 				filename = self.fileDialog.getSaveFileName(self,
-														   'Save File',
+												 'Save File',
 														   os.path.join(self.PATH, Name))
 			else:
 				filename = self.fileDialog.getSaveFileName(self,
@@ -643,7 +749,7 @@ class QTR(QtWidgets.QMainWindow):
 			for i in prev_data.attrs.keys():
 				data.attrs[i] = prev_data.attrs[i]
 			if self.ui.actionProcessView.isChecked():
-				xl = self.mpl.canvas.ax.get_xlim()
+				xl = self.regionForProcessing.pos()[0],self.regionForProcessing.size()[0] 
 				print(xl,data[:,0].min(), sp.where(data[:, 0] >= xl[0])[0][0],"-"*10)
 				x_start = sp.where(data[:, 0] >= xl[0])[0][0]
 				x_end = sp.where(data[:, 0] <= xl[1])[0][-1]
@@ -1208,130 +1314,107 @@ class QTR(QtWidgets.QMainWindow):
 		data[:, 1] = data[:, 1][::-1]
 		self.updateData(name=Name, data=data)
 
-	def movePoint(self):
+	def movePoint(self,state):
 		'''Переміщення точок'''
-		data, Name = self.getData()
-		if not data is None:
-			def on_motion(event):
-				if not event.xdata is None and not event.ydata is None:
-					xl = self.mpl.canvas.ax.get_xlim()
-					yl = self.mpl.canvas.ax.get_ylim()
-					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
-					self.mpl.canvas.ax.set_xlim(xl)
-					self.mpl.canvas.ax.set_ylim(yl)
-					nearest_x = sp.absolute(data[:, 0] - event.xdata).argmin()
-					# print(nearest_x, data[nearest_x, 1], event.xdata)
-					yl = self.mpl.canvas.ax.get_ylim()
-					self.line.set_xdata([event.xdata] * 2)
-					self.line.set_ydata(yl)
-					self.points.set_xdata(data[nearest_x, 0])
-					self.points.set_ydata(data[nearest_x, 1])
-					# redraw artist
-					self.mpl.canvas.ax.draw_artist(self.line)
-					self.mpl.canvas.ax.draw_artist(self.points)
-					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
+		if state:
+			data, Name = self.getData()
+			if not data is None:
+				
+				def mouseMoved(evt):
+					pos = evt[0]
+					if self.mpl.sceneBoundingRect().contains(pos):
+						mousePoint = self.mpl.vb.mapSceneToView(pos)
+						self.mousePosition =[mousePoint.x(),mousePoint.y()] 
+						nearest_x = sp.absolute(data[:, 0] - mousePoint.x()).argmin()
+						#self.cutLinePlot.setData(x=[data[nearest_x, 0]],y=[data[nearest_x, 1]])
+						self.vLine.setPos(data[nearest_x, 0])
+						self.hLine.setPos(data[nearest_x, 1])
 
-			def on_press(event):
-				if not event.xdata is None and not event.ydata is None:
+				def mouseClicked(evt):
+					if evt[0].button() == 1:
+						pos = self.mousePosition
+						nearest_x = sp.absolute(data[:, 0] - self.mousePosition[0]).argmin()
+						data[nearest_x, 1] = pos[1]
+						self.updateData(name=Name, data=data)
+						self.mouseProxyMove.disconnect()
+						self.mouseProxyClick.disconnect()
+						self.mouseProxyMoveRestoreBG()
+						self.ui.movePoint.setChecked(0)
 
-					nearest_x = abs(data[:, 0] - event.xdata).argmin()
-					# nearest_y = abs(data[:, 1] - event.ydata).argmin()
+				self.mouseProxyMove.disconnect()
+				self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+				self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
+		else:
+			self.ui.movePoint.setChecked(0)
+			try:
+				self.mouseProxyMove.disconnect()
+				self.mouseProxyClick.disconnect()
+				self.mouseProxyMoveRestoreBG()
+			except:
+				traceback.print_exc()
 
-					data[nearest_x, 1] = event.ydata
-					self.updateData(name=Name, data=data)
-
-					xl = self.mpl.canvas.ax.get_xlim()
-					self.mpl.canvas.ax.plot(xl, [1] * 2, '-.r')
-					self.mpl.canvas.ax.plot(event.xdata, 1, 'ro', markersize=6)
-					self.mpl.canvas.draw()
-					self.mpl.canvas.mpl_disconnect(self.cidpress)
-					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				else:
-					self.mpl.canvas.mpl_disconnect(self.cidpress)
-					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-
-			self.cidmotion = self.mpl.canvas.mpl_connect(
-				'motion_notify_event', on_motion)
-			self.cidpress = self.mpl.canvas.mpl_connect(
-				'button_press_event', on_press)
-	
 	def find_2Tangent(self, state):
 		'''Переміщення точок'''
-		data, Name = self.getData()
-		self.issecond = 0
-		if not data is None:
-			X, Y = data[:,0],data[:,1]
-			t = interp.InterpolatedUnivariateSpline(X, Y)
-			dt = t.derivative()
-			def find_tangent_line_l(x,y):
-				w = X<=x
-				XX = X[w]
-				YY = Y[w]
-				r = abs(YY-y+dt(XX)*(x-XX))
-				w = sp.where(r == r.min())[0]
-				f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
-				return f
-			def find_tangent_line_r(x,y):
-				w = X>=x
-				XX = X[w]
-				YY = Y[w]
-				r = abs(YY-y+dt(XX)*(x-XX))
-				w = sp.where(r == r.min())[0]
-				f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
-				return f
-			k = 0
-			def on_motion(event):
-				if not event.xdata is None and not event.ydata is None:
-					xl = self.mpl.canvas.ax.get_xlim()
-					yl = self.mpl.canvas.ax.get_ylim()
-					self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
-					self.mpl.canvas.ax.set_xlim(xl)
-					self.mpl.canvas.ax.set_ylim(yl)
-					# print(nearest_x, data[nearest_x, 1], event.xdata)
-					yl = self.mpl.canvas.ax.get_ylim()
-					
-					yy_l = find_tangent_line_l(event.xdata, event.ydata)
-					yy_r = find_tangent_line_r(event.xdata, event.ydata)
-					x_new = sp.array([xl[0],event.xdata,xl[1]])
-					y_new = sp.array([yy_l(xl[0]), yy_l(event.xdata), yy_r(xl[1])])
-					self.line.set_data(x_new, y_new)
-					#self.points.set_xdata(data[nearest_x, 0])
-					#self.points.set_ydata(data[nearest_x, 1])
-					# redraw artist
-					self.mpl.canvas.ax.draw_artist(self.line)
-					#self.mpl.canvas.ax.draw_artist(self.points)
-					self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
-
-			def on_press(event):
-
-				if not event.xdata is None and not event.ydata is None:
-					
-					self.mpl.canvas.ax.plot(event.xdata, event.ydata,'ro', markersize=6)
-					self.mpl.canvas.draw()
-					self.mpl.canvas.mpl_disconnect(self.cidpress)
-					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-					print('press')
-					self.ui.action_find2Tangent.setChecked(False)
-					self.mprintf("XY: %.3f, %.3f"%(event.xdata, event.ydata))
-
-				else:
-					self.mpl.canvas.mpl_disconnect(self.cidpress)
-					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				
 		if state:
-			self.cidpress = self.mpl.canvas.mpl_connect(
-				'button_press_event', on_press)
-			self.cidmotion = self.mpl.canvas.mpl_connect(
-				'motion_notify_event', on_motion)
+			data, Name = self.getData()
+			self.issecond = 0
+			if not data is None:
+				X, Y = data[:,0],data[:,1]
+				t = interp.InterpolatedUnivariateSpline(X, Y)
+				dt = t.derivative()
+				xl = X.min(),X.max()
+				yl = Y.min(),Y.max()
+				def find_tangent_line_l(x,y):
+					w = X<=x
+					XX = X[w]
+					YY = Y[w]
+					r = abs(YY-y+dt(XX)*(x-XX))
+					w = sp.where(r == r.min())[0]
+					f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
+					return f
+				def find_tangent_line_r(x,y):
+					w = X>=x
+					XX = X[w]
+					YY = Y[w]
+					r = abs(YY-y+dt(XX)*(x-XX))
+					w = sp.where(r == r.min())[0]
+					f = lambda x: YY[w]+dt(XX[w])*(x-XX[w])
+					return f
+				k = 0
+				self.cutLinePlot.show()
+				def mouseMoved(evt):
+					pos = evt[0]
+					if self.mpl.sceneBoundingRect().contains(pos):
+						mousePoint = self.mpl.vb.mapSceneToView(pos)
+						self.mousePosition =[mousePoint.x(),mousePoint.y()]
 
+						yy_l = find_tangent_line_l(self.mousePosition[0], self.mousePosition[1])
+						yy_r = find_tangent_line_r(self.mousePosition[0], self.mousePosition[1])
+						x_new = sp.array([xl[0],self.mousePosition[0],xl[1]])
+						y_new = sp.array([yy_l(xl[0])[0], yy_l(self.mousePosition[0])[0], yy_r(xl[1])[0]])
+						#print(x_new,y_new)
+						self.cutLinePlot.setData(x=x_new, y=y_new)
+						self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
+					
+						
+				def mouseClicked(evt):
+					if evt[0].button() == 1:
+						pos = self.mousePosition
+						print("X=",self.mousePosition[0],", Y=",self.mousePosition[1])
+						self.mouseProxyMove.disconnect()
+						self.mouseProxyClick.disconnect()
+						self.mouseProxyMoveRestoreBG()
+						self.ui.action_find2Tangent.setChecked(0)
 
+				self.mouseProxyMove.disconnect()
+				self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+				self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
 		else:
+			self.ui.action_find2Tangent.setChecked(0)
 			try:
-				self.mpl.canvas.mpl_disconnect(self.cidpress)
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				#self.update_graph()
-				self.ui.action_find2Tangent.setChecked(False)
-
+				self.mouseProxyMove.disconnect()
+				self.mouseProxyClick.disconnect()
+				self.mouseProxyMoveRestoreBG()
 			except:
 				traceback.print_exc()
 
@@ -1343,12 +1426,9 @@ class QTR(QtWidgets.QMainWindow):
 			try:
 				data[:, 1] /= self.abs(data[0, 1])
 				self.updateData(name=Name, data=data)
-				xl = self.mpl.canvas.ax.get_xlim()
-				l1, = self.mpl.canvas.ax.plot(xl, [1] * 2, 'r')
-				l2, = self.mpl.canvas.ax.plot(data[0, 0], 1, 'ro', markersize=6)
-				self.mpl.canvas.draw()
-				self.mpl.canvas.ax.lines.remove(l1)
-				self.mpl.canvas.ax.lines.remove(l2)
+				self.cutLinePlot.show()
+				self.cutLinePlot.setData(x=[data[0,0]],y=[1])
+				self.hLine.setPos(data[0,0])				
 
 			except:
 				traceback.print_exc()
@@ -1398,7 +1478,7 @@ class QTR(QtWidgets.QMainWindow):
 
 	def norm_AtX(self):
 		''' Нормувати на 1 по заданому X'''
-		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_NormShift'))
+		self.setToolsLayer(layer=self.uiNormShift)
 		data, Name = self.getData()
 
 		if not data is None:
@@ -1414,55 +1494,44 @@ class QTR(QtWidgets.QMainWindow):
 
 	def norm_Shift0Xh(self, state):
 		''' Центрування по X вручну'''
+		if state:
+			data, Name = self.getData()
 
-		data, Name = self.getData()
+			def mouseMoved(evt):
+				pos = evt[0]
+				if self.mpl.sceneBoundingRect().contains(pos):
+					mousePoint = self.mpl.vb.mapSceneToView(pos)
+					self.mousePosition =[mousePoint.x(),mousePoint.y()]
+					self.vLine.setPos(self.mousePosition[0])
 
-
-		def on_press(event):
-			''' Отримання координат точки для нормування на точку '''
-			if not event.xdata is None and not event.ydata is None:
-
-				if not data is None:
-					data[:, 0] -= event.xdata  # data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
+			def mouseClicked(evt):
+				if evt[0].button() == 1:
+					pos = self.mousePosition
+					print("X=",self.mousePosition[0],", Y=",self.mousePosition[1])
+					data[:, 0] -= pos[0]  # data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
 
 					self.updateData(Name, data=data)
-					yl = self.mpl.canvas.ax.get_ylim()
-					self.line, = self.mpl.canvas.ax.plot([0] * 3, [yl[0], (yl[0]+yl[1])/2, yl[1]], 'r')
-					# self.points, = self.mpl.canvas.ax.plot(0, yl, 'ro', markersize=6)
-					self.mpl.canvas.draw()
-					self.mpl.canvas.mpl_disconnect(self.cidpress)
-					self.mpl.canvas.mpl_disconnect(self.cidmotion)
-					self.ui.norm_Shift0Xh.setChecked(False)
+					
+					self.mouseProxyMove.disconnect()
+					self.mouseProxyClick.disconnect()
+					self.mouseProxyMoveRestoreBG()
+					self.ui.movePoint.setChecked(0)
 
-		def on_motion(event):
-			if not event.xdata is None and not event.ydata is None:
-				xl = self.mpl.canvas.ax.get_xlim()
-				yl = self.mpl.canvas.ax.get_ylim()
-				self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
-				self.mpl.canvas.ax.set_xlim(xl)
-				self.mpl.canvas.ax.set_ylim(yl)
-
-				self.line.set_xdata([event.xdata] * 2)
-				self.line.set_ydata(yl)
-
-				# redraw artist
-				self.mpl.canvas.ax.draw_artist(self.line)
-				self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
-
-		if state:
-			self.cidpress = self.mpl.canvas.mpl_connect(
-				'button_press_event', on_press)
-			self.cidmotion = self.mpl.canvas.mpl_connect(
-				'motion_notify_event', on_motion)
-
-
+			self.mouseProxyMove.disconnect()
+			self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+			self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
 		else:
+			self.ui.movePoint.setChecked(0)
 			try:
-				self.mpl.canvas.mpl_disconnect(self.cidpress)
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				self.update_graph()
+				self.mouseProxyMove.disconnect()
+				self.mouseProxyClick.disconnect()
+				self.mouseProxyMoveRestoreBG()
 			except:
 				traceback.print_exc()
+
+		
+
+	
 		# Якщо ввімкнено, обробка решти даних
 		self.processSelectedData(Name, self.sender)
 
@@ -1578,7 +1647,7 @@ class QTR(QtWidgets.QMainWindow):
 	def norm_Shift0(self):
 		''' Видалення фонової компоненти '''
 		# Name = self.currentName()
-		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_NormShift'))
+		self.setToolsLayer(layer=self.uiNormShift)
 		shift_len = self.ui.norm_Shift0_len.value()
 		data, Name = self.getData()
 		newData = sp.copy(data)
@@ -1710,25 +1779,32 @@ class QTR(QtWidgets.QMainWindow):
 					i.setEnabled(not ui_actions[0].isChecked())
 
 			else:
-				index = int(senderName[6] != "X")
+				
 				# ui_obj = getattr(self.ui, t + Names[0])
 				# print(Scale, state)
 
 				if state == 1:
-					logShift = data[:, index].min()
-					print("logShift=%f" % logShift)
-					if logShift < 0 and self.ui.Log10Shift.isChecked():
-						shiftForLog10 = logShift
-						data[:, index] -= logShift
+					if senderName[6] == "X":
+						self.mpl.setLogMode(x=True)
+					else:
+						self.mpl.setLogMode(y=True)
+					#logShift = data[:, index].min()
+					#print("logShift=%f" % logShift)
+					#if logShift < 0 and self.ui.Log10Shift.isChecked():
+					#	shiftForLog10 = logShift
+					#	data[:, index] -= logShift
 
-					data = data[data[:, index] > 0, :]
-					data[:, index] = sp.log10(data[:, index])
+					#data = data[data[:, index] > 0, :]
+					#data[:, index] = sp.log10(data[:, index])
 				else:
-
-					data[:, index] = sp.power(10., data[:, index])
-					if data.attrs['shiftForLog10'] != None and self.ui.Log10Shift.isChecked():
-						data[:, index] += data.attrs['shiftForLog10']
-						shiftForLog10 = None
+					if senderName[6] == "X":
+						self.mpl.setLogMode(x=False)
+					else:
+						self.mpl.setLogMode(y=False)
+					#data[:, index] = sp.power(10., data[:, index])
+					#if data.attrs['shiftForLog10'] != None and self.ui.Log10Shift.isChecked():
+					#	data[:, index] += data.attrs['shiftForLog10']
+					#	shiftForLog10 = None
 				Scale[index] = int(state)
 				# print(Scale)
 				# ui_obj[0].setEnabled(##	not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
@@ -1773,11 +1849,6 @@ class QTR(QtWidgets.QMainWindow):
 	def update_graph(self, name=None, data=None, showTmp=True):
 		"""Updates the graph with new X and Y"""
 		# TODO: rewrite this routine, to get better performance
-
-
-		self.background = \
-			self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
-		# save current plot variables
 		if name is None:
 			data, name = self.getData()
 
@@ -1786,301 +1857,229 @@ class QTR(QtWidgets.QMainWindow):
 		if name is None:
 			print('noData')
 		else:
-			print("points: %d"% len(data))
-			if self.confDict['autoscale'] and len(data) > 2:
-				self.Rescale(data)
-
-			if self.background != None:
-				# save initial x and y limits
-				self.xl = self.mpl.canvas.ax.get_xlim()
-				self.yl = self.mpl.canvas.ax.get_ylim()
-
-			# clear the axes
-			self.mpl.canvas.ax.clear()
-			# plot graph
-			self.mpl.canvas.ax.axis[:].invert_ticklabel_direction()
-			# self.mpl.canvas.ax.set_xticks(self.mpl.canvas.ax.get_xticks()[1:-1])
-
-
 			if self.confDict['showTmp'] and len(self.data[name]['main']) > 1 and showTmp:
 				# print(data.attrs['color'])
 				prev_data = self.data[name]['main'][str(int(self.dIndex(name)) - 1)]
 				c = QtGui.QColor(data.attrs['color']).getRgb()
-				new_color = QtGui.QColor(255 - c[0], 255 - c[1], 255 - c[2], 255)
-				self.plt_tmp, = self.mpl.canvas.ax.plot(prev_data[:, 0], \
-														prev_data[:, 1], color=new_color.name(), marker='+',
-														linestyle='None', markersize=4, alpha=0.35)
-
-			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
-												data[:, 1], color=data.attrs['color'], marker='o', linestyle='None',
-												markeredgecolor=data.attrs['color'], markersize=5, zorder=15, alpha=0.9)
-			self.plt, = self.mpl.canvas.ax.plot(data[:, 0], \
-												data[:, 1], color=data.attrs['color'],  linestyle='-',
-												markeredgecolor=data.attrs['color'],  zorder=16, alpha=0.3)
-			self.mprintf(len(data))
-			if not hasattr(self, 'line'):
-				# creating line
-				self.line, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'g--', animated=True)
-			if not hasattr(self, 'points'):
-				# creating points
-				self.points, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'mo', animated=True, markersize=3)
-			if not hasattr(self.ui, 'rectab'):
-				# creating rectangle
-				self.rect, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'm--', animated=True)
-				self.rectab, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-				self.rectbc, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-				self.rectcd, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-				self.rectda, = self.mpl.canvas.ax.plot([0, 0], [0, 0], 'r--', animated=True)
-			# TODO: create a circle
-			# enable grid
-			self.mpl.canvas.ax.grid(True)
-
-			if self.background != None:
-				# set x and y limits
-				self.mpl.canvas.ax.set_xlim(self.xl)
-				self.mpl.canvas.ax.set_ylim(self.yl)
+				new_color = (255 - c[0], 255 - c[1], 255 - c[2])
+				print(new_color)
+				self.pointsPlotTmp.setData(x=prev_data[:,0],y=prev_data[:,1],pen=(200,200,200,20),symbolBrush=(20,0,255,20))
+			self.pointsPlot.setData(x=data[:,0],y=data[:,1],pen=(200,200,200), symbolBrush=(255,0,0), symbolPen='w')
+			if self.confDict['autoscale'] and len(data) > 2:
+				self.mpl.autoRange()
 
 
-			# self.set_x_log(self.ui.xLogScale.isChecked(), redraw = False)
-			# self.set_y_log(self.ui.yLogScale.isChecked(), redraw = False)
-			# force an image redraw
-			self.mpl.canvas.draw()
-
-			# copy background
-			self.background = \
-				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
-			# make edit buttons enabled
-
-			self.ui.mplactionCut_by_line.setEnabled(self.background != None)
-			self.ui.mplactionCut_by_rect.setEnabled(self.background != None)
-
-		# self.mpl.canvas.ax.relim()
-		# self.mpl.canvas.ax.autoscale_view()
-
-		# if sp.shape(data) != self.tempShape :
-		#	self.tempShape = sp.shape(data)
-		#	self.data_signal.emit()
-
-	def draw_line(self):
-		self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
-		self.line.set_xdata([self.x1, self.x2])
-		self.line.set_ydata([self.y1, self.y2])
-		# redraw artist
-		self.mpl.canvas.ax.draw_artist(self.line)
-		self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
-
-	def draw_rect(self):
-		self.mpl.canvas.ax.figure.canvas.restore_region(self.background)
-		self.rect.set_xdata([self.x1, self.x1, self.x2, self.x2, self.x1])
-		self.rect.set_ydata([self.y1, self.y2, self.y2, self.y1, self.y1])
-
-		# redraw artists
-		self.mpl.canvas.ax.draw_artist(self.rect)
-
-		self.mpl.canvas.ax.figure.canvas.blit(self.mpl.canvas.ax.bbox)
-
+	
 	############################## Line #######################################
 
+			
 	def cut_line(self, state):
 		"""start cut the line"""
+
 		if state:
+			self.cutLinePlot.show()
+			#cross hair
+			#print(self.mpl,dir(self.mpl)ir)
+			vb = self.mpl.vb
+			self.mousePosition = []
+			def mouseMoved(evt):
+				
+				pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+				#print(pos)
+				if self.mpl.sceneBoundingRect().contains(pos):
+					
+					mousePoint = vb.mapSceneToView(pos)
+					x, y = mousePoint.x(), mousePoint.y()
+					if self.ui.actionX_Log10.isChecked():
+						x = 10**(x)
+					if self.ui.actionY_Log10.isChecked():
+						y = 10**(y)
+					self.mousePosition = [x,y]
+					#print(mousePoint)
+					#if index > 0 and index < len(data):
+					self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
+					self.vLine.setPos(mousePoint.x())
+					self.hLine.setPos(mousePoint.y())
+					x0, y0 = self.cutLineStart[0]
+					if len(self.cutLineStart)==1:
+						self.cutLinePlot.setData(x=[x0,x],y=[y0,y])
+					#self.polyLine.setData()
 
-			# self.sdata = data.copy()
-			self.cidpress = self.mpl.canvas.mpl_connect(
-				'button_press_event', self.on_press)
-			self.cidrelease = self.mpl.canvas.mpl_connect(
-				'button_release_event', self.on_release)
+			def mouseClicked(evt):
+				#print(evt[0].pos(),evt[0].button(), dir(evt[0]))
+				print(self.cutLineStart,evt[0].pos())
+				pos=[None,None]
+				if evt[0].button() == 1:
+					pos = self.mousePosition
+				if evt[0].button() == 1 and len(self.cutLineStart) == 0:
+					self.cutLineStart = [pos]
+					self.cutLinePlot.setData(x=[pos[0]],y=[pos[1]])
+				elif evt[0].button() == 1 and len(self.cutLineStart) == 1:
+					self.cutLineStart.append( [pos[0],pos[1]])
+					#self.mouseProxyMove.disconnect()
+					#self.mouseProxyClick.disconnect()
+				elif evt[0].button() == 1 and len(self.cutLineStart) == 2:
+					x1,y1 = self.cutLineStart[0]
+					x2,y2 = self.cutLineStart[1] 
+					x3,y3 = pos
+
+					data, name = self.getData()
+
+					# point swap
+					if x1 >= x2:
+						x1, x2 = swap(x1, x2)
+						y1, y2 = swap(y1, y2)
+					try:
+						y  = ((y2 - y1) / (x2 - x1)) * (x3 - x2) + y2
+						X  = data[:, 0]
+						Y  = data[:, 1]
+						yy = ((y2 - y1) / (x2 - x1)) * (X - x2) + y2
+					except:
+						y = 0.
+					if y3 >= y:
+						# up cut
+						w = (X >= x1) * (X <= x2) * (Y >= yy)
+						data = data[~w, :]
+
+					else:
+						# down cut
+						w = (X >= x1) * (X <= x2) * (Y <= yy)
+						data = data[~w, :]
+					self.updateData(name, data=data)
+
+					self.ui.mplactionCut_by_line.setChecked(False)
+					self.cutLineStart = []
+					self.mouseProxyMove.disconnect()
+					self.mouseProxyMoveRestoreBG()
+					self.mouseProxyClick.disconnect()
+					self.cutLinePlot.hide()
+					
+
+			self.mouseProxyMove.disconnect()
+			self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+			self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
+			#p1.scene().sigMouseMoved.connect(mouseMoved)
+			## self.sdata = data.copy()
+			#self.cidpress = self.mpl.canvas.mpl_connect(
+			#	'button_press_event', self.on_press)
+			#self.cidrelease = self.mpl.canvas.mpl_connect(
+			#	'button_release_event', self.on_release)
 		else:
-			self.issecond = 0
-			self.mpl.canvas.mpl_disconnect(self.cidpress)
-			self.mpl.canvas.mpl_disconnect(self.cidrelease)
-			if hasattr(self, 'cidmotion'):
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-			self.update_graph()
+			self.cutLineStart = []
+			self.mouseProxyMove.disconnect()
+			self.mouseProxyMoveRestoreBG()
+			self.mouseProxyClick.disconnect()
+			self.cutLinePlot.hide()
+			#print(dir(self.mouseProxy))
+			#self.issecond = 0
+			#self.mpl.canvas.mpl_disconnect(self.cidpress)
+			#self.mpl.canvas.mpl_disconnect(self.cidrelease)
+			#if hasattr(self, 'cidmotion'):
+			#	self.mpl.canvas.mpl_disconnect(self.cidmotion)
+			#self.update_graph()
 		self.ui.mplactionCut_by_rect.setEnabled(not state)
-		self.ui.stackedWidget.setEnabled(not state)
-
-	def on_press(self, event):
-		"""on button press event for line
-		"""
-		if not event.xdata is None and not event.ydata is None:
-			# copy background
-
-			self.background = \
-				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
-			if self.issecond == 0:
-				self.x1 = event.xdata
-				self.y1 = event.ydata
-				self.cidmotion = self.mpl.canvas.mpl_connect('motion_notify_event', self.on_motion)
-				return
-
-			if self.issecond == 1:
-				data, name = self.getData()
-
-				self.x3 = event.xdata
-				self.y3 = event.ydata
-				# point swap
-				if self.x1 >= self.x2:
-					self.x1, self.x2 = swap(self.x1, self.x2)
-					self.y1, self.y2 = swap(self.y1, self.y2)
-				try:
-					y = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						(self.x3 - self.x2) + self.y2
-					X = data[:, 0]
-					Y = data[:, 1]
-					yy = ((self.y2 - self.y1) / (self.x2 - self.x1)) * \
-						 (X - self.x2) + self.y2
-				except:
-					y = 0.
-				if self.y3 >= y:
-					# up cut
-					w = (X >= self.x1) * (X <= self.x2) * (Y >= yy)
-					data = data[~w, :]
-
-				else:
-					# down cut
-					w = (X >= self.x1) * (X <= self.x2) * (Y <= yy)
-					data = data[~w, :]
-				self.updateData(name, data=data)
-
-				self.ui.mplactionCut_by_line.setChecked(False)
-		else:
-
-			#self.ui.mplactionCut_by_line.setChecked(False)
-			return
-
-	def on_motion(self, event):
-		'''on motion we will move the rect if the mouse is over us'''
-		if not event.xdata is None and not event.ydata is None:
-			self.x2 = event.xdata
-			self.y2 = event.ydata
-			self.draw_line()
-		else:
-			pass
-			#self.ui.mplactionCut_by_line.setChecked(False)
-
-	def on_release(self, event):
-		'''on release we reset the press data'''
-		if not event.xdata is None and not event.ydata is None:
-			self.x2 = event.xdata
-			self.y2 = event.ydata
-			self.issecond = 1
-			self.draw_line()
-			if self.x1 and self.x2 and self.y1 and self.y2:
-				# self.mpl.canvas.mpl_disconnect(self.cidpress)
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				self.mpl.canvas.mpl_disconnect(self.cidrelease)
-			else:
-				self.mpl.canvas.mpl_disconnect(self.cidpress)
-		else:
-			self.x2 = self.line.get_xdata()[-1]
-			self.y2 = self.line.get_ydata()[-1]
-			self.issecond = 1
-			#self.draw_line()
-			if self.x1 and self.x2 and self.y1 and self.y2:
-				# self.mpl.canvas.mpl_disconnect(self.cidpress)
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				self.mpl.canvas.mpl_disconnect(self.cidrelease)
-			else:
-				self.mpl.canvas.mpl_disconnect(self.cidpress)
-			#self.ui.mplactionCut_by_line.setChecked(False)
+		self.ui.activeTools.setEnabled(not state)
 
 	############################### Rect ####################################
+	"""start cut the line"""
 	def cut_rect(self, state):
 		if state:
-			"""start to cut the rect"""
-			# self.sdata = data.copy()
-			self.cidpress = self.mpl.canvas.mpl_connect(
-				'button_press_event', self.on_press2)
-			self.cidrelease = self.mpl.canvas.mpl_connect(
-				'button_release_event', self.on_release2)
-		else:
-			self.issecond = 0
-			self.mpl.canvas.mpl_disconnect(self.cidpress)
-			self.mpl.canvas.mpl_disconnect(self.cidrelease)
-			if hasattr(self, 'cidmotion'):
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-			self.update_graph()
-		self.ui.mplactionCut_by_line.setEnabled(not state)
-		self.ui.stackedWidget.setEnabled(not state)
+			self.cutLinePlot.show()
+			#cross hair
+			#print(self.mpl,dir(self.mpl)ir)
+			vb = self.mpl.vb
+			self.mousePosition = []
+			def mouseMoved(evt):
+				
+				pos = evt[0]  ## using signal proxy turns original arguments into a tuple
+				#print(pos)
+				if self.mpl.sceneBoundingRect().contains(pos):
+					
+					mousePoint = vb.mapSceneToView(pos)
+					x, y = mousePoint.x(), mousePoint.y()
+					if self.ui.actionX_Log10.isChecked():
+						x = 10**(x)
+					if self.ui.actionY_Log10.isChecked():
+						y = 10**(y)
+					self.mousePosition = [x,y]
+					#print(mousePoint)
+					#if index > 0 and index < len(data):
+					self.mplLabel.setText("<span style='color:green'>x=%0.1f</span>,   <span style='color: red'>y=%0.1f</span>" % (mousePoint.x(), mousePoint.x()))
+					self.vLine.setPos(mousePoint.x())
+					self.hLine.setPos(mousePoint.y())
+					x0, y0 = self.cutLineStart[0]
+					if len(self.cutLineStart)==1:
+						self.cutLinePlot.setData(x=[x0,x,x,x0,x0],y=[y0,y0,y,y,y0])
+					#self.polyLine.setData()
 
-	def on_press2(self, event):
-		"""on button press event for rectangle
-		"""
-		if not event.xdata is None and not event.ydata is None:
-			# copy background
+			def mouseClicked(evt):
+				#print(evt[0].pos(),evt[0].button(), dir(evt[0]))
+				print(self.cutLineStart,evt[0].pos())
+				pos=[None,None]
+				if evt[0].button() == 1:
+					pos = self.mousePosition
+				if evt[0].button() == 1 and len(self.cutLineStart) == 0:
+					self.cutLineStart = [pos]
+					self.cutLinePlot.setData(x=[pos[0]],y=[pos[1]])
+				elif evt[0].button() == 1 and len(self.cutLineStart) == 1:
+					self.cutLineStart.append( [pos[0],pos[1]])
+					#self.mouseProxyMove.disconnect()
+					#self.mouseProxyClick.disconnect()
+				elif evt[0].button() == 1 and len(self.cutLineStart) == 2:
+					x1,y1 = self.cutLineStart[0]
+					x2,y2 = self.cutLineStart[1] 
+					x3,y3 = pos
 
-			self.background = \
-				self.mpl.canvas.ax.figure.canvas.copy_from_bbox(self.mpl.canvas.ax.bbox)
-			# first press
-			if self.issecond == 0:
-				self.x1 = event.xdata
-				self.y1 = event.ydata
+					data, name = self.getData()
 
-				self.cidmotion = self.mpl.canvas.mpl_connect('motion_notify_event', self.on_motion2)
-				return
-			# second press
-			if self.issecond == 1:
-				data, name = self.getData()
-				self.x3 = event.xdata
-				self.y3 = event.ydata
-				# point swap
-				if self.x1 > self.x2:
-					self.x1, self.x2 = swap(self.x1, self.x2)
-					if self.y1 < self.y2:
-						self.y1, self.y2 = swap(self.y1, self.y2)
+					# point swap
+					if x1 > x2:
+						x1, x2 = swap(x1, x2)
+						if y1 < y2:
+							y1, y2 = swap(y1, y2)
+						else:
+							delta = y1 - y2
+							y1 -= delta
+							y2 += delta
 					else:
-						delta = self.y1 - self.y2
-						self.y1 -= delta
-						self.y2 += delta
-				else:
-					if self.y1 < self.y2:
-						delta = self.y2 - self.y1
-						self.y1 += delta
-						self.y2 -= delta
+						if y1 < y2:
+							delta = y2 - y1
+							y1 += delta
+							y2 -= delta
+						else:
+							pass
+					X = data[:, 0]
+					Y = data[:, 1]
+					w = (X >= x1) * (X <= x2) * (Y <= y1) * (Y >= y2)
+					if y3 <= y1 and y3 >= y2 and x3 >= x1 and x3 <= x2:
+						# in cut
+						data = data[~w, :]
 					else:
-						pass
-				X = data[:, 0]
-				Y = data[:, 1]
-				w = (X >= self.x1) * (X <= self.x2) * (Y <= self.y1) * (Y >= self.y2)
-				if self.y3 <= self.y1 and self.y3 >= self.y2 and self.x3 >= self.x1 and self.x3 <= self.x2:
-					# in cut
-					data = data[~w, :]
-				else:
-					# out cut
-					data = data[w, :]
+						# out cut
+						data = data[w, :]
 
-				self.updateData(name, data=data)
-				self.ui.mplactionCut_by_rect.setChecked(False)
+					self.updateData(name, data=data)
+					self.ui.mplactionCut_by_rect.setChecked(False)
+					self.cutLineStart = []
+					self.mouseProxyMove.disconnect()
+					self.mouseProxyMoveRestoreBG()
+					self.mouseProxyClick.disconnect()
+					self.cutLinePlot.hide()
+
+			self.mouseProxyMove.disconnect()
+			self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
+			self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
 
 		else:
-			self.ui.mplactionCut_by_rect.setChecked(False)
-		return
+			self.cutLineStart = []
+			self.mouseProxyMove.disconnect()
+			self.mouseProxyMoveRestoreBG()
+			self.mouseProxyClick.disconnect()
+			self.cutLinePlot.hide()
+		self.ui.mplactionCut_by_rect.setEnabled(not state)
+		self.ui.activeTools.setEnabled(not state)
 
-	def on_motion2(self, event):
-		'''on motion we will move the rect if the mouse is over us'''
-		if not event.xdata is None and not event.ydata is None:
-			self.x2 = event.xdata
-			self.y2 = event.ydata
-			self.draw_rect()
-		else:
-			self.ui.mplactionCut_by_rect.setChecked(False)
 
-	def on_release2(self, event):
-		'''on release we reset the press data'''
-		if not event.xdata is None and not event.ydata is None:
-			self.x2 = event.xdata
-			self.y2 = event.ydata
-			self.issecond = 1
-			self.draw_rect()
-			if self.x1 and self.x2 and self.y1 and self.y2:
-				# self.mpl.canvas.mpl_disconnect(self.cidpress)
-				self.mpl.canvas.mpl_disconnect(self.cidmotion)
-				self.mpl.canvas.mpl_disconnect(self.cidrelease)
-			else:
-				self.mpl.canvas.mpl_disconnect(self.cidpress)
-		else:
-			self.ui.mplactionCut_by_rect.setChecked(False)
 
 	def set_autoScale(self, flag):
 		"""change Y|X autoscale"""
@@ -2092,13 +2091,31 @@ class QTR(QtWidgets.QMainWindow):
 			self.confDict['autoscale'] = False
 
 	def processView(self, state):
+		
 		if state:
-			self.ui.autoScale.setChecked(False)
+			r = self.mpl.viewRange()
+			x0, x1 = r[0]
+			y0, y1 = r[1]
+			xc = sp.mean(r[0])
+			yc = sp.mean(r[1])
+			
+			print(self.regionForProcessing.pos())
+			self.regionForProcessing.setSize([x1-x0-2*xc/2,y1-y0-2*yc/2])
+			self.regionForProcessing.setPos([x0+xc/2,y0+yc/2])
+			self.regionForProcessing.show()
+		else:
+			self.regionForProcessing.hide()
+		#	self.ui.autoScale.setChecked(False)
 
 	def plotTmp(self, state):
 		'''Проміжні побудови'''
 		self.confDict['showTmp'] = state
 		if not state: self.update_graph()
+
+		if state:
+			self.pointsPlotTmp.show()
+		else:
+			self.pointsPlotTmp.hide()
 
 	###########################################################################################################################
 	######################	Фільтри, сплайни...	###############################################################################
@@ -2140,8 +2157,8 @@ class QTR(QtWidgets.QMainWindow):
 
 		if self.confDict['showTmp']:
 			# self.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
-			xl = self.mpl.canvas.ax.get_xlim()
-			yl = self.mpl.canvas.ax.get_ylim()
+			xl, yl = self.mpl.viewRange()
+			
 
 			text = ''
 			for j, i in enumerate(EQ):
@@ -2156,49 +2173,7 @@ class QTR(QtWidgets.QMainWindow):
 		# Якщо ввімкнено, обробка решти даних
 		self.processSelectedData(Name, self.sender)
 
-	#  page_B_spline
-	"""
-	def connectAutoB_sS(self, state):
-		'''Оновлення коеф. згладжування'''
-		spins = ['S', 'Step', 'K']
-		for j in spins:
-			if state:
-				self.getUi('B_spline' + j).valueChanged.connect(
-								self.AutoB_splineS)
-			else:
-				self.getUi('B_spline' + j).valueChanged.disconnect(
-								self.AutoB_splineS)
-
-	def AutoB_splineS(self, state=None, param=0.98):
-		'''Штучний підбір коефіцієнтів для b-сплайн інтерполяції'''
-		spins = ('S',  'Step', 'K')
-		state = self.getUi('AutoB_splineS').isChecked()
-		active = self.getUi(['B_spline' + i for i in spins])
-
-		data, Name = self.getData()
-
-		active[0].setEnabled(not state)
-		m = len(data)
-		active[0].setValue(sp.std(data[:,1])**2*(m - sp.sqrt(m*2)))
-		'''
-		if state:
-
-			y = data[:,1]
-			x = data[:,0]
-			EQ = sp.poly1d( sp.polyfit(x, y, 3) )
-			poly_Y = EQ( x )
-			Y = y - poly_Y
-			Step = float(active[1].value())
-			K = float(active[2].value())
-
-			try:
-				print(str((1+Step/K**3)*param))
-				active[0].setValue(sp.std(Y)**2*len(y)*(1+Step/K**2)*param)
-			except:
-				traceback.print_exc()
-		'''
-	"""
-
+	
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
 		spins = ['B_spline' + i for i in ('Step', "K", "NKnots", "_xb", "_xe")]
@@ -2573,30 +2548,30 @@ class QTR(QtWidgets.QMainWindow):
 				print('ResEval: interpTypeError')
 
 	## Chi^3
-	# page_ReHi3
-	def recalcReHi3(self):
+	# page_ReChi3
+	def recalcReChi3(self):
 		'''Обрахунок Re(hi^(3))'''
 
 		data, Name = self.getData()
 
-		a = self.ui.reHi3_a0.value()
+		a = self.ui.ReChi3_a0.value()
 		#if 'a' in data.comments and self.ui.workWithSelectedData.isChecked():
 		#	a = float(data.comments['a'])
-		Lambda = self.ui.reHi3_lambda.value()
-		n0 = self.ui.reHi3_n0.value()
-		d = self.ui.reHi3_d.value()
-		z = self.ui.reHi3_z.value()
-		r0 = self.ui.reHi3_r0.value()
-		f = self.ui.reHi3_f.value()
-		L = self.ui.reHi3_l.value()
-		polyM = self.ui.reHi3_polyM.value()
+		Lambda = self.ui.ReChi3_lambda.value()
+		n0 = self.ui.ReChi3_n0.value()
+		d = self.ui.ReChi3_d.value()
+		z = self.ui.ReChi3_z.value()
+		r0 = self.ui.ReChi3_r0.value()
+		f = self.ui.ReChi3_f.value()
+		L = self.ui.ReChi3_l.value()
+		polyM = self.ui.ReChi3_polyM.value()
 
 		eq, na1, hi3a1, hi3t, Phit = calcReChi3(data, m=polyM, a=a, Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
 
 		#self.updateData(name=Name, data=data, comments={'a': a})
 		text = "Data name: {}\nn2 = {} ; hi3_1 = {} ; hi3_2 = {} ; Phit = {}".format(Name, na1, hi3a1, hi3t, Phit)
 		print(text)
-		self.ui.reHi3_console.setText(text)
+		self.ui.ReChi3_console.setText(text)
 		l1, = self.mpl.canvas.ax.plot(data[:, 0], sp.poly1d(eq[::-1])(data[:, 0]), 'r-', markersize=6)
 		self.mpl.canvas.draw()
 		self.mpl.canvas.ax.lines.remove(l1)
@@ -2606,15 +2581,15 @@ class QTR(QtWidgets.QMainWindow):
 		print("-"*20,"CW")
 		calcReChi3CW(data, m=polyM, a=a,Lambda=Lambda, n0=n0, d=d, z=z, L=L, f=f, r0=r0)
 
-	# page_ImHi3
-	def recalcImHi3(self):
+	# page_ImChi3
+	def recalcImChi3(self):
 		'''Обрахунок Im(hi^(3))'''
 
 		data = []
 		Name = ""
-		Lambda = self.ui.imHi3_lambda.value()
-		n0 = self.ui.imHi3_n0.value()
-		d = self.ui.imHi3_d.value()
+		Lambda = self.ui.ImChi3_lambda.value()
+		n0 = self.ui.ImChi3_n0.value()
+		d = self.ui.ImChi3_d.value()
 		exp_type = self.ui.exp_type.currentText()
 		tmp = []
 		if self.ui.actionProcessView.isChecked():
@@ -2634,12 +2609,12 @@ class QTR(QtWidgets.QMainWindow):
 			tmp = data[:]
 				
 		#print(tmp.shape)
-		ImHi3, beta, Leff, T0, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
+		ImChi3, beta, Leff, T0, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
 		
-		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g},T_0 = {:10g}, ImChi3[esu] = {:10g}".format(Name, Leff,T0, beta, ImHi3)
+		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g},T_0 = {:10g}, ImChi3[esu] = {:10g}".format(Name, Leff,T0, beta, ImChi3)
 		print(text)
 		#self.updateData(name=Name, clone=data)#, comments=text)
-		self.ui.imHi3_console.setText(text)
+		self.ui.ImChi3_console.setText(text)
 		l1, = self.mpl.canvas.ax.plot(x_new, y_new, 'r-', markersize=6)
 		self.mpl.canvas.draw()
 		self.mpl.canvas.ax.lines.remove(l1)
@@ -2736,6 +2711,14 @@ class QTR(QtWidgets.QMainWindow):
 		sb.setValue(sb.maximum())
 		self.statusBarMessage.setText(str(text))
 
+	def addToolUi(self, newui):
+		self.activeToolsLayout.addWidget(newui)
+
+		self.uiToolsDict['ui'+newui.objectName()] = newui
+		for widget in newui.children():
+			setattr( self.ui, widget.objectName(), widget)
+		
+
 	def getUi(self, attrNames):
 		if type(attrNames) in (type([]), type(())):
 			return tuple(getattr(self.ui, i) for i in attrNames)
@@ -2777,13 +2760,22 @@ class QTR(QtWidgets.QMainWindow):
 	def getValue(self, names):
 		return (getattr(self.ui, i).value() for i in names)
 
-	def setToolsLayer(self):
-		name = self.sender().objectName().split('action')[1]
-		self.ui.stackedWidget.setCurrentWidget(self.getUi('page_' + name))
-	
+	def setToolsLayer(self,state=None,layer=None):
+		name = ''
+		if layer is None:
+			name = 'ui' + self.sender().objectName().split('action')[1]
+		else:
+			name = 'ui' + layer.objectName()
+		for tool in self.uiToolsDict.values():
+			tool.hide()
+			if tool != self.uiToolsDict[name]:
+				getattr(self.ui, 'action'+tool.objectName()).setChecked(False)
+		self.uiToolsDict[name].show()
+		self.ui.activeTools.setFixedSize(self.uiToolsDict[name].sizeHint())#setFixedSize(self.uiToolsDict[name].sizeHint())
+
 	def closeEvent(self, QCloseEvent):
 		print("Close...")
-		guisave(self.ui, self.settings)
+		#guisave(self.ui, self.settings)
 		sys.exit()
 		#QCloseEvent.accept()
 		
@@ -2806,10 +2798,10 @@ class QTR(QtWidgets.QMainWindow):
 		##############  Filters	###############################################
 		self.ui.FiltOk.clicked.connect(self.setFilters)
 
-		##############  ReHi3	  ###############################################
-		self.ui.reHi3_ok.clicked.connect(self.recalcReHi3)
-		##############  ImHi3	  ###############################################
-		self.ui.imHi3_ok.clicked.connect(self.recalcImHi3)
+		##############  ReChi3	  ###############################################
+		self.ui.ReChi3_ok.clicked.connect(self.recalcReChi3)
+		##############  ImChi3	  ###############################################
+		self.ui.ImChi3_ok.clicked.connect(self.recalcImChi3)
 		##############  NormData   ###############################################
 		self.ui.normDataAdd.clicked.connect(self.normDataAdd)
 		self.ui.normDataRemove.clicked.connect(self.normDataRemove)
@@ -2933,16 +2925,16 @@ class QTR(QtWidgets.QMainWindow):
 		self.ui.actionPolyCut.triggered.connect(self.setToolsLayer)
 		self.ui.actionPolyFit.triggered.connect(self.setToolsLayer)
 		self.ui.actionB_spline.triggered.connect(self.setToolsLayer)
-		self.ui.actionAverage.triggered.connect(self.setToolsLayer)
+		self.ui.actionAverageWindow.triggered.connect(self.setToolsLayer)
 		self.ui.actionFiltFilt.triggered.connect(self.setToolsLayer)
-		self.ui.actionData.triggered.connect(self.setToolsLayer)
+		self.ui.actionDataLoad.triggered.connect(self.setToolsLayer)
 		self.ui.actionNormData.triggered.connect(self.setToolsLayer)
-		self.ui.actionReHi3.triggered.connect(self.setToolsLayer)
-		self.ui.actionImHi3.triggered.connect(self.setToolsLayer)
+		self.ui.actionReChi3.triggered.connect(self.setToolsLayer)
+		self.ui.actionImChi3.triggered.connect(self.setToolsLayer)
 		self.ui.actionFilters.triggered.connect(self.setToolsLayer)
-		self.ui.actionIntens.triggered.connect(self.setToolsLayer)
+		self.ui.actionIntensCalibr.triggered.connect(self.setToolsLayer)
 
-		self.ui.actionDataDock.triggered.connect(self.ui.DataDock.show)
+		#self.ui.actionDataDock.triggered.connect(self.ui.DataDock.show)
 
 
 def main():
@@ -2950,11 +2942,11 @@ def main():
 
 	app = QtWidgets.QApplication(sys.argv)
 	win = QTR()
-
+	
 	sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
-	logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
+	#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
 	main()
 

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>NormData</class>
+ <widget class="QFrame" name="NormData">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1086</width>
+    <height>170</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Frame</string>
+  </property>
+  <property name="frameShape">
+   <enum>QFrame::StyledPanel</enum>
+  </property>
+  <property name="frameShadow">
+   <enum>QFrame::Raised</enum>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="2">
+    <widget class="QToolButton" name="normDataRemove">
+     <property name="text">
+      <string>...</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>buttons/remove.svg</normaloff>buttons/remove.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QCheckBox" name="cumSumNormData">
+     <property name="text">
+      <string>Ком. сум.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QComboBox" name="normEvalType">
+     <item>
+      <property name="text">
+       <string>linear</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>nearest</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>zero</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>slinear</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>quadratic</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>cubic</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QToolButton" name="normDataAdd">
+     <property name="text">
+      <string>...</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>buttons/add.svg</normaloff>buttons/add.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="yInPercents">
+     <property name="text">
+      <string>Y, %</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" rowspan="4">
+    <widget class="QTableWidget" name="normTable">
+     <column>
+      <property name="text">
+       <string>Чисельник</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Знаменник</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="background">
+       <color>
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+       </color>
+      </property>
+      <property name="foreground">
+       <brush brushstyle="NoBrush">
+        <color alpha="255">
+         <red>59</red>
+         <green>92</green>
+         <blue>121</blue>
+        </color>
+       </brush>
+      </property>
+      <property name="icon">
+       <iconset theme="right">
+        <normaloff>../QTR-0.3.9/QTR</normaloff>../QTR-0.3.9/QTR</iconset>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Назва</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Стан</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
