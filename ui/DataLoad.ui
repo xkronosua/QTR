@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1270</width>
-    <height>188</height>
+    <height>216</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -26,26 +26,6 @@
    <enum>QFrame::Raised</enum>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="6">
-    <widget class="QCheckBox" name="autoSortData">
-     <property name="text">
-      <string>Sort. Х</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="3">
-    <widget class="QSpinBox" name="mColumn">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="value">
-      <number>1</number>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="delimiter">
      <property name="currentIndex">
@@ -88,128 +68,24 @@
      </item>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QSpinBox" name="xColumn">
+   <item row="3" column="1">
+    <widget class="QSpinBox" name="yColumn">
      <property name="value">
-      <number>0</number>
+      <number>1</number>
      </property>
     </widget>
    </item>
-   <item row="1" column="3" colspan="2">
-    <widget class="QComboBox" name="selectPartOfData">
-     <item>
-      <property name="text">
-       <string>All</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Forw</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Backw</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="1" column="6">
-    <widget class="QCheckBox" name="shift0">
-     <property name="text">
-      <string>Shift 0</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Sep</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Y</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="6">
-    <widget class="QPushButton" name="addToTable">
+   <item row="2" column="5">
+    <widget class="QSpinBox" name="mColumn">
      <property name="enabled">
       <bool>false</bool>
      </property>
-     <property name="text">
-      <string>Додати</string>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>../buttons/add.svg</normaloff>../buttons/add.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>16</width>
-       <height>16</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="QCheckBox" name="isNormColumn">
-     <property name="text">
-      <string>Норм.</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="3">
-    <widget class="QCheckBox" name="startStepAverage">
-     <property name="text">
-      <string>N puls.</string>
+     <property name="value">
+      <number>1</number>
      </property>
     </widget>
    </item>
    <item row="3" column="4">
-    <widget class="QSpinBox" name="startStepAverage_N">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="minimum">
-      <number>1</number>
-     </property>
-     <property name="maximum">
-      <number>1000</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="6">
-    <widget class="QComboBox" name="exp_type">
-     <item>
-      <property name="text">
-       <string>CW</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>PICO</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>X</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="2">
     <widget class="QComboBox" name="Norm_col_select">
      <item>
       <property name="text">
@@ -229,6 +105,30 @@
     </widget>
    </item>
    <item row="2" column="4">
+    <widget class="QCheckBox" name="isNormColumn">
+     <property name="text">
+      <string>Норм.</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="6">
+    <widget class="QLineEdit" name="filePath">
+     <property name="echoMode">
+      <enum>QLineEdit::Normal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Range</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="6">
     <widget class="QSpinBox" name="Norm_Col_Pow">
      <property name="minimum">
       <number>1</number>
@@ -238,32 +138,234 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QSpinBox" name="yColumn">
-     <property name="value">
+   <item row="1" column="5" colspan="2">
+    <widget class="QComboBox" name="selectPartOfData">
+     <item>
+      <property name="text">
+       <string>All</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Forw</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Backw</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="6">
+    <widget class="QSpinBox" name="startStepAverage_N">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="minimum">
       <number>1</number>
      </property>
+     <property name="maximum">
+      <number>1000</number>
+     </property>
+     <property name="value">
+      <number>10</number>
+     </property>
     </widget>
    </item>
-   <item row="1" column="2">
-    <widget class="QLabel" name="label_4">
+   <item row="2" column="1">
+    <widget class="QSpinBox" name="xColumn">
+     <property name="value">
+      <number>0</number>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="8">
+    <widget class="QCheckBox" name="shift0">
      <property name="text">
-      <string>Range</string>
+      <string>Shift 0</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="4">
-    <widget class="QLineEdit" name="filePath">
-     <property name="echoMode">
-      <enum>QLineEdit::Normal</enum>
+   <item row="2" column="8">
+    <widget class="QCheckBox" name="autoSortData">
+     <property name="text">
+      <string>Sort. Х</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="0" column="4">
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Sep</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>X</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="8">
+    <widget class="QComboBox" name="exp_type">
+     <item>
+      <property name="text">
+       <string>CW</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PICO</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="8">
+    <widget class="QPushButton" name="addToTable">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Додати</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>../buttons/add.svg</normaloff>../buttons/add.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>16</width>
+       <height>16</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="5">
+    <widget class="QCheckBox" name="startStepAverage">
+     <property name="text">
+      <string>N puls.</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="6">
     <widget class="QToolButton" name="selectFile">
      <property name="text">
       <string>...</string>
      </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Y</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QSpinBox" name="skipRows"/>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Skip</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2" rowspan="2" colspan="2">
+    <widget class="QTableWidget" name="columnsList">
+     <property name="columnCount">
+      <number>1</number>
+     </property>
+     <row>
+      <property name="text">
+       <string>0</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>1</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>2</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>3</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>4</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>5</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>6</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>7</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>8</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>9</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>10</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>11</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>12</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>13</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>14</string>
+      </property>
+     </row>
+     <row>
+      <property name="text">
+       <string>15</string>
+      </property>
+     </row>
+     <column>
+      <property name="text">
+       <string>columns</string>
+      </property>
+     </column>
     </widget>
    </item>
   </layout>

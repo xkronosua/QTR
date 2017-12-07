@@ -4,7 +4,7 @@ from __future__ import print_function
 
 
 # This must be the first statement before other statements.
-# You may only put a quoted or triple quoted string, 
+# You may only put a quoted or triple quoted string,
 # Python comments or blank lines before the __future__ line.
 
 
@@ -17,17 +17,10 @@ parser.add_option("--qt5", dest="qt5", action="store_true", help="for pyqt5", de
 print(ScriptOptions, ScriptArgs)
 import sys, os, signal, random, glob
 #import pdb
-ScriptOptions.qt4 = True
-if ScriptOptions.qt4:
-	print("Qt4")
-	from PyQt4 import QtGui, QtCore, uic, QtGui as QtWidgets # QtUiTools
-	from PyQt4.QtCore import QSettings, qDebug
-else:
-	print("Qt5")
-	from PyQt5 import QtGui, QtCore, uic, QtWidgets # QtUiTools
-	from PyQt5.QtCore import QSettings, qDebug
+from PyQt5 import QtGui, QtCore, uic, QtWidgets # QtUiTools
+from PyQt5.QtCore import QSettings, qDebug
 
-
+import pandas
 import scipy as sp
 
 import scipy.interpolate as interp
@@ -57,6 +50,8 @@ import traceback
 from datetime import datetime
 import h5py
 import shutil
+from pathlib import Path
+
 
 import cmath
 from calc_n2_newForVG import calcReChi3
@@ -74,11 +69,11 @@ from pprint import pformat
 import pandas
 ###############################################
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtCore
+#from pyqtgraph.Qt import QtGui, QtCore
 ###############################################
 
 
-filtersDict_indicatrix = {"532": {1:1,'1': 1, "OP06": 1/10**0.6, "OP09": 1/10**0.9, "OP18": 1/10**1.8}}
+filtersDict_indicatrix = {"532": {1:1,'1': 1, "OP06": 1/10**0.6/2, "OP09": 1/10**0.9/2, "OP18": 1/10**1.8/2}}
 def convertRawFilter(filt,waveLenght="532"):
 	filt = filt.upper()
 	filters = filt.replace(' ','').replace('\n','').replace('\t','').split(',')
@@ -97,17 +92,17 @@ def isIndicatrixData(filename):
 				break
 
 def indicatrixRaw2Data(filename,convertRawFilter_=convertRawFilter):
-	
+
 	header = []
 	comments = []
 	#with open('filters.dict') as f:
-	#	filtersDict = json.load(f)	
-	
+	#	filtersDict = json.load(f)
+
 	filtersRaw = []
 	WAVELENGHT = "532"
-	
+
 	with open(filename, 'r') as fobj:
-		# takewhile returns an iterator over all the lines 
+		# takewhile returns an iterator over all the lines
 		# that start with the comment string
 		for n,line in enumerate(fobj):
 			if line.startswith('#'):
@@ -119,7 +114,7 @@ def indicatrixRaw2Data(filename,convertRawFilter_=convertRawFilter):
 			if line.startswith('#ch'):
 				header = line[1:-1].split('\t')
 		#headiter = takewhile(lambda s: ss(s), fobj)
-		# you may want to process the headers differently, 
+		# you may want to process the headers differently,
 		# but here we just convert it to a list
 		#header = list(headiter)
 	df = pandas.read_csv(filename, comment='#',sep='\t',names = header)
@@ -140,7 +135,7 @@ def indicatrixRaw2Data(filename,convertRawFilter_=convertRawFilter):
 
 def _print(*args, **kwargs):
 	"""My custom print() function."""
-	# Adding new arguments to the print function signature 
+	# Adding new arguments to the print function signature
 	# is probably a bad idea.
 	# Instead consider testing if custom argument keywords
 	# are present in kwargs
@@ -160,7 +155,7 @@ def loadUi(uifilename, parent=None):
 	# loader = QtUiTools.QUiLoader(parent)
 	#try:
 	#	ui = __import__(uifilename.split('.')[-2].replace('/','').split('\\')[-1].split('/')[-1])
-		
+
 	#except:
 	ui = uic.loadUi(uifilename)  # loader.load(uifilename)
 	#	traceback.print_exc()
@@ -191,9 +186,10 @@ def moving_average(x, y, step_size=.1, bin_size=1):
 		else:
 			bin_avg[index] = sp.mean(items_in_bin)
 			bin_err[index] = sp.std(items_in_bin)
-	bin_centers = bin_centers[-sp.isnan(bin_avg)]
-	bin_avg = bin_avg[-sp.isnan(bin_avg)]
-	bin_err = bin_err[-sp.isnan(bin_avg)]
+	bin_centers = bin_centers[~sp.isnan(bin_avg)]
+	bin_err = bin_err[~sp.isnan(bin_avg)]
+	bin_avg = bin_avg[~sp.isnan(bin_avg)]
+
 
 	return (bin_centers, bin_avg, bin_err)
 
@@ -245,7 +241,7 @@ class dataArray(sp.ndarray):
 		self.x_start = getattr(obj, 'x_start', None)
 		self.x_end = getattr(obj, 'x_end', None)
 		self.attrs = getattr(obj, 'attrs', None)
-		
+
 
 	def getScale(self): return [self.scaleX, self.scaleY]
 
@@ -286,48 +282,48 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.settings = QSettings('settings.ini', QSettings.IniFormat)
 		self.PATH = self.MAIN_DIRECTORY
-		
-		
+
+
 		#logging.getLogger().setLevel(100)
 		self.ui = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/mainwindow.ui'), self)
 		self.activeToolsLayout = QVBoxLayout()
 		self.ui.activeTools.setLayout(self.activeToolsLayout)
 
-		
-		
+
+
 		self.uiAverageWindow = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/AverageWindow.ui'), self)
-		self.addToolUi(self.uiAverageWindow) 
+		self.addToolUi(self.uiAverageWindow)
 		self.uiDataLoad = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/DataLoad.ui'), self)
-		self.addToolUi(self.uiDataLoad) 
+		self.addToolUi(self.uiDataLoad)
 		self.uiImChi3 = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/ImChi3.ui'), self)
-		self.addToolUi(self.uiImChi3)   
+		self.addToolUi(self.uiImChi3)
 		self.uiNormShift = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/NormShift.ui'), self)
-		self.addToolUi(self.uiNormShift) 
+		self.addToolUi(self.uiNormShift)
 		self.uiReChi3 = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/ReChi3.ui'), self)
 		self.addToolUi(self.uiReChi3)
 		self.uiB_spline = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/B_spline.ui'), self)
 		self.addToolUi(self.uiB_spline)
 		self.uiFilters = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/Filters.ui'), self)
-		self.addToolUi(self.uiFilters) 
+		self.addToolUi(self.uiFilters)
 		self.uiIntensCalibr = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/IntensCalibr.ui'), self)
-		self.addToolUi(self.uiIntensCalibr)   
+		self.addToolUi(self.uiIntensCalibr)
 		self.uiPolyCut = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/PolyCut.ui'), self)
-		self.addToolUi(self.uiPolyCut)  
+		self.addToolUi(self.uiPolyCut)
 		self.uiFiltFilt = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/FiltFilt.ui'), self)
-		self.addToolUi(self.uiFiltFilt)  
+		self.addToolUi(self.uiFiltFilt)
 		self.uiPolyFit = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/PolyFit.ui'), self)
-		self.addToolUi(self.uiPolyFit)  
+		self.addToolUi(self.uiPolyFit)
 		self.uiNormData = loadUi(os.path.join(self.MAIN_DIRECTORY, 'ui/NormData.ui'), self)
-		self.addToolUi(self.uiNormData) 
+		self.addToolUi(self.uiNormData)
 
 		print("ToolsList:", self.uiToolsDict.keys())
 		#self.ui.toolsWidget.setWidget(self.toolsWidget)
 
 
-		 
+
 		#logging.getLogger().setLevel(40)
-		
-		
+
+
 		if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")):
 			os.makedirs(os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp"))
 		self.projectName = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -338,7 +334,7 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
 
-		
+
 		## mpl
 		self.lock = 0
 		self.issecond = 0
@@ -347,7 +343,7 @@ class QTR(QtWidgets.QMainWindow):
 		#self.mpl = MplWidget(self)
 		#self.ui.mplWidget.addWidget(self.mpl)
 		self.mplPlotInit()
-			
+
 		#self.ui.addToolBar(self.mpl.ntb)
 
 		##< mpl
@@ -366,10 +362,19 @@ class QTR(QtWidgets.QMainWindow):
 		self.nameBox = QtWidgets.QComboBox()
 		self.nameBox.setObjectName('fastDataComboBox')
 		self.ui.statusbar.addPermanentWidget(self.nameBox)
+		## випадаючий список довжин хвиль
+		self.wavelengthBox = QtWidgets.QComboBox()
+		self.wavelengthBox.setObjectName('wavelengthBox')
+		self.ui.statusbar.addPermanentWidget(self.wavelengthBox)
+		self.wavelengthBox.addItem("1064")
+		self.wavelengthBox.addItem("532")
+		self.wavelengthBox.addItem("633")
+
+		self.wavelengthBox.setCurrentIndex(1)
 
 
 		## фільтри
-		fDict = self.filtersDict[self.uiFilters.filtWaveLENGTH.currentText()]
+		fDict = self.filtersDict[self.wavelengthBox.currentText()]
 		for i in fDict:
 			self.ui.filtersList.addItem(i + "\t\t" + str(fDict[i]))
 
@@ -377,7 +382,8 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.setToolsLayer(layer=self.uiDataLoad)
 		self.fileDialog = QtWidgets.QFileDialog(self)
-		self.fileDialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog)
+		self.fileDialog.setOption(self.fileDialog.DontUseNativeDialog)
+		#self.fileDialog = None#
 		self.uiConnect()
 
 		#self.plt = self.mpl.canvas.ax.plot([], [], '.')
@@ -395,10 +401,10 @@ class QTR(QtWidgets.QMainWindow):
 
 		#self.ui.label.setMouseTracking(True)
 		self.ui.installEventFilter(self)
-	
+
 		# self.ui.stackedWidget.setCurrentIndex(6)
 		self.ui.show()
-		
+
 		self.selectedDataDict = dict()
 		self.ui.namesTable.setColumnWidth(0, 100);
 		self.ui.namesTable.setColumnWidth(1, 40);
@@ -414,24 +420,25 @@ class QTR(QtWidgets.QMainWindow):
 			pass
 		except:
 			traceback.print_exc()
-
+		self.ui.filePath.setText(self.settings.value('filePath'))
 		if self.ui.filePath.text() == "":
 			self.ui.filePath.setText('/home/kronosua/work/QTR/test.dat')
 
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+H"), self.ui, self.showTmpConfig)
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+S"), self.ui, self.saveData)
 		#self.ui.tabifyDockWidget(self.ui.dockWidget_Console, self.ui.DataDock)
-	
+
 	def mplPlotInit(self):
 		self.mplWin = pg.GraphicsWindow()
 		self.mpl = self.mplWin.addPlot(row=1, col=0) #pg.PlotWidget(name='mainPlot')  ## giving the plots names allows us to link their axes together
-		
+
 		self.ui.mplWidget.addWidget(self.mplWin)
 		self.pointsPlot = self.mpl.plot( pen=(200,200,200), symbolBrush=(255,0,0), symbolPen='w')
 		self.pointsPlotTmp = self.mpl.plot( pen=(200,200,200,20), symbolBrush=(0,255,0,20), symbolPen='c')
 		self.pointsPlotTmp.setZValue(-10)
 		self.cutLinePlot = self.mpl.plot( pen=(255,0,0), symbolBrush=(255,0,0,50), symbolPen='w')
 		#self.polyLine = pg.PolyLineROI([[0,0]],closed=False)
-		#self.mpl.addItem(self.polyLine) 
+		#self.mpl.addItem(self.polyLine)
 		self.cutLineStart = []
 		self.vLine = pg.InfiniteLine(angle=90, movable=False)
 		self.hLine = pg.InfiniteLine(angle=0, movable=False)
@@ -457,6 +464,7 @@ class QTR(QtWidgets.QMainWindow):
 		self.regionForProcessing.addScaleHandle([0, 1], [1, 0])
 		self.regionForProcessing.addScaleHandle([1, 0], [0, 1])
 		self.regionForProcessing.hide()
+		self.mplTmpLines = []
 
 	def mouseProxyMoveRestoreBG(self):
 		self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=15, slot=self.bgMouseMoveReader)
@@ -469,9 +477,16 @@ class QTR(QtWidgets.QMainWindow):
 			mousePoint = vb.mapSceneToView(pos)
 			x, y = mousePoint.x(), mousePoint.y()
 			if self.ui.actionX_Log10.isChecked():
-				x = 10**(x)
+				try:
+					x = 10**(x)
+				except:
+					traceback.print_exc()
+
 			if self.ui.actionY_Log10.isChecked():
-				y = 10**(y)
+				try:
+					y = 10**(y)
+				except:
+					traceback.print_exc()
 			self.mousePosition = [x,y]
 			#print(mousePoint)
 			#if index > 0 and index < len(data):
@@ -479,7 +494,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.mplLabel.setText("<span style='color:green'>x=%0.4f|%0.4E</span>,   <span style='color: red'>y=%0.4f|%0.4E</span>" % (mousePoint.x(),x, mousePoint.x(),y))
 			else:
 				self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
-			
+
 
 	#############################################################################g
 	############	 Вкладка  "дані"	#########################################
@@ -598,7 +613,7 @@ class QTR(QtWidgets.QMainWindow):
 		# self.ProjectFile.close()
 		filename = self.fileDialog.getOpenFileName(self, 'Open Project', self.PATH)
 		if not ScriptOptions.qt4: filename = filename[0]
-		
+
 		print("Open:", filename)
 		# del self.ProjectFile
 		# shutil.move(self.projectPath, filename)
@@ -705,8 +720,8 @@ class QTR(QtWidgets.QMainWindow):
 					elif text == lastCell1:
 						lastInd[1] = i
 					self.ui.normTable.cellWidget(j, 0).addItem(text)
-					#self.ui.normTable.cellWidget(j, 1).addItem(text)
-					self.ui.normTable.cellWidget(j, 1)
+					self.ui.normTable.cellWidget(j, 1).addItem(text)
+					#self.ui.normTable.cellWidget(j, 1)
 				self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
 				self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
 		for i in range(counter):
@@ -734,7 +749,7 @@ class QTR(QtWidgets.QMainWindow):
 		if name is None:
 			return(None, None)
 
-		elif name in self.data:
+		elif name in self.data.keys():
 			prev_data = self.data[name]['main'][self.dIndex(name)]  # self.data[name]['main'][0].copy()
 
 			#data = self.data[name]['main'].create_dataset(str(int(self.dIndex(name))+1), data=prev_data)
@@ -749,7 +764,7 @@ class QTR(QtWidgets.QMainWindow):
 			for i in prev_data.attrs.keys():
 				data.attrs[i] = prev_data.attrs[i]
 			if self.ui.actionProcessView.isChecked():
-				xl = self.regionForProcessing.pos()[0],self.regionForProcessing.size()[0] 
+				xl = self.regionForProcessing.pos()[0],self.regionForProcessing.size()[0]
 				print(xl,data[:,0].min(), sp.where(data[:, 0] >= xl[0])[0][0],"-"*10)
 				x_start = sp.where(data[:, 0] >= xl[0])[0][0]
 				x_end = sp.where(data[:, 0] <= xl[1])[0][-1]
@@ -776,7 +791,7 @@ class QTR(QtWidgets.QMainWindow):
 				return (subregion, name)
 			else:
 				prev_data.attrs['processView'] = False
-				
+
 				data.attrs['processView'] = False
 				return (data, name)
 
@@ -791,7 +806,7 @@ class QTR(QtWidgets.QMainWindow):
 			names.append(self.ui.namesTable.item(i, 0).text())
 		return names
 
-	def updateData(self, name, data=None, clone=None, color=None,
+	def updateData(self, name, data=None, clone=None, color=None, replot=True,
 				   scales=None, comments=None, x_start=sp.nan, x_end=sp.nan, shiftForLog10=None, showTmp=True):
 		'''Оновлення існуючих даних та їх атрибутів'''
 		prev_data = []
@@ -802,17 +817,17 @@ class QTR(QtWidgets.QMainWindow):
 
 		if data is None and color is None and scales is None and comments is None and clone is None:
 			print("foo",type="error")
-		
-		
+
+
 		if data is None:
 			data = prev_data
 			print("type(data) == 'NoneType'")
-			
+
 		elif type(data) == sp.ndarray:
 			print("type(data) == 'numpy.ndarray'")
-			
+
 			tdata = self.data[name]['tmp']['active']
-			
+
 			tdata.resize(len(data), 0)
 			tdata.resize(len(data.T), 1)
 			tdata[:] = data
@@ -824,20 +839,20 @@ class QTR(QtWidgets.QMainWindow):
 
 		elif type(data) == h5py._hl.dataset.Dataset:
 			print("type(data) == 'h5py._hl.dataset.Dataset'")
-			
-		
+
+
 		else:
 			print(type(data))
-			
-		
+
+
 		if type(clone) == h5py._hl.dataset.Dataset:
 			attrs = dict(clone.attrs)
 			for i in attrs.keys():
 				data.attrs[i] = attrs[i]
 
-		
+
 		update_subregion = True
-		
+
 		try:
 			update_subregion = prev_data.attrs['processView']
 			print(update_subregion, x_start, x_end, prev_data.attrs['x_start'], data.attrs['x_start'], 'x_start' is data.attrs.keys() , x_start is sp.nan,
@@ -861,10 +876,10 @@ class QTR(QtWidgets.QMainWindow):
 					x_end = sp.where(data[:, 0] == data[:, 0].max())[0][0]
 				else:
 					pass
-			
-			
+
+
 			print('Update_subregion: ', update_subregion, x_start, x_end)
-			
+
 			if update_subregion:
 				if x_start >= x_end:
 					warnings.warn("\nupdate_subregion:\tx_start >= x_end", UserWarning)
@@ -873,7 +888,7 @@ class QTR(QtWidgets.QMainWindow):
 				data.resize(len(tdata), 0)
 				data.resize(len(tdata.T), 1)
 				data[:] = tdata
-				
+
 			else:
 				pass
 		except:
@@ -904,10 +919,10 @@ class QTR(QtWidgets.QMainWindow):
 			except:
 				traceback.print_exc()
 		else:
-			
+
 			dset.attrs['x_end'] = dset.value[:,0].max()
 			dset.attrs['x_start'] = dset.value[:,0].max()
-				
+
 		# self.data[name]['main'] = (dataArray(data, scales=scales, comments=comments, color=color), self.data[name]['main'])
 
 		self.ui.Undo.setEnabled(True)
@@ -915,7 +930,8 @@ class QTR(QtWidgets.QMainWindow):
 
 		self.syncData()
 		print(sys.getsizeof(self.data))
-		self.update_graph(name=name,data=dset, showTmp=showTmp)
+		if replot:
+			self.update_graph(name=name,data=dset, showTmp=showTmp)
 		self.mprintf(len(dset))
 
 	def dublicateData(self):
@@ -949,7 +965,7 @@ class QTR(QtWidgets.QMainWindow):
 			for key in self.data[name]['main'].keys():
 				if key != '0':
 					del self.data[name]['main'][key]
-			print("dataLen:",len(self.data[name]['main'])) 
+			print("dataLen:",len(self.data[name]['main']))
 		# if len(self.data[name]['main']) == 2:
 		#	data = self.data[name]['main']
 		#	while len(data) == 2:
@@ -982,15 +998,17 @@ class QTR(QtWidgets.QMainWindow):
 
 	def getFilePath(self):
 		'''Вибір файлу для завантаження'''
-		
-		path = self.fileDialog.getOpenFileNames(self, caption="Open Files", directory=self.PATH, )
+
+		path = self.fileDialog.getOpenFileNames(self, caption="Open Files",
+			directory=os.path.dirname(self.settings.value('filePath')), )
 		print(path)
 		if not ScriptOptions.qt4: path = path[0]
-		
+
 		if len(path) > 0:
 			self.PATH = os.path.dirname(path[0])
 			# self.Path[active[0]] = path
 			self.ui.filePath.setText(";".join(path))
+			self.settings.setValue('filePath',self.ui.filePath.text())
 		self.ui.addToTable.setEnabled(os.path.exists(self.ui.filePath.text().split(';')[0]))
 
 	def getDelimiter(self):
@@ -1016,7 +1034,16 @@ class QTR(QtWidgets.QMainWindow):
 
 		else:
 			self.sender().setStyleSheet('background-color: black; color: orange;')
-
+			try:
+				cols = pandas.read_csv(self.ui.filePath.text().split(';')[0], nrows=1,sep=self.getDelimiter(),skiprows=self.ui.skipRows.value()).columns.values.tolist()
+				#self.ui.columnsList.clear();
+				#self.ui.columnsList.setRowCount(0);
+				print(cols)
+				for col,text in enumerate(cols):
+					newitem = QtWidgets.QTableWidgetItem(text)
+					self.ui.columnsList.setItem(col,0,newitem)
+			except: 
+				pass
 		self.ui.addToTable.setEnabled(state)
 
 	def addData(self):
@@ -1047,11 +1074,13 @@ class QTR(QtWidgets.QMainWindow):
 							yc = 1
 						else:
 							try:
-								data = sp.loadtxt(path, delimiter=self.getDelimiter())
+								data = sp.loadtxt(path, delimiter=self.getDelimiter(),skiprows=self.ui.skipRows.value())
 							except:
 								try:
-									data = sp.loadtxt(path)
-									
+									data = sp.genfromtxt(path, delimiter=self.getDelimiter())
+									#data = data[self.ui.skipRows.value():,:]
+									data = sp.nan_to_num(data)
+
 								except:
 									# Якщо якийсь йолоп зберігає числа з комами, то ця плюшка спробує якось завантажити дані
 									traceback.print_exc()
@@ -1068,9 +1097,13 @@ class QTR(QtWidgets.QMainWindow):
 									c = {i: conv for i in range(nCols)}
 									data = sp.genfromtxt(path, delimiter=self.getDelimiter(), dtype=float, converters=c)
 						#print(data)
-						x, y = data[:, [xc, yc]].T
+						try:
+							x, y = data[:, [xc, yc]].T
+						except:
+							print(data)
 					except:
 						traceback.print_exc()
+
 					print(self.ui.isNormColumn.isChecked())
 					if self.ui.isNormColumn.isChecked():
 						m = data[:, mc]
@@ -1115,7 +1148,7 @@ class QTR(QtWidgets.QMainWindow):
 
 					color = 'cyan'
 					state = 1  # ---------------------------------------------
-					
+
 					if state:
 						self.addNewData(data=XY, scales=[0, 0], name=Name, color=color, xc=xc, yc=yc)
 
@@ -1138,21 +1171,21 @@ class QTR(QtWidgets.QMainWindow):
 		for j in range(c1):
 			lastCell0 = self.ui.normTable.cellWidget(j, 0).currentText()
 			self.ui.normTable.cellWidget(j, 0).clear()
-			#lastCell1 = self.ui.normTable.cellWidget(j, 1).currentText()
-			#self.ui.normTable.cellWidget(j, 1).clear()
-			#lastInd = [0, 0]
+			lastCell1 = self.ui.normTable.cellWidget(j, 1).currentText()
+			self.ui.normTable.cellWidget(j, 1).clear()
+			lastInd = [0, 0]
 			for i in range(c):
 				text = self.ui.namesTable.item(i, 0).text()
 				print(text, lastCell0)
-				#if text == lastCell0:
-				#	lastInd[0] = i
-				#elif text == lastCell1:
-				#	lastInd[1] = i
+				if text == lastCell0:
+					lastInd[0] = i
+				elif text == lastCell1:
+					lastInd[1] = i
 				self.ui.normTable.cellWidget(j, 0).addItem(text)
-				#self.ui.normTable.cellWidget(j, 1).addItem(text)
+				self.ui.normTable.cellWidget(j, 1).addItem(text)
 				#self.ui.normTable.cellWidget(j, 1)
-			#self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
-			#self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
+			self.ui.normTable.cellWidget(j, 0).setCurrentIndex(lastInd[0])
+			self.ui.normTable.cellWidget(j, 1).setCurrentIndex(lastInd[1])
 		if hasattr(self, 'intensDialog'):
 			self.intensDialog.updateActiveDataList()
 
@@ -1167,7 +1200,7 @@ class QTR(QtWidgets.QMainWindow):
 			self.ui.namesTable.item(item.row(), 0).setText(item.text())
 			print(self.confDict['tableEditedName'], "\t-->\t", item.text(), "\t|\t", self.data.keys())
 			self.confDict['nameEditLock'] = True
-			print(dir(item))
+
 			self.updateNamesTable()
 		# self.ui.namesTable.resizeColumnsToContents()
 
@@ -1274,20 +1307,20 @@ class QTR(QtWidgets.QMainWindow):
 
 	def multiPlot(self):
 		selected = self.ui.namesTable.selectionModel().selectedIndexes()
-		lines = []
+
 		for i in selected:
 			name = self.ui.namesTable.item(i.row(), 0).text()
 			data, _ = self.getData(name)
 			modifiers = QtWidgets.QApplication.keyboardModifiers()
-			if modifiers == QtCore.Qt.ControlModifier:
-				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'], alpha=0.5)[0])
-			else:
+			c = QtGui.QColor(data.attrs['color']).getRgb()
+			#if modifiers == QtCore.Qt.ControlModifier:
+			self.mplTmpLines.append(self.mpl.plot(data[:, 0], data[:, 1], pen=c, symbolBrush=c, symbolPen=(0,0,0,0), symbol='o', symbolSize=5))
 
-				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'])[0])
-				lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], "-", color=data.attrs['color'], alpha=0.6)[0])
-		self.mpl.canvas.draw()
-		for i in lines:
-			self.mpl.canvas.ax.lines.remove(i)
+			#else:
+			#	lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], ".", color=data.attrs['color'])[0])
+			#	lines.append(self.mpl.canvas.ax.plot(data[:, 0], data[:, 1], "-", color=data.attrs['color'], alpha=0.6)[0])
+		#self.mpl.canvas.draw()
+
 
 	def joinDataArrays(self):
 		""" Зшивання даних"""
@@ -1319,12 +1352,12 @@ class QTR(QtWidgets.QMainWindow):
 		if state:
 			data, Name = self.getData()
 			if not data is None:
-				
+
 				def mouseMoved(evt):
 					pos = evt[0]
 					if self.mpl.sceneBoundingRect().contains(pos):
 						mousePoint = self.mpl.vb.mapSceneToView(pos)
-						self.mousePosition =[mousePoint.x(),mousePoint.y()] 
+						self.mousePosition =[mousePoint.x(),mousePoint.y()]
 						nearest_x = sp.absolute(data[:, 0] - mousePoint.x()).argmin()
 						#self.cutLinePlot.setData(x=[data[nearest_x, 0]],y=[data[nearest_x, 1]])
 						self.vLine.setPos(data[nearest_x, 0])
@@ -1390,13 +1423,14 @@ class QTR(QtWidgets.QMainWindow):
 
 						yy_l = find_tangent_line_l(self.mousePosition[0], self.mousePosition[1])
 						yy_r = find_tangent_line_r(self.mousePosition[0], self.mousePosition[1])
-						x_new = sp.array([xl[0],self.mousePosition[0],xl[1]])
-						y_new = sp.array([yy_l(xl[0])[0], yy_l(self.mousePosition[0])[0], yy_r(xl[1])[0]])
-						#print(x_new,y_new)
-						self.cutLinePlot.setData(x=x_new, y=y_new)
-						self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
-					
-						
+						try:
+							x_new = sp.array([xl[0],self.mousePosition[0],xl[1]])
+							y_new = sp.array([yy_l(xl[0])[0], yy_l(self.mousePosition[0])[0], yy_r(xl[1])[0]])
+							#print(x_new,y_new)
+							self.cutLinePlot.setData(x=x_new, y=y_new)
+							self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
+						except: pass
+
 				def mouseClicked(evt):
 					if evt[0].button() == 1:
 						pos = self.mousePosition
@@ -1428,7 +1462,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.updateData(name=Name, data=data)
 				self.cutLinePlot.show()
 				self.cutLinePlot.setData(x=[data[0,0]],y=[1])
-				self.hLine.setPos(data[0,0])				
+				self.hLine.setPos(data[0,0])
 
 			except:
 				traceback.print_exc()
@@ -1440,8 +1474,17 @@ class QTR(QtWidgets.QMainWindow):
 		data, Name = self.getData()
 		if not data is None:
 			try:
+				m = self.abs(data[:, 1].max())
 				data[:, 1] /= self.abs(data[:, 1].max())
 				self.updateData(name=Name, data=data)
+				self.workWithSelectedData(state=True)
+				self.selectedDataDict.pop(Name, None)
+				print("selected data:", self.selectedDataDict.keys())
+				for i in self.selectedDataDict.keys():
+					print("Name:",i)
+					data, Name = self.getData(i)
+					data[:, 1] /= m
+					self.updateData(name=Name, data=data)
 			except:
 				traceback.print_exc()
 		# Якщо ввімкнено, обробка решти даних
@@ -1511,17 +1554,19 @@ class QTR(QtWidgets.QMainWindow):
 					data[:, 0] -= pos[0]  # data[data[:,1]>=data[:,1].max()*0.8, 0].mean()
 
 					self.updateData(Name, data=data)
-					
+
 					self.mouseProxyMove.disconnect()
 					self.mouseProxyClick.disconnect()
 					self.mouseProxyMoveRestoreBG()
-					self.ui.movePoint.setChecked(0)
+					self.ui.norm_Shift0Xh.setChecked(0)
 
 			self.mouseProxyMove.disconnect()
 			self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
 			self.mouseProxyClick = pg.SignalProxy(self.mpl.scene().sigMouseClicked, rateLimit=60, slot=mouseClicked)
+			# Якщо ввімкнено, обробка решти даних
+			self.processSelectedData(Name, self.sender)
 		else:
-			self.ui.movePoint.setChecked(0)
+			self.ui.norm_Shift0Xh.setChecked(0)
 			try:
 				self.mouseProxyMove.disconnect()
 				self.mouseProxyClick.disconnect()
@@ -1529,11 +1574,10 @@ class QTR(QtWidgets.QMainWindow):
 			except:
 				traceback.print_exc()
 
-		
 
-	
-		# Якщо ввімкнено, обробка решти даних
-		self.processSelectedData(Name, self.sender)
+
+
+
 
 	def norm_ShiftRange(self, state):
 		'''Переміщення точок'''
@@ -1632,6 +1676,7 @@ class QTR(QtWidgets.QMainWindow):
 				self.update_graph()
 			except:
 				traceback.print_exc()
+
 	def ShiftXY(self):
 		data, Name = self.getData()
 		shiftX = self.ui.ShiftXVal.value()
@@ -1640,10 +1685,10 @@ class QTR(QtWidgets.QMainWindow):
 		data[:,0] -= shiftX
 		data[:,1] -= shiftY
 		self.updateData(name=Name, data=data)
-		
+
 		# Якщо ввімкнено, обробка решти даних
 		self.processSelectedData(Name, self.sender)
-		
+
 	def norm_Shift0(self):
 		''' Видалення фонової компоненти '''
 		# Name = self.currentName()
@@ -1736,10 +1781,13 @@ class QTR(QtWidgets.QMainWindow):
 		if not data is None:
 			scale = data.attrs['scales']
 			ui_actions = self.getUi(actions)
-			for t in ui_actions:
-				t.toggled[bool].disconnect(self.setNewScale)
+			ui_actions[0].toggled[bool].disconnect(self.setNewScale)
+			ui_actions[0].setEnabled(False)
+			ui_actions[0].setChecked(False)
+			for t in ui_actions[1:]:
 				t.setEnabled(False)
 				t.setChecked(False)
+
 			if scale[1] == 2:
 				ui_actions[0].setChecked(True)
 			else:
@@ -1749,8 +1797,7 @@ class QTR(QtWidgets.QMainWindow):
 			ui_actions[1].setEnabled(not ui_actions[0].isChecked())
 			ui_actions[2].setEnabled(not ui_actions[0].isChecked())
 
-			for t in ui_actions:
-				t.toggled[bool].connect(self.setNewScale)
+			ui_actions[0].toggled[bool].connect(self.setNewScale)
 
 	# Змінити масштаб на новий
 	def setNewScale(self, state):
@@ -1779,15 +1826,17 @@ class QTR(QtWidgets.QMainWindow):
 					i.setEnabled(not ui_actions[0].isChecked())
 
 			else:
-				
+
 				# ui_obj = getattr(self.ui, t + Names[0])
 				# print(Scale, state)
-
+				index = None
 				if state == 1:
 					if senderName[6] == "X":
 						self.mpl.setLogMode(x=True)
+						index = 0
 					else:
 						self.mpl.setLogMode(y=True)
+						index = 1
 					#logShift = data[:, index].min()
 					#print("logShift=%f" % logShift)
 					#if logShift < 0 and self.ui.Log10Shift.isChecked():
@@ -1799,12 +1848,15 @@ class QTR(QtWidgets.QMainWindow):
 				else:
 					if senderName[6] == "X":
 						self.mpl.setLogMode(x=False)
-					else:
+						index = 0
+					elif senderName[6] == "Y":
 						self.mpl.setLogMode(y=False)
+						index = 1
 					#data[:, index] = sp.power(10., data[:, index])
 					#if data.attrs['shiftForLog10'] != None and self.ui.Log10Shift.isChecked():
 					#	data[:, index] += data.attrs['shiftForLog10']
 					#	shiftForLog10 = None
+
 				Scale[index] = int(state)
 				# print(Scale)
 				# ui_obj[0].setEnabled(##	not (ui_obj[1].isChecked() or ui_obj[2].isChecked()))
@@ -1856,23 +1908,30 @@ class QTR(QtWidgets.QMainWindow):
 			data, _ = self.getData(name)
 		if name is None:
 			print('noData')
+		try:
+			for i in self.mplTmpLines:
+				self.mpl.removeItem(i)
+		except:
+			pass
 		else:
+			c = QtGui.QColor(data.attrs['color']).getRgb()
 			if self.confDict['showTmp'] and len(self.data[name]['main']) > 1 and showTmp:
 				# print(data.attrs['color'])
 				prev_data = self.data[name]['main'][str(int(self.dIndex(name)) - 1)]
-				c = QtGui.QColor(data.attrs['color']).getRgb()
-				new_color = (255 - c[0], 255 - c[1], 255 - c[2])
+
+
+				new_color = (255 - c[0], 255 - c[1], 255 - c[2],10)
 				print(new_color)
-				self.pointsPlotTmp.setData(x=prev_data[:,0],y=prev_data[:,1],pen=(200,200,200,20),symbolBrush=(20,0,255,20))
-			self.pointsPlot.setData(x=data[:,0],y=data[:,1],pen=(200,200,200), symbolBrush=(255,0,0), symbolPen='w')
+				self.pointsPlotTmp.setData(x=prev_data[:,0],y=prev_data[:,1],pen=new_color,symbolSize=5,symbolBrush=new_color, symbolPen=(0,0,0,0))
+			self.pointsPlot.setData(x=data[:,0],y=data[:,1],pen=c, symbolBrush=c,symbolSize=5, symbolPen=(0,0,0,0))
 			if self.confDict['autoscale'] and len(data) > 2:
 				self.mpl.autoRange()
 
 
-	
+
 	############################## Line #######################################
 
-			
+
 	def cut_line(self, state):
 		"""start cut the line"""
 
@@ -1883,11 +1942,11 @@ class QTR(QtWidgets.QMainWindow):
 			vb = self.mpl.vb
 			self.mousePosition = []
 			def mouseMoved(evt):
-				
+
 				pos = evt[0]  ## using signal proxy turns original arguments into a tuple
 				#print(pos)
 				if self.mpl.sceneBoundingRect().contains(pos):
-					
+
 					mousePoint = vb.mapSceneToView(pos)
 					x, y = mousePoint.x(), mousePoint.y()
 					if self.ui.actionX_Log10.isChecked():
@@ -1900,11 +1959,13 @@ class QTR(QtWidgets.QMainWindow):
 					self.mplLabel.setText("<span style='color:green'>x=%0.4f</span>,   <span style='color: red'>y=%0.4f</span>" % (mousePoint.x(), mousePoint.x()))
 					self.vLine.setPos(mousePoint.x())
 					self.hLine.setPos(mousePoint.y())
-					x0, y0 = self.cutLineStart[0]
-					if len(self.cutLineStart)==1:
-						self.cutLinePlot.setData(x=[x0,x],y=[y0,y])
-					#self.polyLine.setData()
-
+					try:
+						x0, y0 = self.cutLineStart[0]
+						if len(self.cutLineStart)==1:
+							self.cutLinePlot.setData(x=[x0,x],y=[y0,y])
+						#self.polyLine.setData()
+					except:
+						pass
 			def mouseClicked(evt):
 				#print(evt[0].pos(),evt[0].button(), dir(evt[0]))
 				print(self.cutLineStart,evt[0].pos())
@@ -1920,7 +1981,7 @@ class QTR(QtWidgets.QMainWindow):
 					#self.mouseProxyClick.disconnect()
 				elif evt[0].button() == 1 and len(self.cutLineStart) == 2:
 					x1,y1 = self.cutLineStart[0]
-					x2,y2 = self.cutLineStart[1] 
+					x2,y2 = self.cutLineStart[1]
 					x3,y3 = pos
 
 					data, name = self.getData()
@@ -1953,7 +2014,7 @@ class QTR(QtWidgets.QMainWindow):
 					self.mouseProxyMoveRestoreBG()
 					self.mouseProxyClick.disconnect()
 					self.cutLinePlot.hide()
-					
+
 
 			self.mouseProxyMove.disconnect()
 			self.mouseProxyMove = pg.SignalProxy(self.mpl.scene().sigMouseMoved, rateLimit=60, slot=mouseMoved)
@@ -1990,11 +2051,11 @@ class QTR(QtWidgets.QMainWindow):
 			vb = self.mpl.vb
 			self.mousePosition = []
 			def mouseMoved(evt):
-				
+
 				pos = evt[0]  ## using signal proxy turns original arguments into a tuple
 				#print(pos)
 				if self.mpl.sceneBoundingRect().contains(pos):
-					
+
 					mousePoint = vb.mapSceneToView(pos)
 					x, y = mousePoint.x(), mousePoint.y()
 					if self.ui.actionX_Log10.isChecked():
@@ -2007,11 +2068,12 @@ class QTR(QtWidgets.QMainWindow):
 					self.mplLabel.setText("<span style='color:green'>x=%0.1f</span>,   <span style='color: red'>y=%0.1f</span>" % (mousePoint.x(), mousePoint.x()))
 					self.vLine.setPos(mousePoint.x())
 					self.hLine.setPos(mousePoint.y())
-					x0, y0 = self.cutLineStart[0]
-					if len(self.cutLineStart)==1:
-						self.cutLinePlot.setData(x=[x0,x,x,x0,x0],y=[y0,y0,y,y,y0])
-					#self.polyLine.setData()
-
+					try:
+						x0, y0 = self.cutLineStart[0]
+						if len(self.cutLineStart)==1:
+							self.cutLinePlot.setData(x=[x0,x,x,x0,x0],y=[y0,y0,y,y,y0])
+						#self.polyLine.setData()
+					except: pass
 			def mouseClicked(evt):
 				#print(evt[0].pos(),evt[0].button(), dir(evt[0]))
 				print(self.cutLineStart,evt[0].pos())
@@ -2027,7 +2089,7 @@ class QTR(QtWidgets.QMainWindow):
 					#self.mouseProxyClick.disconnect()
 				elif evt[0].button() == 1 and len(self.cutLineStart) == 2:
 					x1,y1 = self.cutLineStart[0]
-					x2,y2 = self.cutLineStart[1] 
+					x2,y2 = self.cutLineStart[1]
 					x3,y3 = pos
 
 					data, name = self.getData()
@@ -2091,14 +2153,14 @@ class QTR(QtWidgets.QMainWindow):
 			self.confDict['autoscale'] = False
 
 	def processView(self, state):
-		
+
 		if state:
 			r = self.mpl.viewRange()
 			x0, x1 = r[0]
 			y0, y1 = r[1]
 			xc = sp.mean(r[0])
 			yc = sp.mean(r[1])
-			
+
 			print(self.regionForProcessing.pos())
 			self.regionForProcessing.setSize([x1-x0-2*xc/2,y1-y0-2*yc/2])
 			self.regionForProcessing.setPos([x0+xc/2,y0+yc/2])
@@ -2158,7 +2220,7 @@ class QTR(QtWidgets.QMainWindow):
 		if self.confDict['showTmp']:
 			# self.mpl.canvas.ax.plot(x,  y, '.m',  alpha=0.2,  zorder=1)
 			xl, yl = self.mpl.viewRange()
-			
+
 
 			text = ''
 			for j, i in enumerate(EQ):
@@ -2173,7 +2235,7 @@ class QTR(QtWidgets.QMainWindow):
 		# Якщо ввімкнено, обробка решти даних
 		self.processSelectedData(Name, self.sender)
 
-	
+
 	def B_spline(self):
 		'''інтерполяція b-сплайном'''
 		spins = ['B_spline' + i for i in ('Step', "K", "NKnots", "_xb", "_xe")]
@@ -2263,9 +2325,9 @@ class QTR(QtWidgets.QMainWindow):
 		'''
 		self.updateData(name=Name, clone=prev_data, data=data)
 		err = sp.array(err)
-		xi = xi[-sp.isnan(err)]
-		fit = fit[-sp.isnan(err)]
-		err = err[-sp.isnan(err)]
+		xi = xi[~sp.isnan(err)]
+		fit = fit[~sp.isnan(err)]
+		err = err[~sp.isnan(err)]
 
 		if self.ui.action_ShowErrors.isChecked():
 			for i in range(len(xi)):
@@ -2364,7 +2426,7 @@ class QTR(QtWidgets.QMainWindow):
 			self.updateData(name, clone=data, data=new_data)
 		except:
 			traceback.print_exc()
-		
+
 		if self.ui.action_ShowErrors.isChecked():
 			for i in range(len(x)):
 				self.mpl.canvas.ax.plot([x[i]] * 2, [y[i] - err[i], y[i] + err[i]], '-r')
@@ -2379,7 +2441,7 @@ class QTR(QtWidgets.QMainWindow):
 		active = self.getUi([i + 'Filt' for i in ['X', 'Y']])
 		res_text = self.getUi(['res' + i + 'Filt' for i in ['X', 'Y']])
 
-		filtBaseNames = list(self.filtersDict[self.ui.filtWaveLENGTH.currentText()].keys())
+		filtBaseNames = list(self.filtersDict[self.wavelengthBox.currentText()].keys())
 
 		M = [1., 1.]
 		for i, j in enumerate(active):
@@ -2408,7 +2470,7 @@ class QTR(QtWidgets.QMainWindow):
 
 	def updateFiltersList(self, index):
 		''' Оновлення списку фільтрів для даної довжини хвилі'''
-		fDict = self.filtersDict[self.ui.filtWaveLENGTH.currentText()]
+		fDict = self.filtersDict[self.wavelengthBox.currentText()]
 		self.ui.filtersList.clear()
 		for i in fDict:
 			self.ui.filtersList.addItem(i + "\t\t" + str(fDict[i]))
@@ -2422,7 +2484,7 @@ class QTR(QtWidgets.QMainWindow):
 		"""Обрахунок пропускання для послідовності фільтрів"""
 		filtTable = self.filtersDict
 		if waveLength is None:
-			waveLength = self.ui.filtWaveLENGTH.currentText()
+			waveLength = self.wavelengthBox.currentText()
 
 		if filters:
 			if not filtTable is None:
@@ -2525,7 +2587,7 @@ class QTR(QtWidgets.QMainWindow):
 														   self.ui.normEvalType.currentText().lower())(x)
 						err = sp.sqrt((sErr_tmp / cY_tmp) ** 2 + (cErr_tmp * y / cY_tmp ** 2) ** 2)
 						rel_err = err / y
-						rel_err = rel_err[-sp.isnan(rel_err)]
+						rel_err = rel_err[~sp.isnan(rel_err)]
 						print("Mean rel. err: %.4f" % (sp.mean(rel_err)))
 				print(sp.shape(x), sp.shape(y))
 
@@ -2607,10 +2669,10 @@ class QTR(QtWidgets.QMainWindow):
 		else:
 			data, Name = self.getData()
 			tmp = data[:]
-				
+
 		#print(tmp.shape)
 		ImChi3, beta, Leff, T0, x_new, y_new = calcImChi3(tmp, d=d, n0=n0, Lambda=Lambda, exp_type=exp_type)
-		
+
 		text = "Data name: {}\nLeff = {:.10g}; beta[cm/MW] = {:.10g},T_0 = {:10g}, ImChi3[esu] = {:10g}".format(Name, Leff,T0, beta, ImChi3)
 		print(text)
 		#self.updateData(name=Name, clone=data)#, comments=text)
@@ -2662,7 +2724,7 @@ class QTR(QtWidgets.QMainWindow):
 					y = float(new_name)
 				data = sp.loadtxt(i)
 				#attr = self.getUi([i + 'Column' for i in ('x', 'y', 'm')])
-				
+
 				mc = self.ui.calibrCoefColumnNorm.value() #attr[2].value()
 				x = None
 				if self.ui.isNormColumn.isChecked():
@@ -2692,7 +2754,7 @@ class QTR(QtWidgets.QMainWindow):
 
 			result = float(eval(self.ui.calibr.text().replace("^", "**"))) / float(self.ui.Ai2.text()) ** 2 / filt
 			self.ui.intensResult.setText(str(round(result, 9)))
-			
+
 			data[:, 0] *= float(self.ui.intensResult.text())
 			self.updateData(name=Name, data=data)
 
@@ -2704,7 +2766,7 @@ class QTR(QtWidgets.QMainWindow):
 
 	# =============================================================================
 	def mprintf(self, text):
-		
+
 		self.ui.outputConsole.insertPlainText("\n"+str(text))
 
 		sb = self.ui.outputConsole.verticalScrollBar()
@@ -2717,7 +2779,7 @@ class QTR(QtWidgets.QMainWindow):
 		self.uiToolsDict['ui'+newui.objectName()] = newui
 		for widget in newui.children():
 			setattr( self.ui, widget.objectName(), widget)
-		
+
 
 	def getUi(self, attrNames):
 		if type(attrNames) in (type([]), type(())):
@@ -2771,14 +2833,14 @@ class QTR(QtWidgets.QMainWindow):
 			if tool != self.uiToolsDict[name]:
 				getattr(self.ui, 'action'+tool.objectName()).setChecked(False)
 		self.uiToolsDict[name].show()
-		self.ui.activeTools.setFixedSize(self.uiToolsDict[name].sizeHint())#setFixedSize(self.uiToolsDict[name].sizeHint())
+		#self.ui.activeTools.setFixedSize(self.uiToolsDict[name].sizeHint())#setFixedSize(self.uiToolsDict[name].sizeHint())
 
 	def closeEvent(self, QCloseEvent):
 		print("Close...")
 		#guisave(self.ui, self.settings)
 		sys.exit()
 		#QCloseEvent.accept()
-		
+
 	"""
 	def changeEvent(self,event):
 		if(event.type()==QtCore.QEvent.WindowStateChange):
@@ -2880,7 +2942,7 @@ class QTR(QtWidgets.QMainWindow):
 
 
 		## Фільтри
-		self.ui.filtWaveLENGTH.currentIndexChanged.connect(self.updateFiltersList)
+		self.wavelengthBox.currentIndexChanged.connect(self.updateFiltersList)
 		self.ui.filtersList.itemDoubleClicked.connect(self.addFiltInEditLine)
 		self.ui.XFilt.textEdited.connect(self.setFiltLineEdit)
 		self.ui.YFilt.textEdited.connect(self.setFiltLineEdit)
@@ -2901,7 +2963,7 @@ class QTR(QtWidgets.QMainWindow):
 		self.ui.actionSaveAll.triggered.connect(self.saveAll)
 		self.ui.actionSaveProject.triggered.connect(self.saveProject)
 		self.ui.actionOpenProject.triggered.connect(self.openProject)
-		#self.connect(self.ui, QtCore.SIGNAL('destroyed(QObject *)'), self.closeEvent) 
+		#self.connect(self.ui, QtCore.SIGNAL('destroyed(QObject *)'), self.closeEvent)
 		self.ui.Close.triggered.connect(self.closeEvent)
 		'''
 		#self.ui.rYInPercents.toggled[bool].connect(self.rYInPercents)
@@ -2942,11 +3004,10 @@ def main():
 
 	app = QtWidgets.QApplication(sys.argv)
 	win = QTR()
-	
+
 	sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
 	#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s')
 	main()
-
